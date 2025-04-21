@@ -1,0 +1,22 @@
+#version 450
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(location=0, rgba16f) uniform image2D DestinationTexture;
+uniform sampler2D SourceTexture;
+layout(location=2) uniform vec2 DestinationTexelSize;
+layout(location=3) uniform vec2 SourceTexelSize;
+layout(location=4) uniform float DestinationContribution;
+layout(location=5) uniform float SourceContribution;
+
+void main()
+{
+    //get coords
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    vec2 samplerCoords = (gl_GlobalInvocationID.xy + vec2(.5)) * DestinationTexelSize;
+    
+    //sample the source texture
+    vec4 color = texture(SourceTexture, samplerCoords);
+    
+    vec4 ogColor = imageLoad(DestinationTexture, pixelCoords);
+    imageStore(DestinationTexture, pixelCoords, color*DestinationContribution + ogColor*SourceContribution);
+}

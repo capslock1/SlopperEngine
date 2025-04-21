@@ -1,0 +1,20 @@
+vertOut vec4 position;
+
+vertIn vec4 position;
+vertIn vec2 UVCoordinates;
+
+vertToPix vec2 uvCoords;
+
+void vertex()
+{
+    vertToPix.uvCoords = vertIn.UVCoordinates;
+    vertOut.position = vertIn.position;
+}
+
+pixOut vec3 Albedo;
+uniform sampler2D mainTexture;
+
+void pixel()
+{
+    pixOut.Albedo = texture(mainTexture, vertToPix.uvCoords).xyz;
+}

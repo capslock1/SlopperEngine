@@ -1,0 +1,52 @@
+vertOut vec4 position;
+
+vertToPix vec4 worldPosition;
+vertToPix vec4 camDirection;
+vertToPix vec2 uvCoords;
+vertToPix vec4 normal;
+
+vertIn vec4 position;
+vertIn vec2 UVCoordinates;
+vertIn vec3 normal;
+
+void vertex()
+{
+    vertToPix.worldPosition = vertIn.position * Globals.model;
+    
+    //https://www.cs.toronto.edu/~jacobson/phong-demo/ pointed out that worldpos.xyz/worldpos.w = -camdir. thanks
+    //this code makes no fucking sense
+    
+    vertToPix.camDirection = vec4(normalize((Globals.view*(vertToPix.worldPosition * Globals.view)).xyz),1.0);
+
+    vertOut.position = vertToPix.worldPosition * Globals.view * Globals.projection;
+    vertToPix.normal = vec4(vertIn.normal, 0.0)*Globals.model;
+    vertToPix.uvCoords = vertIn.UVCoordinates;
+}
+
+pixOut vec3 Albedo;
+
+uniform vec4 color;
+
+void pixel()
+{
+    //phong shading
+    vec3 lightDir = normalize(vec3(15,5,4));
+    vec3 camDir = vertToPix.camDirection.xyz;
+    vec3 norm = normalize(vertToPix.normal.xyz);
+    vec3 rHatM = reflect(lightDir, norm);
+
+    float litness = max(dot(norm, lightDir),0);
+    float spec = 0;
+
+    spec = max( dot(rHatM, camDir), 0);
+    spec = pow(spec,20);
+    spec *= litness;
+
+    litness += 3.*spec;
+    litness = litness < 0. ? 0. : litness;
+
+    float ambient = norm.y*.5+1.;
+    ambient *= 1.+.5*dot(camDir, norm);
+    vec3 col = litness + vec3(0.05,.1,.2)*ambient;
+    pixOut.Albedo = col;
+}

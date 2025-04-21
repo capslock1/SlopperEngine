@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "C#: SlopperEngine",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}\\SlopperEngine.csproj",
+            "launchConfigurationId": "TargetFramework=;SlopperEngine"
+        }
+    ]
+}

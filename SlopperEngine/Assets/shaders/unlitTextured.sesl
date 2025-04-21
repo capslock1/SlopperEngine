@@ -1,0 +1,34 @@
+vertOut vec4 position;
+
+vertToPix vec2 uvCoords;
+
+vertIn vec4 position;
+vertIn vec2 UVCoordinates;
+
+void vertex()
+{
+    vec4 worldPosition = vertIn.position * Globals.model;
+    vertToPix.uvCoords = vertIn.UVCoordinates;
+    vertOut.position = worldPosition * Globals.view * Globals.projection;
+}
+
+pixOut vec3 Albedo;
+
+uniform sampler2D mainTexture;
+
+vec3 ACESFilm(vec3 x)
+{
+    //stolen from https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    return ((x*(a*x+b))/(x*(c*x+d)+e));
+}
+
+void pixel()
+{
+    vec3 res = texture(mainTexture, vertToPix.uvCoords).xyz;
+    pixOut.Albedo = ACESFilm(res);
+}

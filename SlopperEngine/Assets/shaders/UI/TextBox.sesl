@@ -1,0 +1,26 @@
+vertOut vec4 position;
+
+vertIn vec4 position;
+vertIn vec2 UVCoordinates;
+
+vertToPix vec2 uvCoords;
+
+void vertex()
+{
+    vertToPix.uvCoords = vertIn.UVCoordinates;
+    vertOut.position = vertIn.position;
+}
+
+pixOut vec3 Albedo;
+pixOut float Transparency;
+
+uniform sampler2D TextTexture;
+uniform vec4 BackgroundColor;
+uniform vec4 TextColor;
+
+void pixel()
+{
+    bool isText = texture(TextTexture, vertToPix.uvCoords).r > .5;
+    pixOut.Albedo = isText ? TextColor.rgb : BackgroundColor.rgb;
+    pixOut.Transparency = isText ? TextColor.a : BackgroundColor.a;
+}

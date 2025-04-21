@@ -1,0 +1,23 @@
+vertOut vec4 position;
+
+vertToPix vec2 uvCoords;
+
+vertIn vec4 position;
+vertIn vec2 UVCoordinates;
+
+void vertex()
+{
+    vec4 worldPosition = vertIn.position * Globals.model;
+    vertToPix.uvCoords = vertIn.UVCoordinates;
+    vertOut.position = worldPosition * Globals.view * Globals.projection;
+}
+
+pixOut vec3 Albedo;
+
+uniform sampler2D mainTexture;
+
+void pixel()
+{
+    vec3 res = texture(mainTexture, vertToPix.uvCoords).xyz;
+    pixOut.Albedo = res;
+}
