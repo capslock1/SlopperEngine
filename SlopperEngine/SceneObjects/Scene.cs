@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using SlopperEngine.Engine;
 using SlopperEngine.Engine.Collections;
 using SlopperEngine.Engine.SceneComponents;
@@ -129,7 +130,7 @@ public sealed class Scene : SceneObject
     SceneDataContainer<T> GetOrCreateDataContainer<T>()
     {
         if(_dataContainers.TryGetValue(typeof(T), out var container))
-            return (SceneDataContainer<T>)container;
+            return Unsafe.As<SceneDataContainer<T>>(container);
 
         SceneDataContainer<T> result = new SparseSemiorderedSceneDataContainer<T>(); //sparsesemiordered by default cuz I DONT CARE :D
         AddDataContainer(result);
