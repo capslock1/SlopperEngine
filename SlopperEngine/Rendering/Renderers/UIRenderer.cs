@@ -17,6 +17,13 @@ public class UIRenderer : RenderHandler
     readonly ScreenspaceQuadMesh _drawMesh = new(default);
     Vector2i _screenSize = (400,300);
 
+    public UIRenderer()
+    {
+        globals.CameraProjection = Matrix4.Identity;
+        globals.CameraView = Matrix4.Identity;
+        globals.Model = Matrix4.Identity;
+    }
+
     protected override void RenderInternal()
     {
         if(Scene == null) return;
@@ -55,6 +62,7 @@ public class UIRenderer : RenderHandler
 
     public override Texture2D GetOutputTexture() => Buffer.ColorAttachments[0];
     public override Vector2i GetScreenSize() => _screenSize;
+    public Vector2 GetPixelScale() => new Vector2(2,2) / _screenSize;
     public override void Resize(Vector2i newSize)
     {
         _screenSize = newSize;

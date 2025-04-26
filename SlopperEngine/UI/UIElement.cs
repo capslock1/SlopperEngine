@@ -21,7 +21,15 @@ public class UIElement : SceneObject
     /// </summary>
     public ChildList<UIElement> UIChildren;
 
-    Box2 _globalShape;
+    /// <summary>
+    /// The last renderer that used this UIElement.
+    /// </summary>
+    protected UIRenderer? lastRenderer {get; private set;}
+    /// <summary>
+    /// The last global shape that was calculated of this UIElement, in normalized device coordinates.
+    /// </summary>
+    protected Box2 lastGlobalShape {get; private set;}
+
     bool _isUIRoot;
     SceneDataHandle _UIRootUpdateHandle;
 
@@ -53,6 +61,8 @@ public class UIElement : SceneObject
     protected virtual UIElementSize GetSizeConstraints() => new(default, default, 0, 0);
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
     {
+        lastRenderer = renderer;
+
         Box2 globalShape = new(
             float.Lerp(parentShape.Min.X, parentShape.Max.X, LocalShape.Min.X),
             float.Lerp(parentShape.Min.Y, parentShape.Max.Y, LocalShape.Min.Y),
@@ -60,7 +70,7 @@ public class UIElement : SceneObject
             float.Lerp(parentShape.Min.Y, parentShape.Max.Y, LocalShape.Max.Y)
         );
 
-        var screenScale = new Vector2(2,2)/renderer.GetScreenSize();
+        var screenScale = renderer.GetPixelScale();
         UIElementSize size = GetSizeConstraints();
         float minSizeX = size.MinimumSizeX * screenScale.X;
         float maxSizeX = size.MaximumSizeX * screenScale.X;
@@ -73,7 +83,7 @@ public class UIElement : SceneObject
         foreach(var ch in UIChildren.All)
             ch.UpdateShape(globalShape, renderer);
 
-        _globalShape = globalShape;
+        lastGlobalShape = globalShape;
 
         static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {
@@ -103,7 +113,7 @@ public class UIElement : SceneObject
     {
         var tex = GetMaterial();
         if(tex != null)
-        renderer.AddRenderToQueue(_globalShape, tex);
+        renderer.AddRenderToQueue(lastGlobalShape, tex);
         foreach(var ch in UIChildren.All)
             ch.Render(renderer);
     }

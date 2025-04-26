@@ -121,6 +121,7 @@ public class TestGame : SceneObject
         _background = Material.Create(SlopperShader.Create("shaders/UI/PostProcessing.sesl"));
         _backgroundTexIndex = _background.GetUniformIndexFromName("sourceTexture");
         _UIScene = Scene.CreateEmpty();
+        _UIScene.Components.Add(new UpdateHandler());
         _UIScene.Children.Add(new MaterialQuad(_background));
         var rend = new UIRenderer();
         _UIScene.Components.Add(rend);
