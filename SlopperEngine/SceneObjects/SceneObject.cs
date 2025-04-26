@@ -231,10 +231,6 @@ public class SceneObject
             return res;
         }
 
-        /// <summary>
-        /// Removes a child from the ChildList by index.
-        /// </summary>
-        /// <param name="index">The index to remove the child at.</param>
         public void Remove(int index)
         {
             var removed = _children[index];
@@ -252,9 +248,6 @@ public class SceneObject
             removed._parentList = null;
         }
 
-        /// <summary>
-        /// Should be called by the owner when it gets registered/unregistered.
-        /// </summary>
         public void CheckRegistered()
         {
             if(Owner.InScene == _currentlyRegistered) return;
@@ -274,12 +267,93 @@ public class SceneObject
 
         public SceneObject Get(int index) => this[index];
     }
+
+    /// <summary>
+    /// Stores a single child of a SceneObject.
+    /// </summary>
+    /// <typeparam name="TSceneObject">The type of SceneObject to store.</typeparam>
+    public class SingleChild<TSceneObject> : IChildList where TSceneObject : SceneObject
+    {
+        public SceneObject Owner {get; private set;}
+        public int Count => _child == null ? 0 : 1;
+        public TSceneObject? Value
+        {
+            get => _child;
+            set 
+            {
+                if(Owner == value) throw new Exception("Cannot set a SceneObject as its own child!");
+                if(value is Scene) throw new Exception("Cannot set a Scene as a child!");
+                
+                Remove(0);
+                _child = value;
+                if(_child == null) 
+                    return;
+                
+                _child.Remove();
+                _child._parentList = this;
+                if(_currentlyRegistered)
+                    _child.Register(Owner.Scene!);
+            }
+        }
+
+        TSceneObject? _child;
+        bool _currentlyRegistered;
+
+        public SingleChild(SceneObject owner)
+        {
+            Owner = owner;
+            _currentlyRegistered = owner.InScene;
+            owner._childLists ??= new(1);
+            owner._childLists.Add(this);
+        }
+
+        public void CheckRegistered()
+        {
+            if(_currentlyRegistered == Owner.InScene) return;
+            if(_child == null) return;
+
+            if(_currentlyRegistered)
+                _child.Register(Owner.Scene!);
+            else _child.Unregister();
+        }
+
+        public SceneObject Get(int index) => _child!; // if you nullref here, thats intentional.
+
+        public void Remove(int index)
+        {
+            if(_child == null) return;
+            if(_child.Scene is not null)
+                _child.Unregister();
+            _child = null;
+        }
+    }
     protected interface IChildList
     {
+        /// <summary>
+        /// The owner of this ChildList.
+        /// </summary>
         public SceneObject Owner {get;}
+
+        /// <summary>
+        /// Removes a child by index.
+        /// </summary>
+        /// <param name="index">The index of the child to remove.</param>
         public void Remove(int index);
+
+        /// <summary>
+        /// Gets a child by index.
+        /// </summary>
+        /// <param name="index">The index of the child. Should be between -1 and Count.</param>
         public SceneObject Get(int index);
+
+        /// <summary>
+        /// The amount of children this ChildList stores.
+        /// </summary>
         public int Count {get;}
+        
+        /// <summary>
+        /// Should be called by the owner when it gets registered/unregistered.
+        /// </summary>
         public void CheckRegistered();
     }
 }
