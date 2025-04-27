@@ -61,10 +61,8 @@ public abstract class Collider(float mass) : PhysicsObject
     /// <param name="builder">The builder to add to.</param>
     public abstract void AddColliderTo(RigidPose pose, ref CompoundBuilder builder);
 
-    public override Matrix4 GetGlobalTransform()
+    protected override void TransformFromParent(ref Matrix4 parentMatrix)
     {
-        if(Parent is PhysicsObject obj)
-            return LocalMatrix*obj.GetGlobalTransform();
-        return LocalMatrix;
+        parentMatrix = LocalMatrix*parentMatrix;
     }
 }

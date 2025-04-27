@@ -52,8 +52,11 @@ public class PhysicsObject : SceneObject
             return mat;
         }
     }
-    
-    public override Matrix4 GetGlobalTransform() => LocalMatrix;
+
+    protected override void TransformFromParent(ref Matrix4 parentMatrix)
+    {
+        parentMatrix = LocalMatrix;
+    }
 
     /// <summary>
     /// Gets called when the position is externally set. Should handle physics engine calls in overriding classes.

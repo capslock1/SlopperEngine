@@ -22,11 +22,9 @@ public class SceneObject3D : SceneObject
             return mat;
         }
     }
-    
-    public override Matrix4 GetGlobalTransform()
+
+    protected override void TransformFromParent(ref Matrix4 parentMatrix)
     {
-        if(Parent is null)
-            return LocalMatrix;
-        return LocalMatrix*Parent.GetGlobalTransform();
+        parentMatrix = LocalMatrix*parentMatrix;
     }
 }

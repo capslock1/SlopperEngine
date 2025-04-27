@@ -124,12 +124,25 @@ public partial class SceneObject
     /// <summary>
     /// Gets the transform from this object's space to global space, also known as the model-to-global space matrix.
     /// </summary>
-    public virtual Matrix4 GetGlobalTransform()
+    public Matrix4 GetGlobalTransform()
     {
-        if(Parent is null)
-            return Matrix4.Identity;
-        return Parent.GetGlobalTransform();
+        Matrix4 res = Matrix4.Identity;
+        RecursiveParentTransform(ref res, this);
+        return res;
+
+        void RecursiveParentTransform(ref Matrix4 mat, SceneObject curr)
+        {
+            if(curr.Parent is not null)
+                RecursiveParentTransform(ref mat, curr.Parent);
+            curr.TransformFromParent(ref mat);
+        }
     }
+
+    /// <summary>
+    /// In overriding classes, this function should transform the parent's transform to the local transform.
+    /// </summary>
+    /// <param name="parentMatrix">The parent's transform.</param>
+    protected virtual void TransformFromParent(ref Matrix4 parentMatrix){}
 
     //the evil '== null' code
     public static bool operator ==(SceneObject? A, SceneObject? B)
