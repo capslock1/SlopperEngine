@@ -1,8 +1,8 @@
-using System.Collections;
 using System.Collections.ObjectModel;
 using OpenTK.Mathematics;
 using SlopperEngine.Engine;
 using SlopperEngine.Engine.SceneData;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.SceneObjects;
 
@@ -24,7 +24,7 @@ public partial class SceneObject
     /// <summary>
     /// The scene this object is in.
     /// </summary>
-    public Scene? Scene {get; private set;}
+    [field:DontSerialize] public Scene? Scene {get; private set;}
 
     /// <summary>
     /// Whether the object exists or is destroyed. Destroyed objects cannot be used in Scenes.
@@ -36,16 +36,16 @@ public partial class SceneObject
     /// </summary>
     public ChildList<SceneObject> Children => _children ??= new ChildList<SceneObject>(this);
     
-    private IChildList? _parentList = null;
+    [DontSerialize] private IChildList? _parentList = null;
     private ChildList<SceneObject>? _children;
-    private int _parentListIndex = -1;
-    private bool _registryComplete = false;
-    private List<IChildList>? _childLists;
+    [DontSerialize] private int _parentListIndex = -1;
+    [DontSerialize] private bool _registryComplete = false;
+    [DontSerialize] private List<IChildList>? _childLists;
 
     //premature optimisation? couldnt be me.
     //actually, the registered method handles could be stored in the scene to avoid allocations..... i shant
-    readonly private ReadOnlyCollection<EngineMethodAttribute> _registeredMethods;
-    readonly private SceneDataHandle[] _registeredMethodHandles;
+    [DontSerialize] readonly private ReadOnlyCollection<EngineMethodAttribute> _registeredMethods;
+    [DontSerialize] readonly private SceneDataHandle[] _registeredMethodHandles;
 
     /// <summary>
     /// Creates a SceneObject.
