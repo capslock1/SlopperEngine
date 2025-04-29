@@ -74,6 +74,7 @@ public class PointLight : SceneObject3D
         res.Radius = _radius;
         res.Color = _color;
         res.Sharpness = _sharpness;
+        res.Object = this;
         _dataHandle = Scene!.RegisterSceneData(res);
     }
 

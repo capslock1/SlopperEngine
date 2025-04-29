@@ -37,12 +37,15 @@ public class DebugRenderer : RenderHandler
         _lights.ClearBuffer();
         foreach(PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
             _lights.AddLight(dat);
+        _lights.UseBuffer();
 
         foreach(Camera cam in cameras)
         {
             globals.Use();
             globals.CameraProjection = cam.Projection;
-            globals.CameraView = cam.GetGlobalTransform().Inverted();
+            var camTransform = cam.GetGlobalTransform();
+            globals.CameraView = camTransform.Inverted();
+            globals.CameraPosition = new(camTransform.ExtractTranslation(),1.0f);
             foreach(Drawcall call in Scene.GetDataContainerEnumerable<Drawcall>())
             {
                 call.Material.Use(call.Model.GetMeshInfo(), this);
@@ -93,6 +96,7 @@ public class DebugRenderer : RenderHandler
     {
         bool writesAlbedo = false;
         bool writesAlpha = false;
+        bool writesSpecular = false;
         int normPosWrite = 0;
         foreach(var v in scope.pixOut)
         {
@@ -102,6 +106,7 @@ public class DebugRenderer : RenderHandler
                 case "Transparency": writesAlpha = true; break;
                 case "Normal": normPosWrite++; break;
                 case "Position": normPosWrite++; break;
+                case "Specular": writesSpecular = true; break;
             }
         }
         bool writesNormalAndPosition = normPosWrite == 2;
@@ -110,12 +115,46 @@ public class DebugRenderer : RenderHandler
 @$"
 out vec4 SL_FragColor;
 
+float SL_PhongLighting(vec3 position, vec3 normal, vec3 cameraDirection, SL_PointLightData light)
+{{
+    vec3 lightDir = light.positionSharpness.xyz - position;
+    float lightDist = length(lightDir);
+    if(lightDist > light.colorRange.w)
+        return 0.0;
+    float normLightDist = lightDist / light.colorRange.w;
+    lightDir /= lightDist;
+
+    float litness = max(dot(normal, lightDir), 0);
+{(writesSpecular ? 
+@"
+    vec3 rHatM = reflect(lightDir, normal);
+
+    float spec = 0;
+    spec = max(dot(rHatM, cameraDirection), 0);
+    spec = pow(spec,20);
+    spec *= litness;
+    
+    litness += 3.*spec;
+    " : ' '
+)}
+    float sq = (light.positionSharpness.w);
+    litness *= (1-normLightDist) / (sq * sq + 1);
+    return litness < 0. ? 0. : litness;
+}}
 vec3 SL_GetLighting(vec3 position, vec3 normal)
 {{
     vec3 camDir = normalize(position - Globals.cameraPosition.xyz);
     float ambient = normal.y*.5+1.;
     ambient *= 1.-.5*dot(camDir, normal);
-    return vec3(0.05,.1,.2)*ambient;
+
+    vec3 lightContribution = vec3(0);
+    for(int l = 0; l < SL_lightlights.count; l++)
+    {{
+        SL_PointLightData light = SL_lightlights.lights[l];
+        lightContribution += SL_PhongLighting(position, normal, camDir, light) * light.colorRange.xyz;
+    }}
+
+    return vec3(0.05,.1,.2)*ambient + lightContribution;
 }}
 
 void main()

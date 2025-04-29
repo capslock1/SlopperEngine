@@ -127,21 +127,21 @@ void vertIn_Initialize();
         //write vertins
         writer.WriteLine(
 @"struct SL_vertInStruct
-{");
+{bool anticrash;");
         WriteInoutStructVars(scope.vertIn, writer);
         writer.WriteLine("} vertIn;");
 
         //write vertouts
         writer.WriteLine(
 @"struct SL_vertOutStruct
-{");
+{bool anticrash;");
         WriteInoutStructVars(scope.vertOut, writer);
         writer.WriteLine("} vertOut;");
 
         //write verttopix
         writer.WriteLine(
 @"out SL_vertToPix
-{");
+{bool anticrash;");
         WriteInoutStructVars(scope.vertToPix, writer);
         writer.WriteLine("} vertToPix;");
 
@@ -174,14 +174,14 @@ void vertIn_Initialize();
         //write pixout
         writer.WriteLine(
 @"struct SL_pixOut
-{");
+{bool anticrash;");
         WriteInoutStructVars(scope.pixOut, writer);
         writer.WriteLine("} pixOut;");
 
         //write verttopix
         writer.WriteLine(
 @"in SL_vertToPix
-{");
+{bool anticrash;");
         WriteInoutStructVars(scope.vertToPix, writer);
         writer.WriteLine("} vertToPix;");
 

@@ -27,7 +27,7 @@ layout(binding = 1, std140) buffer SL_Lights
     int count;
     int pad1; int pad2; int pad3;
     SL_PointLightData[] lights;
-};
+} SL_lightlights;
 ";
 
     public LightBuffer()

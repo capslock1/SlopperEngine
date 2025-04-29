@@ -1,0 +1,18 @@
+vertOut vec4 position;
+
+vertIn vec4 position;
+
+void vertex()
+{
+    vec4 worldPosition = vertIn.position * Globals.model;
+    vertOut.position = worldPosition * Globals.view * Globals.projection;
+}
+
+pixOut vec3 Albedo;
+
+uniform vec3 Color;
+
+void pixel()
+{
+    pixOut.Albedo = Color;
+}

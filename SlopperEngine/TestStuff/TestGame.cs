@@ -35,6 +35,7 @@ public class TestGame : SceneObject
     Camera _camera = new ManeuverableCamera();
     Rigidbody _rb;
     TextBox _fpsCounter;
+    PointLight _lamp;
 
     public TestGame(int width, int height, string title)
     {
@@ -110,7 +111,7 @@ public class TestGame : SceneObject
 
         var floor = new Rigidbody(){IsKinematic = true, Position = (0,-2,0)};
         var floorcol = new BoxCollider(1, (10,1,10));
-        floorcol.Children.Add(new MeshRenderer(){Mesh = DefaultMeshes.Cube, LocalScale = (5,.5f,5)});
+        floorcol.Children.Add(new MeshRenderer(){Mesh = DefaultMeshes.Cube, LocalScale = (5,.5f,5), Material = sphere.Material});
         floor.Colliders.Add(floorcol);
         _main.Children.Add(floor);
 
@@ -162,6 +163,12 @@ public class TestGame : SceneObject
         fonttest.BackgroundColor = new(0,0,0,.4f);
         _UIScene.Children.Add(fonttest);
 
+        _lamp = new PointLight(){LocalPosition = new(10,3,5), Color = new(5,3,2), Radius = 20, Sharpness = 2.5f};
+        var lampMat = Material.Create(SlopperShader.Create("shaders/UnlitColor.sesl"));
+        lampMat.Uniforms[lampMat.GetUniformIndexFromName("Color")].Value = new Vector3(15,9,6);
+        _lamp.Children.Add(new MeshRenderer(){Mesh = DefaultMeshes.Sphere, Material = lampMat, LocalScale = new(.3f)});
+        _main.Children.Add(_lamp);
+
         _main.FrameUpdate(new(.0001f));
 
         StbImage.stbi_set_flip_vertically_on_load(0);
@@ -184,7 +191,6 @@ public class TestGame : SceneObject
         _testWindow.WindowTexture = _UIScene.Components.FirstOfType<UIRenderer>()?.GetOutputTexture();
         _background.Uniforms[_backgroundTexIndex].Value = _main.RenderHandler!.GetOutputTexture();
         _testWindow.FramebufferResize += OnFramebufferResize;
-
     }
 
     [OnFrameUpdate]
@@ -200,6 +206,7 @@ public class TestGame : SceneObject
         }
 
         _rb.AddImpulse(45 * args.DeltaTime * Vector3.UnitY * (MathF.Sin((float)_secsSinceStart)+1));
+        _lamp!.LocalPosition = new(5*(float)Math.Sin(_secsSinceStart), 3, 5*(float)Math.Cos(_secsSinceStart * Math.Sqrt(2)));
     }
 
     [OnInputUpdate]
