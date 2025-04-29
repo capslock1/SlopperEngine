@@ -2,7 +2,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 
-namespace SlopperEngine.SceneObjects;
+namespace SlopperEngine.SceneObjects.Rendering;
 
 /// <summary>
 /// Renders a mesh using a material.

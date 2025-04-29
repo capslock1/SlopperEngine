@@ -9,6 +9,7 @@ using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core;
 using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.Physics;
+using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Physics.Colliders;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;

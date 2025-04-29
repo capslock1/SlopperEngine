@@ -4,6 +4,7 @@ using SlopperEngine.UI;
 using SlopperEngine.Windowing;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.Renderers;
+using SlopperEngine.SceneObjects.Rendering;
 using OpenTK.Windowing.Common;
 using SlopperEngine.Core.SceneComponents;
 using StbImageSharp;

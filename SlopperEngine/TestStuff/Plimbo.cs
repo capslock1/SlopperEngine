@@ -1,6 +1,6 @@
 using SlopperEngine.Core;
 using SlopperEngine.Graphics;
-using SlopperEngine.SceneObjects;
+using SlopperEngine.SceneObjects.Rendering;
 using OpenTK.Mathematics;
 using SlopperEngine.Physics;
 using SlopperEngine.Physics.Colliders;
