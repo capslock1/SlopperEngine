@@ -1,5 +1,5 @@
-using SlopperEngine.Engine;
-using SlopperEngine.Rendering;
+using SlopperEngine.Core;
+using SlopperEngine.Graphics;
 using SlopperEngine.SceneObjects;
 using OpenTK.Mathematics;
 using SlopperEngine.Physics;

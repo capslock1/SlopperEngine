@@ -1,4 +1,4 @@
-using SlopperEngine.Engine;
+using SlopperEngine.Core;
 using SlopperEngine.SceneObjects;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Mathematics;

@@ -1,4 +1,4 @@
-using SlopperEngine.Engine;
+using SlopperEngine.Core;
 using SlopperEngine.SceneObjects;
 using OpenTK.Audio.OpenAL;
 using OpenTK.Mathematics;

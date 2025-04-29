@@ -4,8 +4,8 @@ using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities;
-using SlopperEngine.Engine;
-using SlopperEngine.Rendering;
+using SlopperEngine.Core;
+using SlopperEngine.Graphics;
 
 namespace SlopperEngine.TestStuff;
 

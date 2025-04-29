@@ -1,7 +1,7 @@
 using OpenTK.Mathematics;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.SceneComponents;
-using SlopperEngine.Rendering;
+using SlopperEngine.Core;
+using SlopperEngine.Core.SceneComponents;
+using SlopperEngine.Graphics;
 
 namespace SlopperEngine.SceneObjects;
 

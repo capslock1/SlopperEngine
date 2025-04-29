@@ -1,6 +1,6 @@
-using SlopperEngine.Rendering;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.SceneData;
+using SlopperEngine.Graphics;
+using SlopperEngine.Core;
+using SlopperEngine.Core.SceneData;
 
 namespace SlopperEngine.SceneObjects;
 
@@ -9,10 +9,9 @@ namespace SlopperEngine.SceneObjects;
 /// </summary>
 public class MeshRenderer : SceneObject3D
 {
-    Mesh? _mesh;
-    Material? _mat;
     SceneDataHandle _drawcallIndex;
 
+    Mesh? _mesh;
     public Mesh? Mesh{
         get{return _mesh;}
         set{
@@ -25,6 +24,7 @@ public class MeshRenderer : SceneObject3D
         }
     }
 
+    Material? _mat;
     public Material? Material {
         get{return _mat;} 
         set{

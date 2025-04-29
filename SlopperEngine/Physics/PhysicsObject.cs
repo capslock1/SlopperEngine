@@ -1,6 +1,6 @@
 
 using OpenTK.Mathematics;
-using SlopperEngine.Engine.SceneComponents;
+using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.Physics;

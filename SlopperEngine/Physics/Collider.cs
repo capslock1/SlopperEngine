@@ -1,8 +1,8 @@
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using OpenTK.Mathematics;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.SceneComponents;
+using SlopperEngine.Core;
+using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.Physics;

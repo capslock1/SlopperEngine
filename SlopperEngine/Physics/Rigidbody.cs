@@ -3,9 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.SceneComponents;
-using SlopperEngine.Engine.SceneData;
+using SlopperEngine.Core;
+using SlopperEngine.Core.SceneComponents;
+using SlopperEngine.Core.SceneData;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.Physics;

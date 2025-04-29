@@ -4,7 +4,7 @@ using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using System.Runtime.CompilerServices;
-using SlopperEngine.Engine.SceneComponents;
+using SlopperEngine.Core.SceneComponents;
 
 namespace SlopperEngine.Physics;
 /// <summary>

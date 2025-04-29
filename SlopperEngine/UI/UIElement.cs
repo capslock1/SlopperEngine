@@ -1,8 +1,8 @@
 using OpenTK.Mathematics;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.SceneData;
-using SlopperEngine.Rendering;
-using SlopperEngine.Rendering.Renderers;
+using SlopperEngine.Core;
+using SlopperEngine.Core.SceneData;
+using SlopperEngine.Graphics;
+using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.UI;

@@ -3,7 +3,7 @@ using System.Numerics;
 using BepuUtilities;
 using BepuPhysics;
 using SlopperEngine.Physics;
-using SlopperEngine.Engine.SceneComponents;
+using SlopperEngine.Core.SceneComponents;
 
 namespace SlopperEngine.Physics;
 /// <summary>

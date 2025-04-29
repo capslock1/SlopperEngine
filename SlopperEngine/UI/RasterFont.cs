@@ -1,7 +1,7 @@
 using System.Collections.Frozen;
 using OpenTK.Mathematics;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.Collections;
+using SlopperEngine.Core;
+using SlopperEngine.Core.Collections;
 using StbImageSharp;
 
 namespace SlopperEngine.UI;

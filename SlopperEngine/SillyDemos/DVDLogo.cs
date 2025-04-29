@@ -1,5 +1,5 @@
 using OpenTK.Mathematics;
-using SlopperEngine.Engine;
+using SlopperEngine.Core;
 using SlopperEngine.UI;
 
 namespace SlopperEngine.SillyDemos;

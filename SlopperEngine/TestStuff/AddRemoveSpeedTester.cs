@@ -1,5 +1,5 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using SlopperEngine.Engine;
+using SlopperEngine.Core;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.TestStuff;

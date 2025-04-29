@@ -1,11 +1,11 @@
-using SlopperEngine.Engine;
-using SlopperEngine.Rendering;
+using SlopperEngine.Core;
+using SlopperEngine.Graphics;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.Rendering.Renderers;
+using SlopperEngine.Graphics.Renderers;
 using OpenTK.Windowing.Common;
-using SlopperEngine.Engine.SceneComponents;
+using SlopperEngine.Core.SceneComponents;
 using StbImageSharp;
 using OpenTK.Mathematics;
 using SlopperEngine.TestStuff;

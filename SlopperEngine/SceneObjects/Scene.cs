@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using SlopperEngine.Engine;
-using SlopperEngine.Engine.Collections;
-using SlopperEngine.Engine.SceneComponents;
-using SlopperEngine.Engine.SceneData;
-using SlopperEngine.Rendering.Renderers;
+using SlopperEngine.Core;
+using SlopperEngine.Core.Collections;
+using SlopperEngine.Core.SceneComponents;
+using SlopperEngine.Core.SceneData;
+using SlopperEngine.Graphics.Renderers;
 
 namespace SlopperEngine.SceneObjects;
 

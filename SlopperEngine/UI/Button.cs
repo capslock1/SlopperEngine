@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
-using SlopperEngine.Engine;
-using SlopperEngine.Rendering;
+using SlopperEngine.Core;
+using SlopperEngine.Graphics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace SlopperEngine.UI;

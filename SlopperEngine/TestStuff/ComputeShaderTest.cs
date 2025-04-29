@@ -1,6 +1,6 @@
-using SlopperEngine.Engine;
+using SlopperEngine.Core;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.Rendering;
+using SlopperEngine.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 

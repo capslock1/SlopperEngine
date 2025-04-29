@@ -1,6 +1,6 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
-using SlopperEngine.Rendering;
+using SlopperEngine.Graphics;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Common.Input;

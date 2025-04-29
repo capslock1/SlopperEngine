@@ -1,5 +1,5 @@
 using System.Reflection;
-using SlopperEngine.Engine;
+using SlopperEngine.Core;
 using SlopperEngine.TestStuff;
 
 /// <summary>
