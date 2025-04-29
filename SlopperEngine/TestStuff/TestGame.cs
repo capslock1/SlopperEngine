@@ -41,6 +41,7 @@ public class TestGame : SceneObject
         Console.WriteLine("Using "+GL.GetString(StringName.Renderer));
         Console.WriteLine("Maximum frame buffer color attachments: "+GL.GetInteger(GetPName.MaxColorAttachments));
         Console.WriteLine("Maximum uniform buffers: "+GL.GetInteger(GetPName.MaxUniformBufferBindings));
+        Console.WriteLine("Maximum ssbos: "+GL.GetInteger(GetPName.MaxShaderStorageBufferBindings));
         Console.WriteLine("Maximum array tex layers: "+GL.GetInteger(GetPName.MaxArrayTextureLayers));
         Console.WriteLine("Maximum texture units: "+GL.GetInteger(GetPName.MaxTextureImageUnits));
         Console.WriteLine("Maximum compute image units: "+GL.GetInteger(GetPName.MaxComputeImageUniforms));

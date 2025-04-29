@@ -11,11 +11,10 @@ public class ShaderGlobals : IDisposable
 {
     public void Use()
     {
-        _buffer.Use();
-        GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, _buffer.Handle);
+        _buffer.Bind(0);
     }
 
-    BufferObject _buffer = BufferObject.Create(BufferTarget.UniformBuffer, Unsafe.SizeOf<Matrix4>()*3 + sizeof(float)*4);
+    BufferObject _buffer = BufferObject.Create(BufferTarget.UniformBuffer, Unsafe.SizeOf<Matrix4>()*3 + sizeof(float)*8);
 
     Matrix4 _cameraProjection;
     /// <summary>
@@ -56,6 +55,17 @@ public class ShaderGlobals : IDisposable
         }
     }
 
+    Vector4 _camPosition;
+
+    public Vector4 CameraPosition
+    {
+        get => _camPosition;
+        set{
+            _camPosition = value;
+            _buffer.SetData(value, 192);
+        }
+    }
+
     float _time;
     /// <summary>
     /// The time from the start of the scene.
@@ -65,7 +75,7 @@ public class ShaderGlobals : IDisposable
         get{return _time;}
         set{
             _time = value;
-            _buffer.SetData(value, 192);
+            _buffer.SetData(value, 208);
         }
     }
 
@@ -76,6 +86,7 @@ layout (std140) uniform SL_Globals
     mat4 projection;
     mat4 view;
     mat4 model;
+    vec4 cameraPosition;
     float time;
 } Globals;";
 

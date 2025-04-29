@@ -24,6 +24,8 @@ void vertex()
 }
 
 pixOut vec3 Albedo;
+pixOut vec3 Normal;
+pixOut vec3 Position;
 
 uniform vec4 color;
 
@@ -33,6 +35,8 @@ void pixel()
     vec3 lightDir = normalize(vec3(15,5,4));
     vec3 camDir = vertToPix.camDirection.xyz;
     vec3 norm = normalize(vertToPix.normal.xyz);
+    pixOut.Normal = norm;
+    pixOut.Position = vertToPix.worldPosition.xyz;
     vec3 rHatM = reflect(lightDir, norm);
 
     float litness = max(dot(norm, lightDir),0);
@@ -48,5 +52,5 @@ void pixel()
     float ambient = norm.y*.5+1.;
     ambient *= 1.+.5*dot(camDir, norm);
     vec3 col = litness + vec3(0.05,.1,.2)*ambient;
-    pixOut.Albedo = col;
+    pixOut.Albedo = vec3(.8);
 }

@@ -6,6 +6,7 @@ using SlopperEngine.Graphics.PostProcessing;
 using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.SceneObjects;
+using SlopperEngine.Graphics.Lighting;
 
 namespace SlopperEngine.Graphics.Renderers;
 
@@ -15,6 +16,7 @@ namespace SlopperEngine.Graphics.Renderers;
 public class DebugRenderer : RenderHandler
 {
     public FrameBuffer Buffer {get; private set;}
+    LightBuffer _lights = new();
     Bloom _coolBloom;
     Vector2i _screenSize = (400,300);
     Vector2i _trueScreenSize = (800,600);
@@ -31,6 +33,10 @@ public class DebugRenderer : RenderHandler
 
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+        _lights.ClearBuffer();
+        foreach(PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
+            _lights.AddLight(dat);
 
         foreach(Camera cam in cameras)
         {
@@ -67,6 +73,7 @@ public class DebugRenderer : RenderHandler
     {
         Buffer.DisposeAndTextures();
         globals.Dispose();
+        _lights.Dispose();
         _coolBloom.Dispose();
     }
 
@@ -86,20 +93,36 @@ public class DebugRenderer : RenderHandler
     {
         bool writesAlbedo = false;
         bool writesAlpha = false;
+        int normPosWrite = 0;
         foreach(var v in scope.pixOut)
         {
-            if(v.Name == "Albedo")
-                writesAlbedo = true;
-            if(v.Name == "Transparency")
-                writesAlpha = true;
+            switch(v.Name)
+            {
+                case "Albedo": writesAlbedo = true; break;
+                case "Transparency": writesAlpha = true; break;
+                case "Normal": normPosWrite++; break;
+                case "Position": normPosWrite++; break;
+            }
         }
+        bool writesNormalAndPosition = normPosWrite == 2;
+        writer.Write(LightBuffer.GLSLString);
         writer.Write(
 @$"
 out vec4 SL_FragColor;
+
+vec3 SL_GetLighting(vec3 position, vec3 normal)
+{{
+    vec3 camDir = normalize(position - Globals.cameraPosition.xyz);
+    float ambient = normal.y*.5+1.;
+    ambient *= 1.-.5*dot(camDir, normal);
+    return vec3(0.05,.1,.2)*ambient;
+}}
+
 void main()
 {{
     pixel();
-    SL_FragColor = vec4({(writesAlbedo ? "pixOut.Albedo" : "1.0,1.0,1.0")},{(writesAlpha ? "pixOut.Transparency" : "1.0")});
+    vec3 lighting = {(writesNormalAndPosition ? "SL_GetLighting(pixOut.Position, pixOut.Normal)" : "vec3(1.0)")};
+    SL_FragColor = vec4({(writesAlbedo ? "pixOut.Albedo" : "vec3(1.0,1.0,1.0)")} * lighting, {(writesAlpha ? "pixOut.Transparency" : "1.0")});
 }}"
         );
     }

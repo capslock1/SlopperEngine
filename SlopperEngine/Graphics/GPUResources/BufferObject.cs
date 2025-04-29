@@ -52,9 +52,21 @@ public class BufferObject : GPUResource
         return res;
     }
 
+    /// <summary>
+    /// Uses this BufferObject for CPU-Side operations.
+    /// </summary>
     public void Use()
     {
         GL.BindBuffer(BufferType, Handle);
+    }
+    
+    /// <summary>
+    /// Uses this BufferObject for GPU-side reading.
+    /// </summary>
+    /// <param name="index"></param>
+    public void Bind(int index)
+    {
+        GL.BindBufferBase((BufferRangeTarget)BufferType, index, Handle);
     }
 
     /// <summary>
