@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Core.Collections;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.Core;
 
@@ -12,6 +13,7 @@ public static class SceneObjectReflectionCache
 {
     static List<Assembly> _addedAssemblies = new();
     static FridgeDictionary<Type, ReadOnlyCollection<EngineMethodAttribute>> _engineMethods = new();
+    static FridgeDictionary<Type, ReadOnlyCollection<FieldInfo>> _fieldInfos = new();
     
     /// <summary>
     /// Gets the engine methods associated with the type of a SceneObject.
@@ -28,17 +30,43 @@ public static class SceneObjectReflectionCache
     /// <summary>
     /// Adds an assembly to the EngineMethod register. If the assembly is already present, it gets ignored.
     /// </summary>
-    /// <param name="ass">Assembly to add.</param>
-    public static void AddAssembly(Assembly ass)
+    /// <param name="assembly">Assembly to add.</param>
+    public static void AddAssembly(Assembly assembly)
     {
-        if(_addedAssemblies.Contains(ass))
+        if(_addedAssemblies.Contains(assembly))
         {
-            Console.WriteLine($"Attempted to add assembly {ass} to the SceneObjectReflectionCache, but it was already present");
+            Console.WriteLine($"Attempted to add assembly {assembly} to the SceneObjectReflectionCache, but it was already present");
             return;
         }
 
-        FindEngineMethods(ass);
+        FindEngineMethods(assembly);
     }
+
+    /// <summary>
+    /// Gets the allowed serializable fields for a given type.
+    /// </summary>
+    public static ReadOnlyCollection<FieldInfo> GetSerializableFields(Type type)
+    {
+        if(_fieldInfos.TryGetValue(type, out var res))
+            return res;
+
+        var currTyp = type; 
+        List<FieldInfo> allowedFields = new();
+        while(currTyp != null)
+        {
+            var fields = currTyp.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            foreach(var f in fields)
+                if(!f.GetCustomAttributes(typeof(DontSerializeAttribute)).Any())
+                    allowedFields.Add(f);
+
+            currTyp = currTyp.BaseType;
+        }
+
+        res = allowedFields.AsReadOnly();
+        _fieldInfos.Add(type, res);
+        return res;
+    }
+
     static void FindEngineMethods(Assembly ass)
     {
         _addedAssemblies.Add(ass);

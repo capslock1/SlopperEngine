@@ -35,7 +35,7 @@ public class TestGame : SceneObject
     Camera _camera = new ManeuverableCamera();
     Rigidbody _rb;
     TextBox _fpsCounter;
-    PointLight _lamp;
+    PointLight[] _lamps;
 
     public TestGame(int width, int height, string title)
     {
@@ -163,11 +163,20 @@ public class TestGame : SceneObject
         fonttest.BackgroundColor = new(0,0,0,.4f);
         _UIScene.Children.Add(fonttest);
 
-        _lamp = new PointLight(){LocalPosition = new(10,3,5), Color = new(5,3,2), Radius = 20, Sharpness = 2.5f};
-        var lampMat = Material.Create(SlopperShader.Create("shaders/UnlitColor.sesl"));
-        lampMat.Uniforms[lampMat.GetUniformIndexFromName("Color")].Value = new Vector3(15,9,6);
-        _lamp.Children.Add(new MeshRenderer(){Mesh = DefaultMeshes.Sphere, Material = lampMat, LocalScale = new(.3f)});
-        _main.Children.Add(_lamp);
+        _lamps = new PointLight[10];
+        var lampShader = SlopperShader.Create("shaders/UnlitColor.sesl");
+        for(int i = 0; i<_lamps.Length; i++)
+        {
+            var color = new Vector3(rand.NextSingle()*5, rand.NextSingle()*5, rand.NextSingle()*5);
+            var lamp = new PointLight(){LocalPosition = new(1,3,1), Color = color, Radius = 20, Sharpness = 2.5f};
+            var lampMat = Material.Create(lampShader);
+            lampMat.Uniforms[lampMat.GetUniformIndexFromName("Color")].Value = color*9;
+            lamp.Children.Add(new MeshRenderer(){Mesh = DefaultMeshes.Sphere, Material = lampMat, LocalScale = new(.2f)});
+            _main.Children.Add(lamp);
+            _lamps[i] = lamp;
+        }
+
+        _lamps[0].Serialize();
 
         _main.FrameUpdate(new(.0001f));
 
@@ -206,7 +215,12 @@ public class TestGame : SceneObject
         }
 
         _rb.AddImpulse(45 * args.DeltaTime * Vector3.UnitY * (MathF.Sin((float)_secsSinceStart)+1));
-        _lamp!.LocalPosition = new(5*(float)Math.Sin(_secsSinceStart), 3, 5*(float)Math.Cos(_secsSinceStart * Math.Sqrt(2)));
+        Random rand = new(203958);
+        foreach(var lamp in _lamps)
+            lamp!.LocalPosition = new(
+                13*(float)Math.Sin(.1*_secsSinceStart + 1000*rand.NextDouble()), 
+                1 + 4*rand.NextSingle(), 
+                13*(float)Math.Cos(.1*_secsSinceStart * Math.Sqrt(2) + 1000*rand.NextDouble()));
     }
 
     [OnInputUpdate]

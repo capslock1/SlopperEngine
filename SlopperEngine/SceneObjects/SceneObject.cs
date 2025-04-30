@@ -35,7 +35,7 @@ public partial class SceneObject
     /// The default list of children for this SceneObject. Can contain any type of SceneObject.
     /// </summary>
     public ChildList<SceneObject> Children => _children ??= new ChildList<SceneObject>(this);
-    
+
     [DontSerialize] private IChildList? _parentList = null;
     private ChildList<SceneObject>? _children;
     [DontSerialize] private int _parentListIndex = -1;
@@ -44,13 +44,20 @@ public partial class SceneObject
 
     //premature optimisation? couldnt be me.
     //actually, the registered method handles could be stored in the scene to avoid allocations..... i shant
-    [DontSerialize] readonly private ReadOnlyCollection<EngineMethodAttribute> _registeredMethods;
-    [DontSerialize] readonly private SceneDataHandle[] _registeredMethodHandles;
+    [DontSerialize] private ReadOnlyCollection<EngineMethodAttribute> _registeredMethods;
+    [DontSerialize] private SceneDataHandle[] _registeredMethodHandles;
 
     /// <summary>
     /// Creates a SceneObject.
     /// </summary>
+    #pragma warning disable
     public SceneObject()
+    #pragma warning restore // yes it does
+    {
+        Initialize();
+    }
+
+    private void Initialize()
     {
         if(this is Scene s)
             Scene = s;
@@ -58,6 +65,11 @@ public partial class SceneObject
 
         _registeredMethods = SceneObjectReflectionCache.GetEngineMethods(GetType());
         _registeredMethodHandles = new SceneDataHandle[_registeredMethods.Count];
+    }
+
+    [OnSerialize] void Serialize(SerializedObjectTree serializer)
+    {
+        
     }
 
     [OnRegister] void CompleteRegister() => _registryComplete = true;
@@ -143,6 +155,23 @@ public partial class SceneObject
     /// </summary>
     /// <param name="parentMatrix">The parent's transform.</param>
     protected virtual void TransformFromParent(ref Matrix4 parentMatrix){}
+
+    public SerializedObjectTree Serialize()
+    {
+        bool insc = InScene;
+        var sc = Scene;
+        if(insc)
+        {
+            Unregister();
+            sc!.UpdateRegister();
+        }
+
+        var res = new SerializedObjectTree(this);
+
+        if(insc)
+            Register(sc!);
+        return res;
+    }
 
     //the evil '== null' code
     public static bool operator ==(SceneObject? A, SceneObject? B)
