@@ -176,7 +176,8 @@ public class TestGame : SceneObject
             _lamps[i] = lamp;
         }
 
-        _lamps[0].Serialize();
+        var lamp0 = _lamps[0].Serialize();
+        //lamp0.Instantiate();
 
         _main.FrameUpdate(new(.0001f));
 

@@ -50,9 +50,9 @@ public partial class SceneObject
     /// <summary>
     /// Creates a SceneObject.
     /// </summary>
-    #pragma warning disable
+    #pragma warning disable CS8618 // yes it does
     public SceneObject()
-    #pragma warning restore // yes it does
+    #pragma warning restore 
     {
         Initialize();
     }
@@ -69,7 +69,7 @@ public partial class SceneObject
 
     [OnSerialize] void Serialize(SerializedObjectTree serializer)
     {
-        
+
     }
 
     [OnRegister] void CompleteRegister() => _registryComplete = true;
