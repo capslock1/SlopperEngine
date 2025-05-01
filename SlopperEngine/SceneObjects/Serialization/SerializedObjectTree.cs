@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
@@ -15,6 +16,7 @@ public class SerializedObjectTree
 {
     int _typeCount = 1;
     Dictionary<Type, int> _typeIndices = new();
+    Dictionary<int, Type> _indexTypes = new();
     int _currentID = 1;
     Dictionary<object, int> _referenceIDs = new();
     SpanList<byte> _primitiveData = new();
@@ -52,7 +54,13 @@ public class SerializedObjectTree
             return WritePrimitive(obj);
 
         SerialHandle res = default;
+        res.IsPrimitive = false;
+        if(_referenceIDs.TryGetValue(obj, out res.Handle))
+            return res;
         
+        res.Handle = _currentID;
+        _referenceIDs[obj] = _currentID;
+        _currentID++;
 
         return res;
     }
@@ -62,20 +70,14 @@ public class SerializedObjectTree
         SerialHandle res = default;
         res.IsPrimitive = true;
         int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
+
+        // if statements sorted by how common i think the type is
         if(obj is float f) {WriteFloat(f); return res;}
         if(obj is double d) {WriteFloat(d); return res;}
 
-        if(obj is byte by) {WriteInt(by); return res;}
-        if(obj is sbyte sb) {WriteInt(sb); return res;}
-        if(obj is short s) {WriteInt(s); return res;}
-        if(obj is ushort us) {WriteInt(us); return res;}
-        
         if(obj is int i) {WriteInt(i); return res;}
         if(obj is uint ui) {WriteInt(ui); return res;}
-        if(obj is long l) {WriteInt(l); return res;}
-        if(obj is ulong ul) {WriteInt(ul); return res;}
 
-        if(obj is char c) {WriteInt(c); return res;}
         if(obj is bool b)
         {
             res.Handle = _primitiveData.Count;
@@ -89,6 +91,17 @@ public class SerializedObjectTree
             span[headerSize] = b ? (byte)1 : (byte)0;
             return res;
         }
+
+        if(obj is char c) {WriteInt(c); return res;}
+
+        if(obj is byte by) {WriteInt(by); return res;}
+        if(obj is short s) {WriteInt(s); return res;}
+
+        if(obj is long l) {WriteInt(l); return res;}
+        if(obj is ulong ul) {WriteInt(ul); return res;}
+
+        if(obj is sbyte sb) {WriteInt(sb); return res;}
+        if(obj is ushort us) {WriteInt(us); return res;}
         
         return res; // im not serializing decimal ig
 
@@ -126,6 +139,37 @@ public class SerializedObjectTree
             }
             else throw new Exception("What kinda fucking float is that");
         }
+    }
+
+    object ReadPrimitive(SerialHandle handle)
+    {
+        int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
+        PrimitiveHeader header = default;
+        header.Read(_primitiveData.AllValues.Slice(handle.Handle, headerSize));
+        Type t = _indexTypes[header.IndexedType];
+        var span = _primitiveData.AllValues.Slice(handle.Handle + headerSize, header.Size);
+
+        if(t == typeof(float)) return BinaryPrimitives.ReadSingleLittleEndian(span);
+        if(t == typeof(double)) return BinaryPrimitives.ReadDoubleLittleEndian(span);
+
+        if(t == typeof(int)) return BinaryPrimitives.ReadInt32LittleEndian(span);
+        if(t == typeof(uint)) return BinaryPrimitives.ReadUInt32LittleEndian(span);
+
+        if(t == typeof(bool)) return span[0] != 0;
+        if(t == typeof(char)) return ReadIntLittleEndian<char>(span);
+        
+        if(t == typeof(byte)) return span[0];
+        if(t == typeof(short)) return BinaryPrimitives.ReadInt16LittleEndian(span);
+
+        if(t == typeof(long)) return BinaryPrimitives.ReadUInt32LittleEndian(span);
+        if(t == typeof(ulong)) return BinaryPrimitives.ReadUInt32LittleEndian(span);
+
+        if(t == typeof(sbyte)) return (sbyte)span[0];
+        if(t == typeof(ushort)) return BinaryPrimitives.ReadUInt16LittleEndian(span);
+
+        throw new Exception($"Couldnt deserialize type {t.Name}");
+
+        T ReadIntLittleEndian<T>(ReadOnlySpan<byte> span) where T : IBinaryInteger<T> => T.ReadLittleEndian(span, true);
     }
 
     /// <summary>
@@ -167,6 +211,12 @@ public class SerializedObjectTree
         {
             (Size as IBinaryInteger<int>).WriteLittleEndian(res);
             (IndexedType as IBinaryInteger<int>).WriteLittleEndian(res.Slice(4));
+        }
+
+        public void Read(Span<byte> input)
+        {
+            Size = BinaryPrimitives.ReadInt32LittleEndian(input);
+            IndexedType = BinaryPrimitives.ReadInt32LittleEndian(input.Slice(4));
         }
     }
     struct SerialHandle
