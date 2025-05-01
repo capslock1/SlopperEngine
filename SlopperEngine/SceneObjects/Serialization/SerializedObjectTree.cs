@@ -38,6 +38,20 @@ public class SerializedObjectTree
         }*/
     }
 
+    SerialHandle SerializeRecursive(object toSerialize)
+    {
+        var type = toSerialize.GetType();
+        var fields = SceneObjectReflectionCache.GetSerializableFields(type);
+        foreach(var f in fields)
+        {
+            var fieldVal = f.GetValue(toSerialize);
+            if(fieldVal != null)
+            // gotta register this result into some other list somewhere
+                SerializeRecursive(fieldVal);
+        }
+        return AddObject(toSerialize);
+    }
+
     int GetTypeIndex(Type t)
     {
         if(_typeIndices.TryGetValue(t, out int res)) 
@@ -102,14 +116,18 @@ public class SerializedObjectTree
 
         if(obj is sbyte sb) {WriteInt(sb); return res;}
         if(obj is ushort us) {WriteInt(us); return res;}
+
+        if(obj is nint ni) {WriteInt(ni, 8); return res;}
+        if(obj is nuint nu) {WriteInt(nu, 8); return res;}
         
         return res; // im not serializing decimal ig
 
-        void WriteInt<T>(T num) where T : unmanaged, IBinaryInteger<T>
+        void WriteInt<T>(T num, int overrideSizeof = -1) where T : unmanaged, IBinaryInteger<T>
         {
             res.Handle = _primitiveData.Count;
             PrimitiveHeader header = default;
-            header.Size = Unsafe.SizeOf<T>();
+
+            header.Size = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
             header.IndexedType = GetTypeIndex(typeof(T));
 
             var span = _primitiveData.Add(headerSize + header.Size);
@@ -166,6 +184,9 @@ public class SerializedObjectTree
 
         if(t == typeof(sbyte)) return (sbyte)span[0];
         if(t == typeof(ushort)) return BinaryPrimitives.ReadUInt16LittleEndian(span);
+
+        if(t == typeof(nint)) return (nint)BinaryPrimitives.ReadInt64LittleEndian(span);
+        if(t == typeof(nuint)) return (nuint)BinaryPrimitives.ReadUInt64LittleEndian(span);
 
         throw new Exception($"Couldnt deserialize type {t.Name}");
 
