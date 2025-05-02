@@ -39,6 +39,17 @@ public class SpanList<T>
     }
 
     /// <summary>
+    /// Adds a single item to the list.
+    /// </summary>
+    public void Add(T toAdd)
+    {
+        int currentCount = _usedSize;
+        EnsureCapacity(_usedSize + 1);
+        _values[_usedSize] = toAdd;
+        _usedSize++;
+    }
+
+    /// <summary>
     /// Reserves a span of T and adds it to the list.
     /// </summary>
     /// <param name="lengthToAdd">The amount of elements to add.</param>
@@ -46,8 +57,8 @@ public class SpanList<T>
     public Span<T> Add(int lengthToAdd)
     {
         int currentCount = _usedSize;
+        EnsureCapacity(_usedSize + lengthToAdd);
         _usedSize += lengthToAdd;
-        EnsureCapacity(_usedSize);
         return new(_values, currentCount, lengthToAdd);
     }
 
@@ -58,6 +69,7 @@ public class SpanList<T>
     public void EnsureCapacity(int capacity)
     {
         // implementation was shamelessly stolen from System.Collections.Generic.List
+        if(capacity <= Capacity) return;
         int newCapacity = 2 * _values.Length;
         if ((uint)newCapacity > Array.MaxLength) newCapacity = Array.MaxLength;
         if (newCapacity < capacity) newCapacity = capacity;

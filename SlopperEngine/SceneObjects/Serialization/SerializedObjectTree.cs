@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.CodeDom.Compiler;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
@@ -14,11 +15,11 @@ namespace SlopperEngine.SceneObjects.Serialization;
 /// </summary>
 public class SerializedObjectTree
 {
-    int _typeCount = 1;
-    Dictionary<Type, int> _typeIndices = new();
-    Dictionary<int, Type> _indexTypes = new();
-    int _currentID = 1;
+    int _rootTypeIndex = -1;
+    Dictionary<Type, (int, ReadOnlyCollection<FieldInfo?>)> _typeIndices = new();
+    Dictionary<int, (Type, ReadOnlyCollection<FieldInfo?>)> _indexTypes = new();
     Dictionary<object, int> _referenceIDs = new();
+    SpanList<SerialHandle> _serializedObjects = new();
     SpanList<byte> _primitiveData = new();
 
     /// <summary>
@@ -28,53 +29,125 @@ public class SerializedObjectTree
     {
         if(toSerialize.InScene) 
             throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
-        /*_objectType = toSerialize.GetType();
-        _fields = SceneObjectReflectionCache.GetSerializableFields(_objectType);
-        _fieldValues = new object[_fields.Count];
-        for(int i = 0; i<_fields.Count; i++)
+        
+        var res = _serializedObjects.Add(1);
+        res[0] = SerializeRecursive(toSerialize);
+    }
+
+    public void WriteOutTree()
+    {
+        foreach(var typeIndex in _typeIndices)
+            _indexTypes[typeIndex.Value.Item1] = (typeIndex.Key, typeIndex.Value.Item2);
+                
+        (Type root, ReadOnlyCollection<FieldInfo?> fields) = _indexTypes[_rootTypeIndex];
+
+        TextWriter w = new StringWriter();
+        IndentedTextWriter writer = new(w);
+        RecursiveWriteTree(0, root, fields, writer);
+        System.Console.WriteLine(w.ToString());
+    }
+
+    void RecursiveWriteTree(int serialHandleIndex, Type t, ReadOnlyCollection<FieldInfo?> fields, IndentedTextWriter output)
+    {
+        int currentField = serialHandleIndex;
+        output.WriteLine(t.Name);
+        output.Indent++;
+        foreach(var field in fields)
         {
-            _fieldValues[i] = _fields[i].GetValue(toSerialize);
-            System.Console.WriteLine($"{_fields[i].Name}, {_fieldValues[i]}");
-        }*/
+            currentField++;
+            if(field is null)
+                continue;
+            
+            output.Write(field.Name);
+            SerialHandle handle = _serializedObjects[currentField];
+
+            if(handle.SaveReference)
+            {
+                output.WriteLine();
+                if(handle.Handle == 0)
+                    continue;
+
+                Type fieldT = field.FieldType;
+                (int tIndex, ReadOnlyCollection<FieldInfo?> infos) = _typeIndices[fieldT];
+                RecursiveWriteTree(handle.Handle, fieldT, infos, output);
+            }
+            else 
+            {
+                output.WriteLine(ReadPrimitive(handle));
+            }
+        }
+        output.Indent--;
     }
 
     SerialHandle SerializeRecursive(object toSerialize)
     {
         var type = toSerialize.GetType();
+        int tIndex = GetTypeIndex(type);
+        if(_rootTypeIndex == -1)
+            _rootTypeIndex = tIndex;
+
+        var handle = AddObject(toSerialize, out bool serial);
+        if(!handle.SaveReference || !serial)
+            return handle;
+
+        handle.Handle = _serializedObjects.Count;
         var fields = SceneObjectReflectionCache.GetSerializableFields(type);
-        foreach(var f in fields)
+        var fieldSpan = _serializedObjects.Add(fields.Count);
+        for(int i = 0; i<fieldSpan.Length; i++)
         {
-            var fieldVal = f.GetValue(toSerialize);
+            var fieldVal = fields[i].GetValue(toSerialize);
             if(fieldVal != null)
-            // gotta register this result into some other list somewhere
-                SerializeRecursive(fieldVal);
+                fieldSpan[i] = SerializeRecursive(fieldVal);
         }
-        return AddObject(toSerialize);
+
+        return handle;
     }
 
     int GetTypeIndex(Type t)
     {
-        if(_typeIndices.TryGetValue(t, out int res)) 
-            return res;
-        _typeIndices[t] = _typeCount;
-        _typeCount++;
-        return _typeCount-1;
+        if(_typeIndices.TryGetValue(t, out var res)) 
+            return res.Item1;
+        #pragma warning disable CS8619
+        res = _typeIndices[t] = (_typeIndices.Count, SceneObjectReflectionCache.GetSerializableFields(t));
+        #pragma warning restore CS8619
+        return res.Item1;
     }
 
-    SerialHandle AddObject(object obj)
+    SerialHandle AddObject(object obj, out bool newReference)
     {
+        newReference = false;
         var type = obj.GetType();
         if(type.IsPrimitive)
             return WritePrimitive(obj);
+        
+        if(type == typeof(string))
+            return SerializeString((string)obj);
 
         SerialHandle res = default;
-        res.IsPrimitive = false;
+        res.SaveReference = true;
         if(_referenceIDs.TryGetValue(obj, out res.Handle))
             return res;
-        
-        res.Handle = _currentID;
-        _referenceIDs[obj] = _currentID;
-        _currentID++;
+
+        newReference = true;
+        _referenceIDs.Add(obj, _serializedObjects.Count);
+
+        return res;
+    }
+
+    SerialHandle SerializeString(string obj)
+    {
+        SerialHandle res = default;
+        res.SaveReference = true;
+        res.Handle = _primitiveData.Count;
+        int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
+
+        PrimitiveHeader header = default;
+        header.Size = Encoding.Unicode.GetByteCount(obj);
+        header.IndexedType = GetTypeIndex(typeof(string));
+
+        var span = _primitiveData.Add(headerSize + header.Size);
+        header.Write(span);
+        Encoding.Unicode.GetBytes(obj, span.Slice(headerSize));
 
         return res;
     }
@@ -82,7 +155,8 @@ public class SerializedObjectTree
     SerialHandle WritePrimitive(object obj)
     {
         SerialHandle res = default;
-        res.IsPrimitive = true;
+        res.SaveReference = false;
+        res.Handle = _primitiveData.Count;
         int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
 
         // if statements sorted by how common i think the type is
@@ -94,7 +168,6 @@ public class SerializedObjectTree
 
         if(obj is bool b)
         {
-            res.Handle = _primitiveData.Count;
             PrimitiveHeader header = default;
             header.Size = 1;
             header.IndexedType = GetTypeIndex(typeof(bool));
@@ -124,7 +197,6 @@ public class SerializedObjectTree
 
         void WriteInt<T>(T num, int overrideSizeof = -1) where T : unmanaged, IBinaryInteger<T>
         {
-            res.Handle = _primitiveData.Count;
             PrimitiveHeader header = default;
 
             header.Size = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
@@ -137,7 +209,6 @@ public class SerializedObjectTree
         }
         unsafe void WriteFloat<T>(T num) where T : unmanaged, IBinaryFloatingPointIeee754<T>
         {
-            res.Handle = _primitiveData.Count;
             PrimitiveHeader header = default;
             header.Size = Unsafe.SizeOf<T>();
             header.IndexedType = GetTypeIndex(typeof(T));
@@ -164,7 +235,7 @@ public class SerializedObjectTree
         int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
         PrimitiveHeader header = default;
         header.Read(_primitiveData.AllValues.Slice(handle.Handle, headerSize));
-        Type t = _indexTypes[header.IndexedType];
+        Type t = _indexTypes[header.IndexedType].Item1;
         var span = _primitiveData.AllValues.Slice(handle.Handle + headerSize, header.Size);
 
         if(t == typeof(float)) return BinaryPrimitives.ReadSingleLittleEndian(span);
@@ -223,7 +294,7 @@ public class SerializedObjectTree
         }
     }
 
-    struct PrimitiveHeader
+    record struct PrimitiveHeader
     {
         public int Size;
         public int IndexedType;
@@ -240,9 +311,9 @@ public class SerializedObjectTree
             IndexedType = BinaryPrimitives.ReadInt32LittleEndian(input.Slice(4));
         }
     }
-    struct SerialHandle
+    record struct SerialHandle
     {
         public int Handle;
-        public bool IsPrimitive;
+        public bool SaveReference;
     }
 }
