@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
@@ -16,9 +17,7 @@ namespace SlopperEngine.SceneObjects.Serialization;
 public class SerializedObjectTree
 {
     int _rootTypeIndex = -1;
-    Dictionary<Type, (int, ReadOnlyCollection<FieldInfo?>)> _typeIndices = new();
     Dictionary<int, (Type, ReadOnlyCollection<FieldInfo?>)> _indexTypes = new();
-    Dictionary<object, int> _referenceIDs = new();
     SpanList<SerialHandle> _serializedObjects = new();
     SpanList<byte> _primitiveData = new();
 
@@ -31,24 +30,26 @@ public class SerializedObjectTree
             throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
         
         var res = _serializedObjects.Add(1);
-        TextWriter w = new StringWriter();
-        IndentedTextWriter writer = new(w);
-        res[0] = SerializeRecursive(toSerialize,writer);
-        System.Console.WriteLine((w.ToString()));
+        SerializationRefs refs = new();
+        refs.ReferenceIDs = new();
+        refs.TypeIndices = new();
+        res[0] = SerializeRecursive(toSerialize, refs);
+
+        #pragma warning disable CS8620
+        foreach(var comb in refs.TypeIndices)
+            _indexTypes.Add(comb.Value.Item1, (comb.Key, comb.Value.Item2));
+        #pragma warning restore CS8620
     }
 
     public void WriteOutTree()
     {
-        foreach(var typeIndex in _typeIndices)
-            _indexTypes[typeIndex.Value.Item1] = (typeIndex.Key, typeIndex.Value.Item2);
-                
         (Type root, ReadOnlyCollection<FieldInfo?> fields) = _indexTypes[_rootTypeIndex];
 
         TextWriter w = new StringWriter();
         IndentedTextWriter writer = new(w);
         //try{
             RecursiveWriteTree(0, root, fields, writer);
-        //}catch(Exception){}
+        //}catch(Exception e){ System.Console.WriteLine(e.Message);}
         System.Console.WriteLine(w.ToString());
     }
 
@@ -85,162 +86,147 @@ public class SerializedObjectTree
         output.Indent--;
     }
 
-    SerialHandle SerializeRecursive(object toSerialize, IndentedTextWriter w)
+    SerialHandle SerializeRecursive(object toSerialize, in SerializationRefs refs)
     {
         var type = toSerialize.GetType();
-        int tIndex = GetTypeIndex(type);
+        int tIndex = GetTypeIndex(type, refs);
         if(_rootTypeIndex == -1)
             _rootTypeIndex = tIndex;
 
-        var handle = AddObject(toSerialize, out bool newReference);
+        var handle = AddObject(toSerialize, refs, out bool isNewReference);
         handle.IndexedType = tIndex;
 
-        if(!handle.SaveFields || !newReference)
+        if(!handle.SaveFields || !isNewReference)
             return handle;
 
         handle.Handle = _serializedObjects.Count;
         var fields = SceneObjectReflectionCache.GetSerializableFields(type);
         var fieldSpan = _serializedObjects.Add(fields.Count);
-        w.Indent++;
+
         for(int i = 0; i<fieldSpan.Length; i++)
         {
             var fieldVal = fields[i].GetValue(toSerialize);
             if(fieldVal != null)
             {
-                var serialFieldVal = SerializeRecursive(fieldVal, w);
+                var serialFieldVal = SerializeRecursive(fieldVal, refs);
                 fieldSpan[i] = serialFieldVal;
             }
         }
-        w.Indent--;
 
         return handle;
     }
 
-    int GetTypeIndex(Type t)
+    int GetTypeIndex(Type t, in SerializationRefs refs)
     {
-        if(_typeIndices.TryGetValue(t, out var res)) 
+        if(refs.TypeIndices.TryGetValue(t, out var res)) 
             return res.Item1;
         #pragma warning disable CS8619
-        res = _typeIndices[t] = (_typeIndices.Count, SceneObjectReflectionCache.GetSerializableFields(t));
+        res = refs.TypeIndices[t] = (refs.TypeIndices.Count, SceneObjectReflectionCache.GetSerializableFields(t));
         #pragma warning restore CS8619
         return res.Item1;
     }
 
-    SerialHandle AddObject(object obj, out bool newReference)
+    SerialHandle AddObject(object obj, in SerializationRefs refs, out bool newReference)
     {
         newReference = false;
         var type = obj.GetType();
         if(type.IsPrimitive)
-            return WritePrimitive(obj);
+            return WritePrimitive(obj, refs);
         
         if(type == typeof(string))
-            return SerializeString((string)obj);
+            return SerializeString((string)obj, refs);
 
         SerialHandle res = default;
         res.SaveReference = true;
-        if(_referenceIDs.TryGetValue(obj, out res.Handle))
+        if(refs.ReferenceIDs.TryGetValue(obj, out res.Handle))
             return res;
 
         res.SaveFields = true;
         newReference = true;
-        _referenceIDs.Add(obj, _serializedObjects.Count);
+        refs.ReferenceIDs.Add(obj, _serializedObjects.Count);
 
         return res;
     }
 
-    SerialHandle SerializeString(string obj)
+    SerialHandle SerializeString(string obj, in SerializationRefs refs)
     {
         SerialHandle res = default;
         res.SaveReference = true;
         res.SaveFields = false;
         res.Handle = _primitiveData.Count;
-        int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
 
-        PrimitiveHeader header = default;
-        header.Size = Encoding.Unicode.GetByteCount(obj);
-        res.IndexedType = GetTypeIndex(typeof(string));
+        int stringLength = Encoding.Unicode.GetByteCount(obj);
+        res.IndexedType = GetTypeIndex(typeof(string), refs);
 
-        var span = _primitiveData.Add(headerSize + header.Size);
-        header.Write(span);
-        Encoding.Unicode.GetBytes(obj, span.Slice(headerSize));
+        var span = _primitiveData.Add(Encoding.Unicode.GetByteCount(obj) + 4);
+        BinaryPrimitives.WriteInt32LittleEndian(span, stringLength);
+        Encoding.Unicode.GetBytes(obj, span.Slice(4));
 
         return res;
     }
     
-    SerialHandle WritePrimitive(object obj)
+    SerialHandle WritePrimitive(object obj, in SerializationRefs refs)
     {
         SerialHandle res = default;
         res.SaveReference = false;
         res.SaveFields = false;
         res.Handle = _primitiveData.Count;
-        int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
+        int size = Marshal.SizeOf(obj.GetType());
 
         // if statements sorted by how common i think the type is
-        if(obj is float f) {WriteFloat(f); return res;}
-        if(obj is double d) {WriteFloat(d); return res;}
+        if(obj is float f) {WriteFloat(f, refs); return res;}
+        if(obj is double d) {WriteFloat(d, refs); return res;}
 
-        if(obj is int i) {WriteInt(i); return res;}
-        if(obj is uint ui) {WriteInt(ui); return res;}
+        if(obj is int i) {WriteInt(i, refs); return res;}
+        if(obj is uint ui) {WriteInt(ui, refs); return res;}
 
         if(obj is bool b)
         {
-            PrimitiveHeader header = default;
-            header.Size = 1;
-            res.IndexedType = GetTypeIndex(typeof(bool));
-
-            var span = _primitiveData.Add(headerSize + header.Size);
-
-            header.Write(span);
-            span[headerSize] = b ? (byte)1 : (byte)0;
+            res.IndexedType = GetTypeIndex(typeof(bool), refs);
+            _primitiveData.Add(b ? (byte)1 : (byte)0);
             return res;
         }
 
-        if(obj is char c) {WriteInt(c); return res;}
+        if(obj is char c) {WriteInt(c, refs); return res;}
 
-        if(obj is byte by) {WriteInt(by); return res;}
-        if(obj is short s) {WriteInt(s); return res;}
+        if(obj is byte by) {WriteInt(by, refs); return res;}
+        if(obj is short s) {WriteInt(s, refs); return res;}
 
-        if(obj is long l) {WriteInt(l); return res;}
-        if(obj is ulong ul) {WriteInt(ul); return res;}
+        if(obj is long l) {WriteInt(l, refs); return res;}
+        if(obj is ulong ul) {WriteInt(ul, refs); return res;}
 
-        if(obj is sbyte sb) {WriteInt(sb); return res;}
-        if(obj is ushort us) {WriteInt(us); return res;}
+        if(obj is sbyte sb) {WriteInt(sb, refs); return res;}
+        if(obj is ushort us) {WriteInt(us, refs); return res;}
 
-        if(obj is nint ni) {WriteInt(ni, 8); return res;}
-        if(obj is nuint nu) {WriteInt(nu, 8); return res;}
+        if(obj is nint ni) {WriteInt(ni, refs, 8); return res;}
+        if(obj is nuint nu) {WriteInt(nu, refs, 8); return res;}
         
         return res; // im not serializing decimal ig
 
-        void WriteInt<T>(T num, int overrideSizeof = -1) where T : unmanaged, IBinaryInteger<T>
+        void WriteInt<T>(T num, in SerializationRefs refs, int overrideSizeof = -1) where T : unmanaged, IBinaryInteger<T>
         {
-            PrimitiveHeader header = default;
+            int ssize = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
+            res.IndexedType = GetTypeIndex(typeof(T), refs);
 
-            header.Size = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
-            res.IndexedType = GetTypeIndex(typeof(T));
-
-            var span = _primitiveData.Add(headerSize + header.Size);
-            
-            header.Write(span);
-            num.TryWriteLittleEndian(span.Slice(headerSize), out _);
+            var span = _primitiveData.Add(ssize);
+            num.TryWriteLittleEndian(span, out _);
         }
-        unsafe void WriteFloat<T>(T num) where T : unmanaged, IBinaryFloatingPointIeee754<T>
+        unsafe void WriteFloat<T>(T num, in SerializationRefs refs) where T : unmanaged, IBinaryFloatingPointIeee754<T>
         {
-            PrimitiveHeader header = default;
-            header.Size = Unsafe.SizeOf<T>();
-            res.IndexedType = GetTypeIndex(typeof(T));
+            int ssize = Unsafe.SizeOf<T>();
+            res.IndexedType = GetTypeIndex(typeof(T), refs);
 
-            var span = _primitiveData.Add(headerSize + header.Size);
+            var span = _primitiveData.Add(ssize);
 
-            header.Write(span);
-            if(header.Size == 8)
+            if(ssize == 8)
             {
                 long value = *(long*)&num;
-                (value as IBinaryInteger<long>).TryWriteLittleEndian(span.Slice(headerSize), out _);
+                (value as IBinaryInteger<long>).TryWriteLittleEndian(span, out _);
             }
-            else if(header.Size == 4)
+            else if(ssize == 4)
             {
                 int value = *(int*)&num;
-                (value as IBinaryInteger<int>).TryWriteLittleEndian(span.Slice(headerSize), out _);
+                (value as IBinaryInteger<int>).TryWriteLittleEndian(span, out _);
             }
             else throw new Exception("What kinda fucking float is that");
         }
@@ -248,11 +234,10 @@ public class SerializedObjectTree
 
     object? ReadPrimitive(SerialHandle handle)
     {
-        int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
-        PrimitiveHeader header = default;
-        header.Read(_primitiveData.AllValues.Slice(handle.Handle, headerSize));
         Type t = _indexTypes[handle.IndexedType].Item1;
-        var span = _primitiveData.AllValues.Slice(handle.Handle + headerSize, header.Size);
+        int primitiveSize = Marshal.SizeOf(t);
+        if(t == typeof(bool)) return _primitiveData.AllValues[handle.Handle] != 0;
+        var span = _primitiveData.AllValues.Slice(handle.Handle, primitiveSize);
 
         if(t == typeof(float)) return BinaryPrimitives.ReadSingleLittleEndian(span);
         if(t == typeof(double)) return BinaryPrimitives.ReadDoubleLittleEndian(span);
@@ -260,7 +245,6 @@ public class SerializedObjectTree
         if(t == typeof(int)) return BinaryPrimitives.ReadInt32LittleEndian(span);
         if(t == typeof(uint)) return BinaryPrimitives.ReadUInt32LittleEndian(span);
 
-        if(t == typeof(bool)) return span[0] != 0;
         if(t == typeof(char)) return ReadIntLittleEndian<char>(span);
         
         if(t == typeof(byte)) return span[0];
@@ -310,25 +294,16 @@ public class SerializedObjectTree
         }
     }
 
-    record struct PrimitiveHeader
-    {
-        public int Size;
-
-        public void Write(Span<byte> res)
-        {
-            (Size as IBinaryInteger<int>).WriteLittleEndian(res);
-        }
-
-        public void Read(Span<byte> input)
-        {
-            Size = BinaryPrimitives.ReadInt32LittleEndian(input);
-        }
-    }
     record struct SerialHandle
     {
         public int Handle;
         public int IndexedType;
         public bool SaveReference;
         public bool SaveFields;
+    }
+    ref struct SerializationRefs
+    {
+        public Dictionary<object, int> ReferenceIDs;
+        public Dictionary<Type, (int, ReadOnlyCollection<FieldInfo>)> TypeIndices;
     }
 }
