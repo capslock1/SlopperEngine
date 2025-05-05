@@ -13,6 +13,7 @@ using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Physics.Colliders;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;
+using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.TestStuff;
 
@@ -177,6 +178,7 @@ public class TestGame : SceneObject
         }
 
         var lamp0 = _lamps[0].Serialize();
+        lamp0.WriteOutTree();
         //lamp0.Instantiate();
 
         _main.FrameUpdate(new(.0001f));

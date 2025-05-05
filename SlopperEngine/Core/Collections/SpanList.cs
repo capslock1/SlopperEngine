@@ -43,7 +43,6 @@ public class SpanList<T>
     /// </summary>
     public void Add(T toAdd)
     {
-        int currentCount = _usedSize;
         EnsureCapacity(_usedSize + 1);
         _values[_usedSize] = toAdd;
         _usedSize++;
@@ -54,12 +53,12 @@ public class SpanList<T>
     /// </summary>
     /// <param name="lengthToAdd">The amount of elements to add.</param>
     /// <returns>A span for the caller to write into.</returns>
-    public Span<T> Add(int lengthToAdd)
+    public ListSpan Add(int lengthToAdd)
     {
         int currentCount = _usedSize;
         EnsureCapacity(_usedSize + lengthToAdd);
         _usedSize += lengthToAdd;
-        return new(_values, currentCount, lengthToAdd);
+        return new(this, currentCount, lengthToAdd);
     }
 
 
@@ -75,5 +74,26 @@ public class SpanList<T>
         if (newCapacity < capacity) newCapacity = capacity;
 
         Capacity = newCapacity;
+    }
+
+    public ref struct ListSpan(SpanList<T> owner, int startIndex, int length)
+    {
+        public int Length => _length;
+
+        SpanList<T> _owner = owner;
+        int _startIndex = startIndex;
+        int _length = length;
+
+        // not checking bounds cuz i dont care honestly
+        public ref T this[int index] => ref _owner._values[index + _startIndex];
+
+        /// <summary>
+        /// Forms a slice out of the current range that begins at a specified index.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns></returns>
+        public ListSpan Slice(int start) => new ListSpan(_owner, _startIndex+start, _length-start);
+
+        public static implicit operator Span<T>(ListSpan r) => new(r._owner._values, r._startIndex, r.Length);
     }
 }

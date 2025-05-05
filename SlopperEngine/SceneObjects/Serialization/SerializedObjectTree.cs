@@ -31,7 +31,10 @@ public class SerializedObjectTree
             throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
         
         var res = _serializedObjects.Add(1);
-        res[0] = SerializeRecursive(toSerialize);
+        TextWriter w = new StringWriter();
+        IndentedTextWriter writer = new(w);
+        res[0] = SerializeRecursive(toSerialize,writer);
+        System.Console.WriteLine((w.ToString()));
     }
 
     public void WriteOutTree()
@@ -43,7 +46,9 @@ public class SerializedObjectTree
 
         TextWriter w = new StringWriter();
         IndentedTextWriter writer = new(w);
-        RecursiveWriteTree(0, root, fields, writer);
+        //try{
+            RecursiveWriteTree(0, root, fields, writer);
+        //}catch(Exception){}
         System.Console.WriteLine(w.ToString());
     }
 
@@ -61,44 +66,52 @@ public class SerializedObjectTree
             output.Write(field.Name);
             SerialHandle handle = _serializedObjects[currentField];
 
-            if(handle.SaveReference)
+            if(handle.SaveFields)
             {
                 output.WriteLine();
                 if(handle.Handle == 0)
                     continue;
 
-                Type fieldT = field.FieldType;
-                (int tIndex, ReadOnlyCollection<FieldInfo?> infos) = _typeIndices[fieldT];
-                RecursiveWriteTree(handle.Handle, fieldT, infos, output);
+                (Type fieldT, ReadOnlyCollection<FieldInfo?> infos) = _indexTypes[handle.IndexedType];
+                RecursiveWriteTree(handle.Handle-1, fieldT, infos, output);
             }
-            else 
+            else if(!handle.SaveReference)
             {
-                output.WriteLine(ReadPrimitive(handle));
+                output.Write(" (primitive): ");
+                output.WriteLine(ReadPrimitive(handle) ?? "null");
             }
+            else output.WriteLine(" (reference up the tree).");
         }
         output.Indent--;
     }
 
-    SerialHandle SerializeRecursive(object toSerialize)
+    SerialHandle SerializeRecursive(object toSerialize, IndentedTextWriter w)
     {
         var type = toSerialize.GetType();
         int tIndex = GetTypeIndex(type);
         if(_rootTypeIndex == -1)
             _rootTypeIndex = tIndex;
 
-        var handle = AddObject(toSerialize, out bool serial);
-        if(!handle.SaveReference || !serial)
+        var handle = AddObject(toSerialize, out bool newReference);
+        handle.IndexedType = tIndex;
+
+        if(!handle.SaveFields || !newReference)
             return handle;
 
         handle.Handle = _serializedObjects.Count;
         var fields = SceneObjectReflectionCache.GetSerializableFields(type);
         var fieldSpan = _serializedObjects.Add(fields.Count);
+        w.Indent++;
         for(int i = 0; i<fieldSpan.Length; i++)
         {
             var fieldVal = fields[i].GetValue(toSerialize);
             if(fieldVal != null)
-                fieldSpan[i] = SerializeRecursive(fieldVal);
+            {
+                var serialFieldVal = SerializeRecursive(fieldVal, w);
+                fieldSpan[i] = serialFieldVal;
+            }
         }
+        w.Indent--;
 
         return handle;
     }
@@ -128,6 +141,7 @@ public class SerializedObjectTree
         if(_referenceIDs.TryGetValue(obj, out res.Handle))
             return res;
 
+        res.SaveFields = true;
         newReference = true;
         _referenceIDs.Add(obj, _serializedObjects.Count);
 
@@ -138,12 +152,13 @@ public class SerializedObjectTree
     {
         SerialHandle res = default;
         res.SaveReference = true;
+        res.SaveFields = false;
         res.Handle = _primitiveData.Count;
         int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
 
         PrimitiveHeader header = default;
         header.Size = Encoding.Unicode.GetByteCount(obj);
-        header.IndexedType = GetTypeIndex(typeof(string));
+        res.IndexedType = GetTypeIndex(typeof(string));
 
         var span = _primitiveData.Add(headerSize + header.Size);
         header.Write(span);
@@ -156,6 +171,7 @@ public class SerializedObjectTree
     {
         SerialHandle res = default;
         res.SaveReference = false;
+        res.SaveFields = false;
         res.Handle = _primitiveData.Count;
         int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
 
@@ -170,7 +186,7 @@ public class SerializedObjectTree
         {
             PrimitiveHeader header = default;
             header.Size = 1;
-            header.IndexedType = GetTypeIndex(typeof(bool));
+            res.IndexedType = GetTypeIndex(typeof(bool));
 
             var span = _primitiveData.Add(headerSize + header.Size);
 
@@ -200,7 +216,7 @@ public class SerializedObjectTree
             PrimitiveHeader header = default;
 
             header.Size = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
-            header.IndexedType = GetTypeIndex(typeof(T));
+            res.IndexedType = GetTypeIndex(typeof(T));
 
             var span = _primitiveData.Add(headerSize + header.Size);
             
@@ -211,7 +227,7 @@ public class SerializedObjectTree
         {
             PrimitiveHeader header = default;
             header.Size = Unsafe.SizeOf<T>();
-            header.IndexedType = GetTypeIndex(typeof(T));
+            res.IndexedType = GetTypeIndex(typeof(T));
 
             var span = _primitiveData.Add(headerSize + header.Size);
 
@@ -230,12 +246,12 @@ public class SerializedObjectTree
         }
     }
 
-    object ReadPrimitive(SerialHandle handle)
+    object? ReadPrimitive(SerialHandle handle)
     {
         int headerSize = Unsafe.SizeOf<PrimitiveHeader>();
         PrimitiveHeader header = default;
         header.Read(_primitiveData.AllValues.Slice(handle.Handle, headerSize));
-        Type t = _indexTypes[header.IndexedType].Item1;
+        Type t = _indexTypes[handle.IndexedType].Item1;
         var span = _primitiveData.AllValues.Slice(handle.Handle + headerSize, header.Size);
 
         if(t == typeof(float)) return BinaryPrimitives.ReadSingleLittleEndian(span);
@@ -259,7 +275,7 @@ public class SerializedObjectTree
         if(t == typeof(nint)) return (nint)BinaryPrimitives.ReadInt64LittleEndian(span);
         if(t == typeof(nuint)) return (nuint)BinaryPrimitives.ReadUInt64LittleEndian(span);
 
-        throw new Exception($"Couldnt deserialize type {t.Name}");
+        return null;//throw new Exception($"Couldnt deserialize type {t.Name}");
 
         T ReadIntLittleEndian<T>(ReadOnlySpan<byte> span) where T : IBinaryInteger<T> => T.ReadLittleEndian(span, true);
     }
@@ -297,23 +313,22 @@ public class SerializedObjectTree
     record struct PrimitiveHeader
     {
         public int Size;
-        public int IndexedType;
 
         public void Write(Span<byte> res)
         {
             (Size as IBinaryInteger<int>).WriteLittleEndian(res);
-            (IndexedType as IBinaryInteger<int>).WriteLittleEndian(res.Slice(4));
         }
 
         public void Read(Span<byte> input)
         {
             Size = BinaryPrimitives.ReadInt32LittleEndian(input);
-            IndexedType = BinaryPrimitives.ReadInt32LittleEndian(input.Slice(4));
         }
     }
     record struct SerialHandle
     {
         public int Handle;
+        public int IndexedType;
         public bool SaveReference;
+        public bool SaveFields;
     }
 }
