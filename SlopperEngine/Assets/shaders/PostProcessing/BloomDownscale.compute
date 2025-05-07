@@ -6,20 +6,53 @@ uniform sampler2D SourceTexture;
 layout(location=2) uniform vec2 DestinationTexelSize;
 layout(location=3) uniform vec2 SourceTexelSize;
 
-void main()
+vec4 Unreal4Downscale()
 {
-    //get coords
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
-    vec2 samplerCoords = gl_GlobalInvocationID.xy * DestinationTexelSize;
-    
-    //sample the source texture
+    // this is the top left of the sampler's pixel
+    vec2 samplerCoords = gl_GlobalInvocationID.xy * DestinationTexelSize; 
+
     vec4 color = vec4(0);
     color += texture(SourceTexture, samplerCoords);
     color += texture(SourceTexture, samplerCoords + vec2(DestinationTexelSize.x, 0));
     color += texture(SourceTexture, samplerCoords + vec2(0, DestinationTexelSize.y));
     color += texture(SourceTexture, samplerCoords + DestinationTexelSize);
     color *= .25;
+    return color;
+}
+
+vec4 CODAdvancedWarfareDownscale()
+{
+    // this is the middle of the sampler's pixel
+    vec2 samplerCoords = (gl_GlobalInvocationID.xy + vec2(.5)) * DestinationTexelSize;
+    vec2 ts = DestinationTexelSize;
+
+    vec4 color = vec4(0);
+    // sampling 9 pixels in a grid
+    vec4 s00 = texture(SourceTexture, samplerCoords - ts);
+    vec4 s01 = texture(SourceTexture, samplerCoords + vec2(0, -ts.y));
+    vec4 s02 = texture(SourceTexture, samplerCoords + vec2(ts.x, -ts.y));
+    vec4 s10 = texture(SourceTexture, samplerCoords + vec2(-ts.x, 0));
+    vec4 s11 = texture(SourceTexture, samplerCoords);
+    vec4 s12 = texture(SourceTexture, samplerCoords + vec2(ts.x, 0));
+    vec4 s20 = texture(SourceTexture, samplerCoords + vec2(-ts.x, ts.y));
+    vec4 s21 = texture(SourceTexture, samplerCoords + vec2(0, ts.y));
+    vec4 s22 = texture(SourceTexture, samplerCoords + ts);
+
+    // minimum samples weights
+    color += 3*s00 + 6*s01 + 3*s02; // top row
+    color += 6*s10 + 12*s11 + 6*s12; // middle row
+    color += 3*s20 + 6*s21 + 3*s22; // low row
+    return color * .0208333;
+}
+
+void main()
+{
+    //get coords
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
     
+    //sample the source texture
+    vec4 color = CODAdvancedWarfareDownscale();
+
     //store the blurred result
     imageStore(DestinationTexture, pixelCoords, color);
 }

@@ -12,10 +12,17 @@ void main()
 {
     //get coords
     ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    // this coord is the middle of the sampler's picture
     vec2 samplerCoords = (gl_GlobalInvocationID.xy + vec2(.5)) * DestinationTexelSize;
     
     //sample the source texture
-    vec4 color = texture(SourceTexture, samplerCoords);
+    vec4 color = vec4(0);
+    vec2 texelS = DestinationTexelSize;
+    color += texture(SourceTexture, samplerCoords - vec2(texelS.x, 0));
+    color += texture(SourceTexture, samplerCoords + vec2(texelS.x, 0));
+    color += texture(SourceTexture, samplerCoords - vec2(0, texelS.y));
+    color += texture(SourceTexture, samplerCoords + vec2(0, texelS.y));
+    color *= .25;
     
     vec4 ogColor = imageLoad(DestinationTexture, pixelCoords);
     imageStore(DestinationTexture, pixelCoords, color*DestinationContribution + ogColor*SourceContribution);

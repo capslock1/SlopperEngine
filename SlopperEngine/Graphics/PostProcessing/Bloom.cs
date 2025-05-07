@@ -84,8 +84,8 @@ public class Bloom : IDisposable
         var ogVertWrap = source.VerticalWrap;
         source.MinificationFilter = TextureMinFilter.Linear;
         source.MagnificationFilter = TextureMagFilter.Linear;
-        source.HorizontalWrap = TextureWrapMode.ClampToEdge;
-        source.VerticalWrap = TextureWrapMode.ClampToEdge;
+        source.HorizontalWrap = TextureWrapMode.MirroredRepeat;
+        source.VerticalWrap = TextureWrapMode.MirroredRepeat;
         source.Use(TextureUnit.Texture0);
         
         destination.UseAsImage(0);
@@ -114,8 +114,8 @@ public class Bloom : IDisposable
         var ogVertWrap = source.VerticalWrap;
         source.MinificationFilter = TextureMinFilter.Linear;
         source.MagnificationFilter = TextureMagFilter.Linear;
-        source.HorizontalWrap = TextureWrapMode.ClampToEdge;
-        source.VerticalWrap = TextureWrapMode.ClampToEdge;
+        source.HorizontalWrap = TextureWrapMode.MirroredRepeat;
+        source.VerticalWrap = TextureWrapMode.MirroredRepeat;
         source.Use(TextureUnit.Texture0);
 
         destination.UseAsImage(0);
