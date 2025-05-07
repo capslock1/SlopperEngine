@@ -8,10 +8,8 @@ layout(location=3) uniform vec2 SourceTexelSize;
 layout(location=4) uniform float DestinationContribution;
 layout(location=5) uniform float SourceContribution;
 
-void main()
+vec4 CrossShapedUpscale()
 {
-    //get coords
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
     // this coord is the middle of the sampler's picture
     vec2 samplerCoords = (gl_GlobalInvocationID.xy + vec2(.5)) * DestinationTexelSize;
     
@@ -23,6 +21,23 @@ void main()
     color += texture(SourceTexture, samplerCoords - vec2(0, texelS.y));
     color += texture(SourceTexture, samplerCoords + vec2(0, texelS.y));
     color *= .25;
+    return color;
+}
+
+vec4 SimpleUpscale()
+{
+    // this coord is the middle of the sampler's picture
+    vec2 samplerCoords = (gl_GlobalInvocationID.xy + vec2(.5)) * DestinationTexelSize;
+
+    return texture(SourceTexture, samplerCoords);
+}
+
+void main()
+{
+    //get coords
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+
+    vec4 color = CrossShapedUpscale();
     
     vec4 ogColor = imageLoad(DestinationTexture, pixelCoords);
     imageStore(DestinationTexture, pixelCoords, color*DestinationContribution + ogColor*SourceContribution);
