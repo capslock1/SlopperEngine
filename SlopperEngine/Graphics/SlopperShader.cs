@@ -12,6 +12,7 @@ namespace SlopperEngine.Graphics;
 /// </summary>
 public class SlopperShader
 {
+    string? _name;
     static Cache<string, SlopperShader> _shaderCache = new();
     Dictionary<(Type, MeshInfo), DrawShader> _drawCache = new(); 
     //VertexShaders do not get cached because they are unique to DrawShader's cache
@@ -46,6 +47,7 @@ public class SlopperShader
 
         res = new(scope);
         _shaderCache.Set(filepath, res);
+        res._name = filepath;
         return res;
     }
 
@@ -125,25 +127,34 @@ void vertIn_Initialize();
 ");
 
         //write vertins
-        writer.WriteLine(
+        if(scope.vertIn.Count > 0)
+        {
+            writer.WriteLine(
 @"struct SL_vertInStruct
-{bool anticrash;");
-        WriteInoutStructVars(scope.vertIn, writer);
-        writer.WriteLine("} vertIn;");
+{");
+            WriteInoutStructVars(scope.vertIn, writer);
+            writer.WriteLine("} vertIn;");
+        }
 
         //write vertouts
-        writer.WriteLine(
+        if(scope.vertOut.Count > 0)
+        {
+            writer.WriteLine(
 @"struct SL_vertOutStruct
-{bool anticrash;");
-        WriteInoutStructVars(scope.vertOut, writer);
-        writer.WriteLine("} vertOut;");
+{");
+            WriteInoutStructVars(scope.vertOut, writer);
+            writer.WriteLine("} vertOut;");
+        }
 
         //write verttopix
-        writer.WriteLine(
+        if(scope.vertToPix.Count > 0)
+        {
+            writer.WriteLine(
 @"out SL_vertToPix
-{bool anticrash;");
-        WriteInoutStructVars(scope.vertToPix, writer);
-        writer.WriteLine("} vertToPix;");
+{");
+            WriteInoutStructVars(scope.vertToPix, writer);
+            writer.WriteLine("} vertToPix;");
+        }
 
         //write uniforms
         foreach(Variable j in scope.uniform)
@@ -172,18 +183,24 @@ void vertIn_Initialize();
 ");
 
         //write pixout
-        writer.WriteLine(
+        if(scope.pixOut.Count > 0)
+        {
+            writer.WriteLine(
 @"struct SL_pixOut
-{bool anticrash;");
-        WriteInoutStructVars(scope.pixOut, writer);
-        writer.WriteLine("} pixOut;");
+{");
+            WriteInoutStructVars(scope.pixOut, writer);
+            writer.WriteLine("} pixOut;");
+        }
 
         //write verttopix
-        writer.WriteLine(
+        if(scope.vertToPix.Count > 0)
+        {
+            writer.WriteLine(
 @"in SL_vertToPix
-{bool anticrash;");
-        WriteInoutStructVars(scope.vertToPix, writer);
-        writer.WriteLine("} vertToPix;");
+{");
+            WriteInoutStructVars(scope.vertToPix, writer);
+            writer.WriteLine("} vertToPix;");
+        }
 
         //write uniforms
         foreach(Variable j in scope.uniform)
