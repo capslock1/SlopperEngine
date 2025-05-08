@@ -67,9 +67,12 @@ public partial class SceneObject
         _registeredMethodHandles = new SceneDataHandle[_registeredMethods.Count];
     }
 
-    [OnSerialize] void Serialize(SerializedObjectTree serializer)
+    [OnSerialize] void OnSerialize(in SerializedObjectTree.CustomSerializer serializer)
     {
+        if(serializer.IsWriter)
+            Initialize();
 
+        System.Console.WriteLine("yeah this got called!");
     }
 
     [OnRegister] void CompleteRegister() => _registryComplete = true;

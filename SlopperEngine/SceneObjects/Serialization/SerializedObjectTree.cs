@@ -14,7 +14,7 @@ namespace SlopperEngine.SceneObjects.Serialization;
 /// <summary>
 /// The serialized form of a SceneObject tree.
 /// </summary>
-public class SerializedObjectTree
+public partial class SerializedObjectTree
 {
     int _rootTypeIndex = -1;
     Dictionary<int, (Type, ReadOnlyCollection<FieldInfo?>)> _indexTypes = new();
@@ -120,22 +120,23 @@ public class SerializedObjectTree
     {
         if(refs.TypeIndices.TryGetValue(t, out var res)) 
             return res.Item1;
-        #pragma warning disable CS8619
+
         res = refs.TypeIndices[t] = (refs.TypeIndices.Count, SceneObjectReflectionCache.GetSerializableFields(t));
-        #pragma warning restore CS8619
         return res.Item1;
     }
 
     SerialHandle AddObject(object obj, in SerializationRefs refs, out bool newReference)
     {
-        newReference = false;
+        newReference = false; // dont save a primitive's reference because its probably not worth the lookup time
         var type = obj.GetType();
         if(type.IsPrimitive)
             return WritePrimitive(obj, refs);
         
+        newReference = true;
         if(type == typeof(string))
             return SerializeString((string)obj, refs);
 
+        newReference = false;
         SerialHandle res = default;
         res.SaveReference = true;
         if(refs.ReferenceIDs.TryGetValue(obj, out res.Handle))
@@ -262,36 +263,6 @@ public class SerializedObjectTree
         return null;//throw new Exception($"Couldnt deserialize type {t.Name}");
 
         T ReadIntLittleEndian<T>(ReadOnlySpan<byte> span) where T : IBinaryInteger<T> => T.ReadLittleEndian(span, true);
-    }
-
-    /// <summary>
-    /// Serializes objects.
-    /// </summary>
-    /// <param name="target"></param>
-    /// <param name="writes"></param>
-    public struct Serializer(SerializedObjectTree target, bool writes)
-    {
-        /// <summary>
-        /// True if this Serializer writes to given values.
-        /// </summary>
-        public bool IsWriter => _writes;
-
-        /// <summary>
-        /// True if this Serializer reads from given values.
-        /// </summary>
-        public bool IsReader => !_writes;
-        
-        SerializedObjectTree _target = target;
-        bool _writes = writes;
-
-        /// <summary>
-        /// Serializes a given value.
-        /// </summary>
-        /// <param name="Value">The value to serialize.</param>
-        public void Serialize(ref object Value)
-        {
-
-        }
     }
 
     record struct SerialHandle

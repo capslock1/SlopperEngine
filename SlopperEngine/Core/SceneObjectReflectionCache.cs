@@ -14,19 +14,8 @@ public static class SceneObjectReflectionCache
     static List<Assembly> _addedAssemblies = new();
     static FridgeDictionary<Type, ReadOnlyCollection<EngineMethodAttribute>> _engineMethods = new();
     static FridgeDictionary<Type, ReadOnlyCollection<FieldInfo>> _fieldInfos = new();
+    static FridgeDictionary<Type, ReadOnlyCollection<MethodInfo>> _onSerializes = new();
     
-    /// <summary>
-    /// Gets the engine methods associated with the type of a SceneObject.
-    /// </summary>
-    /// <param name="SceneObjectType"></param>
-    public static ReadOnlyCollection<EngineMethodAttribute> GetEngineMethods(Type SceneObjectType)
-    {
-        if(_engineMethods.TryGetValue(SceneObjectType, out var res))
-            return res;
-        AddAssembly(SceneObjectType.Assembly);
-        return _engineMethods[SceneObjectType];
-    }
-
     /// <summary>
     /// Adds an assembly to the EngineMethod register. If the assembly is already present, it gets ignored.
     /// </summary>
@@ -40,6 +29,18 @@ public static class SceneObjectReflectionCache
         }
 
         FindEngineMethods(assembly);
+    }
+
+    /// <summary>
+    /// Gets the engine methods associated with the type of a SceneObject.
+    /// </summary>
+    /// <param name="SceneObjectType"></param>
+    public static ReadOnlyCollection<EngineMethodAttribute> GetEngineMethods(Type SceneObjectType)
+    {
+        if(_engineMethods.TryGetValue(SceneObjectType, out var res))
+            return res;
+        AddAssembly(SceneObjectType.Assembly);
+        return _engineMethods[SceneObjectType];
     }
 
     /// <summary>
@@ -64,6 +65,47 @@ public static class SceneObjectReflectionCache
 
         res = allowedFields.AsReadOnly();
         _fieldInfos.Add(type, res);
+        return res;
+    }
+
+    /// <summary>
+    /// Gets the first method of the type with a correct OnSerialize attribute.
+    /// </summary>
+    public static ReadOnlyCollection<MethodInfo> GetOnSerialize(Type type)
+    {
+        if(_onSerializes.TryGetValue(type, out var res))
+            return res;
+
+        var list = new List<MethodInfo>();
+        RecursiveAddMethods(type);
+
+        void RecursiveAddMethods(Type t)
+        {
+            if(t.BaseType != null)
+                RecursiveAddMethods(t.BaseType);
+
+            foreach(var meth in t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+            {
+                if(meth.IsConstructor)
+                    continue;
+                if(meth.IsGenericMethod)
+                    continue;
+                    
+                if(!meth.GetCustomAttributes(typeof(OnSerializeAttribute)).Any())
+                    continue;
+                var parameters = meth.GetParameters();
+                if(parameters.Length != 1 || parameters[0].IsIn || parameters[0].ParameterType != typeof(SerializedObjectTree.CustomSerializer))
+                {
+                    System.Console.WriteLine($"OnSerialize expects only a single 'in SerializedObjectTree.CustomSerializer' parameter at {t.Name}.{meth.Name}().");
+                    continue;
+                }
+
+                list.Add(meth);
+            }
+        }
+
+        res = new(list);
+        _onSerializes.Add(type, res);
         return res;
     }
 
