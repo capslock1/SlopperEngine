@@ -179,7 +179,7 @@ public class TestGame : SceneObject
 
         var lamp0 = _lamps[0].Serialize();
         lamp0.WriteOutTree();
-        //lamp0.Instantiate();
+        lamp0.Instantiate();
 
         _main.FrameUpdate(new(.0001f));
 

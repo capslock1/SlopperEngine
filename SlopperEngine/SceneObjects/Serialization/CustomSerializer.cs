@@ -27,9 +27,9 @@ partial class SerializedObjectTree
         /// Serializes a given value.
         /// </summary>
         /// <param name="Value">The value to serialize.</param>
-        public void Serialize(ref object Value)
+        public void Serialize<T>(ref T Value)
         {
-
+            
         }
     }
 }

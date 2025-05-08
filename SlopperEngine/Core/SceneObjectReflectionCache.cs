@@ -71,7 +71,7 @@ public static class SceneObjectReflectionCache
     /// <summary>
     /// Gets the first method of the type with a correct OnSerialize attribute.
     /// </summary>
-    public static ReadOnlyCollection<MethodInfo> GetOnSerialize(Type type)
+    public static ReadOnlyCollection<MethodInfo> GetOnSerializeMethods(Type type)
     {
         if(_onSerializes.TryGetValue(type, out var res))
             return res;
@@ -94,9 +94,19 @@ public static class SceneObjectReflectionCache
                 if(!meth.GetCustomAttributes(typeof(OnSerializeAttribute)).Any())
                     continue;
                 var parameters = meth.GetParameters();
-                if(parameters.Length != 1 || parameters[0].IsIn || parameters[0].ParameterType != typeof(SerializedObjectTree.CustomSerializer))
+                if(parameters.Length != 1)
                 {
-                    System.Console.WriteLine($"OnSerialize expects only a single 'in SerializedObjectTree.CustomSerializer' parameter at {t.Name}.{meth.Name}().");
+                    System.Console.WriteLine($"OnSerialize expects only a single parameter at {t.Name}.{meth.Name}().");
+                    continue;
+                }
+                if(!parameters[0].IsIn)
+                {
+                    System.Console.WriteLine($"OnSerialize expects the parameter at {t.Name}.{meth.Name} to be an 'in' parameter.");
+                    continue;
+                }
+                if(parameters[0].ParameterType != typeof(SerializedObjectTree.CustomSerializer))
+                {
+                    System.Console.WriteLine($"OnSerialize expects the paramater at {t.Name}.{meth.Name} to be of type 'SerializedObjectTree.CustomSerializer'.");
                     continue;
                 }
 
