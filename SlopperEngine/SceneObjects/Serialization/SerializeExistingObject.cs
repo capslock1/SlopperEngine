@@ -46,16 +46,50 @@ public partial class SerializedObjectTree
 
         handle.Handle = _serializedObjects.Count;
         var fields = SceneObjectReflectionCache.GetSerializableFields(type);
-        var fieldSpan = _serializedObjects.Add(fields.Count);
+        var methods = SceneObjectReflectionCache.GetOnSerializeMethods(type);
+        var dataSpan = _serializedObjects.Add(fields.Count + methods.Count);
 
-        for(int i = 0; i<fieldSpan.Length; i++)
+        int serialIndex = 0;
+        // serialize the fields of the object
+        for(; serialIndex<fields.Count; serialIndex++)
         {
-            var fieldVal = fields[i].GetValue(toSerialize);
+            var fieldVal = fields[serialIndex].GetValue(toSerialize);
             if(fieldVal != null)
             {
-                var serialFieldVal = SerializeRecursive(fieldVal, handle.Handle+i, refs);
-                fieldSpan[i] = serialFieldVal;
+                var serialFieldVal = SerializeRecursive(fieldVal, handle.Handle+serialIndex, refs);
+                dataSpan[serialIndex] = serialFieldVal;
             }
+        }
+        // serialize the OnSerialize methods of the object
+        foreach(var meth in methods)
+        {
+            List<object?>? results = null;
+            CustomSerializer serializer = new(ref results);
+            CallOnSerializeQuick(meth, toSerialize, serializer);
+
+            SerialHandle methodResHandle = default;
+            methodResHandle.SerialType = SerialHandle.Type.CustomSerializedObjects;
+            methodResHandle.Handle = _serializedObjects.Count;
+            dataSpan[serialIndex] = methodResHandle;
+
+            SerialHandle methodResCount = default;
+            methodResCount.SerialType = SerialHandle.Type.CustomSerializedObjectsCount;
+            methodResCount.Handle = results?.Count ?? 0;
+            _serializedObjects.Add(methodResCount);
+
+            if(results != null)
+            {
+                var methodResultSpan = _serializedObjects.Add(results.Count);
+                for(int i = 0; i<results.Count; i++)
+                {
+                    var obj = results[i];
+                    if(obj is null) continue;
+                    int tgtIndex = methodResHandle.Handle + i;
+                    var value = SerializeRecursive(obj, tgtIndex, refs);
+                    methodResultSpan[i] = value;
+                }
+            }
+            serialIndex++;
         }
 
         return handle;

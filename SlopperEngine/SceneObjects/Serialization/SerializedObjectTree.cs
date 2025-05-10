@@ -29,11 +29,9 @@ public partial class SerializedObjectTree
         if(thisObject.SaveFields)
         {
             if(thisObject.Handle == 0)
-            {
                 // nullref - dont set anything
-                System.Console.WriteLine("field nullref");
                 return null;
-            }
+
             (Type t, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[thisObject.IndexedType];
             
             object res;
@@ -47,16 +45,19 @@ public partial class SerializedObjectTree
                 currentField++;
                 if(field is null)
                     continue;
-
-                if(currentField == 37)
-                {
-                    //. lol
-                }
                 
                 object? fieldValue = RecursiveDeserialize(currentField, deserializedObjects);
                 
                 if(fieldValue != null)
                     field.SetValue(res, fieldValue);
+            }
+            foreach(var method in onSerializeMethods)
+            {
+                currentField++;
+                if(method is null) 
+                    continue;
+
+                SerialHandle methodP = default;
             }
             return res;
         }
@@ -72,12 +73,8 @@ public partial class SerializedObjectTree
             return null;
 
             case SerialHandle.Type.ReferenceToPrevious:
-            if(deserializedObjects.TryGetValue(thisObject.Handle, out var res))
-            {
-                // le debuggerinatoration
-                return res;
-            }
-            return null;
+            deserializedObjects.TryGetValue(thisObject.Handle, out var res);
+            return res;
 
             case SerialHandle.Type.Array:
             return ReadArray(thisObject, deserializedObjects);
@@ -97,7 +94,7 @@ public partial class SerializedObjectTree
             Array res = Array.CreateInstance(type, length.Handle);
             for(int i = 0; i<res.Length; i++)
             {
-                var val = RecursiveDeserialize(handle.Handle+2, deserializedObjects);
+                var val = RecursiveDeserialize(handle.Handle+2+i, deserializedObjects);
                 res.SetValue(val, i);
             }
             return res;
@@ -143,7 +140,14 @@ public partial class SerializedObjectTree
         T ReadIntLittleEndian<T>(ReadOnlySpan<byte> span) where T : IBinaryInteger<T> => T.ReadLittleEndian(span, true);
     }
 
-    record struct SerialHandle
+    /// <summary>
+    /// Calls the OnSerialize method quickly, if the object can actually have it called. Or if it can't - this is VERY UNSAFE!!!
+    /// </summary>
+    static unsafe void CallOnSerializeQuick(MethodInfo OnSerializeMethod, object target, CustomSerializer serializer) => 
+        ((delegate*<object, CustomSerializer, void>)OnSerializeMethod.MethodHandle.GetFunctionPointer())
+            (target, serializer);
+
+    public record struct SerialHandle
     {
         public int Handle;
         public int IndexedType;
