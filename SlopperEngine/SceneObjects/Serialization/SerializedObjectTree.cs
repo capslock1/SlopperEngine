@@ -35,11 +35,11 @@ public partial class SerializedObjectTree
                 return null;
             }
             (Type t, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[thisObject.IndexedType];
+            
             object res;
-            try{
-                res = RuntimeHelpers.GetUninitializedObject(t);
-            }
-            catch(Exception){return null;}
+            try{res = RuntimeHelpers.GetUninitializedObject(t);}
+            catch(ArgumentException){return null;}
+
             deserializedObjects[serialHandleIndex] = res;
             int currentField = thisObject.Handle - 1;
             foreach(var field in fields)
@@ -63,7 +63,8 @@ public partial class SerializedObjectTree
             case SerialHandle.Type.Reference:
             deserializedObjects.TryGetValue(thisObject.Handle-1, out var res);
             return res;
-            case SerialHandle.Type.Collection:
+            case SerialHandle.Type.Array:
+            return ReadArray(thisObject);
             default:
             return null;
         }
@@ -117,7 +118,7 @@ public partial class SerializedObjectTree
                 case SerialHandle.Type.Reference:
                 output.WriteLine(" (reference up the tree).");
                 break;
-                case SerialHandle.Type.Collection:
+                case SerialHandle.Type.Array:
                 output.WriteLine(" (yeah idk what to do with this)");
                 break;
                 default:
@@ -128,6 +129,10 @@ public partial class SerializedObjectTree
         output.Indent--;
     }
 
+    Array? ReadArray(SerialHandle handle)
+    {
+        return null;
+    }
 
     object? ReadPrimitive(SerialHandle handle)
     {
@@ -165,7 +170,7 @@ public partial class SerializedObjectTree
     {
         public int Handle;
         public int IndexedType;
-        public string? typename;
+        public string? DebugTypeName;
         public Type SerialType;
         public bool SaveFields;
 
@@ -173,7 +178,10 @@ public partial class SerializedObjectTree
         {
             Reference, 
             Primitive, 
-            Collection,
+            Array,
+            ArrayCount,
+            CustomSerializedObjects,
+            CustomSerializedObjectsCount,
         }
     }
 }

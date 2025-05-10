@@ -23,9 +23,8 @@ public partial class SerializedObjectTree
         SerializationRefs refs = new();
         refs.ReferenceIDs = new();
         refs.TypeIndices = new();
-        res[1] = SerializeRecursive(toSerialize, refs);
-        res[1].Handle = 2;
-        res[1].SaveFields = true;
+        var rootHandle = SerializeRecursive(toSerialize, refs);
+        res[1] = rootHandle;
 
         #pragma warning disable CS8620
         foreach(var comb in refs.TypeIndices)
@@ -40,7 +39,7 @@ public partial class SerializedObjectTree
 
         var handle = AddObject(toSerialize, refs, out bool isNewReference);
         handle.IndexedType = tIndex;
-        handle.typename = type.Name;
+        handle.DebugTypeName = type.Name;
 
         if(!handle.SaveFields || !isNewReference)
             return handle;
@@ -59,9 +58,15 @@ public partial class SerializedObjectTree
             }
         }
 
+        if(toSerialize is SceneObject)
+        {
+            // le debug
+        }
+
         return handle;
     }
-        int GetTypeIndex(Type t, in SerializationRefs refs)
+    
+    int GetTypeIndex(Type t, in SerializationRefs refs)
     {
         if(refs.TypeIndices.TryGetValue(t, out var res)) 
             return res.Item1;
@@ -80,6 +85,9 @@ public partial class SerializedObjectTree
         newReference = true;
         if(type == typeof(string))
             return SerializeString((string)obj, refs);
+
+        if(obj is Array arr)
+            return SerializeArray(arr, refs);
 
         newReference = false;
         SerialHandle res = default;
@@ -100,13 +108,54 @@ public partial class SerializedObjectTree
 
         int stringLength = Encoding.Unicode.GetByteCount(obj);
         res.IndexedType = GetTypeIndex(typeof(string), refs);
-        res.typename = "string";
+        res.DebugTypeName = "string";
 
         var span = _primitiveData.Add(Encoding.Unicode.GetByteCount(obj) + 4);
         BinaryPrimitives.WriteInt32LittleEndian(span, stringLength);
         Encoding.Unicode.GetBytes(obj, span.Slice(4));
 
         return res;
+    }
+
+    SerialHandle SerializeArray(Array array, in SerializationRefs refs)
+    {
+        SerialHandle res = default;
+        res.SerialType = SerialHandle.Type.Array;
+        res.Handle = _serializedObjects.Count;
+        int typeIndex = GetTypeIndex(array.GetType().GetElementType()!, refs);
+
+        var valueSpan = _serializedObjects.Add(array.Length + 1 + array.Rank);
+        SerialHandle rank = default;
+        rank.SerialType = SerialHandle.Type.ArrayCount;
+        rank.Handle = array.Rank;
+        rank.DebugTypeName = "array rank";
+        rank.IndexedType = typeIndex;
+
+        valueSpan[0] = rank;
+        for(int dim = 0; dim < array.Rank; dim++)
+        {
+            SerialHandle dimensionLength = default;
+            dimensionLength.SerialType = SerialHandle.Type.ArrayCount;
+            dimensionLength.Handle = array.GetLength(dim);
+            dimensionLength.DebugTypeName = "dimension length";
+            dimensionLength.IndexedType = typeIndex;
+            valueSpan[1+dim] = dimensionLength;
+        }
+
+        if(array.Rank == 1)
+        {
+            for(int i = 0; i<array.Length; i++)
+            {
+                var val = array.GetValue(i);
+                if(val != null)
+                {
+                    var handle = SerializeRecursive(val, refs);
+                    valueSpan[2+i] = handle;
+                }
+            }
+            return res;
+        }
+        throw new ArgumentException("I am not serializing multi-dimensional arrays right now.");
     }
     
     SerialHandle WritePrimitive(object obj, in SerializationRefs refs)
@@ -144,13 +193,13 @@ public partial class SerializedObjectTree
         if(obj is nint ni) {WriteInt(ni, refs, 8); return res;}
         if(obj is nuint nu) {WriteInt(nu, refs, 8); return res;}
         
-        return res; // im not serializing decimal ig
+        return res; // im not serializing decimal or pointers ig
 
         void WriteInt<T>(T num, in SerializationRefs refs, int overrideSizeof = -1) where T : unmanaged, IBinaryInteger<T>
         {
             int ssize = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
             res.IndexedType = GetTypeIndex(typeof(T), refs);
-            res.typename = typeof(T).Name;
+            res.DebugTypeName = typeof(T).Name;
 
             var span = _primitiveData.Add(ssize);
             num.TryWriteLittleEndian(span, out _);
@@ -159,7 +208,7 @@ public partial class SerializedObjectTree
         {
             int ssize = Unsafe.SizeOf<T>();
             res.IndexedType = GetTypeIndex(typeof(T), refs);
-            res.typename = typeof(T).Name;
+            res.DebugTypeName = typeof(T).Name;
 
             var span = _primitiveData.Add(ssize);
 

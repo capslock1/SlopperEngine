@@ -2,6 +2,7 @@ using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Graphics.Lighting;
 using OpenTK.Mathematics;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.SceneObjects.Rendering;
 
@@ -48,7 +49,7 @@ public class PointLight : SceneObject3D
         }
     }
 
-    float _sharpness = 1;
+    [DontSerialize] float _sharpness = 1;
     /// <summary>
     /// How sharply this point light falls off.
     /// </summary>
@@ -64,6 +65,12 @@ public class PointLight : SceneObject3D
                 CreateData();
             }
         }
+    }
+
+    // test serialization - make sure to DoSerialize _sharpness after deleting this
+    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        serializer.Serialize(ref _sharpness);
     }
 
     
