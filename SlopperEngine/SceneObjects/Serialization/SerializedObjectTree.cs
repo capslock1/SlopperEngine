@@ -14,7 +14,6 @@ namespace SlopperEngine.SceneObjects.Serialization;
 /// </summary>
 public partial class SerializedObjectTree
 {
-    int _rootTypeIndex = -1;
     Dictionary<int, (Type, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods)> _indexedTypes = new();
     SpanList<SerialHandle> _serializedObjects = new(); // warning: this is 1 indexed! 0 is for null and should NEVER be deserialized.
     SpanList<byte> _primitiveData = new();
@@ -22,7 +21,6 @@ public partial class SerializedObjectTree
     public SceneObject Instantiate()
     {
         Dictionary<int, object?> deserializedObjects = new();
-        deserializedObjects.Add(0, null);
         return (SceneObject)RecursiveDeserialize(1, deserializedObjects)!;
     }
     object? RecursiveDeserialize(int serialHandleIndex, Dictionary<int, object?> deserializedObjects)
@@ -37,8 +35,13 @@ public partial class SerializedObjectTree
                 return null;
             }
             (Type t, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[thisObject.IndexedType];
-            int currentField = thisObject.Handle-1;
-            object res = RuntimeHelpers.GetUninitializedObject(t);
+            object res;
+            try{
+                res = RuntimeHelpers.GetUninitializedObject(t);
+            }
+            catch(Exception){return null;}
+            deserializedObjects[serialHandleIndex] = res;
+            int currentField = thisObject.Handle - 1;
             foreach(var field in fields)
             {
                 currentField++;
@@ -58,7 +61,8 @@ public partial class SerializedObjectTree
             case SerialHandle.Type.Primitive:
             return ReadPrimitive(thisObject);
             case SerialHandle.Type.Reference:
-            return deserializedObjects[thisObject.Handle];
+            deserializedObjects.TryGetValue(thisObject.Handle-1, out var res);
+            return res;
             case SerialHandle.Type.Collection:
             default:
             return null;
@@ -67,7 +71,7 @@ public partial class SerializedObjectTree
 
     public void WriteOutTree()
     {
-        (Type root, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[_rootTypeIndex];
+        (Type root, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[0];
 
         TextWriter w = new StringWriter();
         IndentedTextWriter writer = new(w);
@@ -161,6 +165,7 @@ public partial class SerializedObjectTree
     {
         public int Handle;
         public int IndexedType;
+        public string? typename;
         public Type SerialType;
         public bool SaveFields;
 

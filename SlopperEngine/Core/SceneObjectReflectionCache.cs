@@ -99,14 +99,9 @@ public static class SceneObjectReflectionCache
                     System.Console.WriteLine($"OnSerialize expects only a single parameter at {t.Name}.{meth.Name}().");
                     continue;
                 }
-                if(!parameters[0].IsIn)
-                {
-                    System.Console.WriteLine($"OnSerialize expects the parameter at {t.Name}.{meth.Name} to be an 'in' parameter.");
-                    continue;
-                }
                 if(parameters[0].ParameterType != typeof(SerializedObjectTree.CustomSerializer))
                 {
-                    System.Console.WriteLine($"OnSerialize expects the paramater at {t.Name}.{meth.Name} to be of type 'SerializedObjectTree.CustomSerializer'.");
+                    System.Console.WriteLine($"OnSerialize expects the paramater at {t.Name}.{meth.Name}() to be of type 'SerializedObjectTree.CustomSerializer'.");
                     continue;
                 }
 

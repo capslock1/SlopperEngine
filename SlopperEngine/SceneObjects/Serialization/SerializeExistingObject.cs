@@ -24,6 +24,8 @@ public partial class SerializedObjectTree
         refs.ReferenceIDs = new();
         refs.TypeIndices = new();
         res[1] = SerializeRecursive(toSerialize, refs);
+        res[1].Handle = 2;
+        res[1].SaveFields = true;
 
         #pragma warning disable CS8620
         foreach(var comb in refs.TypeIndices)
@@ -35,11 +37,10 @@ public partial class SerializedObjectTree
     {
         var type = toSerialize.GetType();
         int tIndex = GetTypeIndex(type, refs);
-        if(_rootTypeIndex == -1)
-            _rootTypeIndex = tIndex;
 
         var handle = AddObject(toSerialize, refs, out bool isNewReference);
         handle.IndexedType = tIndex;
+        handle.typename = type.Name;
 
         if(!handle.SaveFields || !isNewReference)
             return handle;
@@ -99,6 +100,7 @@ public partial class SerializedObjectTree
 
         int stringLength = Encoding.Unicode.GetByteCount(obj);
         res.IndexedType = GetTypeIndex(typeof(string), refs);
+        res.typename = "string";
 
         var span = _primitiveData.Add(Encoding.Unicode.GetByteCount(obj) + 4);
         BinaryPrimitives.WriteInt32LittleEndian(span, stringLength);
@@ -148,6 +150,7 @@ public partial class SerializedObjectTree
         {
             int ssize = overrideSizeof < 0 ? Unsafe.SizeOf<T>() : overrideSizeof;
             res.IndexedType = GetTypeIndex(typeof(T), refs);
+            res.typename = typeof(T).Name;
 
             var span = _primitiveData.Add(ssize);
             num.TryWriteLittleEndian(span, out _);
@@ -156,6 +159,7 @@ public partial class SerializedObjectTree
         {
             int ssize = Unsafe.SizeOf<T>();
             res.IndexedType = GetTypeIndex(typeof(T), refs);
+            res.typename = typeof(T).Name;
 
             var span = _primitiveData.Add(ssize);
 
