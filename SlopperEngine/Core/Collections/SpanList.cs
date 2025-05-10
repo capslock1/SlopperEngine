@@ -35,7 +35,10 @@ public class SpanList<T>
     public T this[int index]
     {
         get => _values[index];
-        set => _values[index] = value;
+        set {
+            T temp = value;
+            _values[index] = temp;
+        }
     }
 
     /// <summary>

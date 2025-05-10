@@ -23,7 +23,7 @@ public partial class SerializedObjectTree
         SerializationRefs refs = new();
         refs.ReferenceIDs = new();
         refs.TypeIndices = new();
-        var rootHandle = SerializeRecursive(toSerialize, refs);
+        var rootHandle = SerializeRecursive(toSerialize, 1, refs);
         res[1] = rootHandle;
 
         #pragma warning disable CS8620
@@ -32,12 +32,12 @@ public partial class SerializedObjectTree
         #pragma warning restore CS8620
     }
 
-    SerialHandle SerializeRecursive(object toSerialize, in SerializationRefs refs)
+    SerialHandle SerializeRecursive(object toSerialize, int destinationIndex, in SerializationRefs refs)
     {
         var type = toSerialize.GetType();
         int tIndex = GetTypeIndex(type, refs);
 
-        var handle = AddObject(toSerialize, refs, out bool isNewReference);
+        var handle = AddObject(toSerialize, destinationIndex, refs, out bool isNewReference);
         handle.IndexedType = tIndex;
         handle.DebugTypeName = type.Name;
 
@@ -53,14 +53,9 @@ public partial class SerializedObjectTree
             var fieldVal = fields[i].GetValue(toSerialize);
             if(fieldVal != null)
             {
-                var serialFieldVal = SerializeRecursive(fieldVal, refs);
+                var serialFieldVal = SerializeRecursive(fieldVal, handle.Handle+i, refs);
                 fieldSpan[i] = serialFieldVal;
             }
-        }
-
-        if(toSerialize is SceneObject)
-        {
-            // le debug
         }
 
         return handle;
@@ -75,27 +70,27 @@ public partial class SerializedObjectTree
         return res.Item1;
     }
 
-    SerialHandle AddObject(object obj, in SerializationRefs refs, out bool newReference)
+    SerialHandle AddObject(object obj, int destinationIndex, in SerializationRefs refs, out bool newReference)
     {
         newReference = false; // dont save a primitive's reference because its probably not worth the lookup time
         var type = obj.GetType();
         if(type.IsPrimitive)
             return WritePrimitive(obj, refs);
         
+        SerialHandle res = default;
+        res.SerialType = SerialHandle.Type.ReferenceToPrevious;
+        if(refs.ReferenceIDs.TryGetValue(obj, out res.Handle))
+            return res;
+
         newReference = true;
         if(type == typeof(string))
             return SerializeString((string)obj, refs);
 
         if(obj is Array arr)
             return SerializeArray(arr, refs);
-
-        newReference = false;
-        SerialHandle res = default;
-        if(refs.ReferenceIDs.TryGetValue(obj, out res.Handle))
-            return res;
-
-        newReference = true;
-        refs.ReferenceIDs.Add(obj, _serializedObjects.Count);
+        
+        res.SerialType = SerialHandle.Type.Reference;
+        refs.ReferenceIDs.Add(obj, destinationIndex);
         res.SaveFields = true;
         return res;
     }
@@ -149,7 +144,7 @@ public partial class SerializedObjectTree
                 var val = array.GetValue(i);
                 if(val != null)
                 {
-                    var handle = SerializeRecursive(val, refs);
+                    var handle = SerializeRecursive(val, res.Handle + 2 + i, refs);
                     valueSpan[2+i] = handle;
                 }
             }

@@ -1,10 +1,10 @@
 using System.Buffers.Binary;
-using System.CodeDom.Compiler;
 using System.Collections.ObjectModel;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.SceneObjects.Serialization;
@@ -47,6 +47,11 @@ public partial class SerializedObjectTree
                 currentField++;
                 if(field is null)
                     continue;
+
+                if(currentField == 37)
+                {
+                    //. lol
+                }
                 
                 object? fieldValue = RecursiveDeserialize(currentField, deserializedObjects);
                 
@@ -60,78 +65,50 @@ public partial class SerializedObjectTree
         {
             case SerialHandle.Type.Primitive:
             return ReadPrimitive(thisObject);
+
             case SerialHandle.Type.Reference:
-            deserializedObjects.TryGetValue(thisObject.Handle-1, out var res);
-            return res;
+            if(_indexedTypes[thisObject.IndexedType].Item1 == typeof(string))
+                return ReadString(thisObject);
+            return null;
+
+            case SerialHandle.Type.ReferenceToPrevious:
+            if(deserializedObjects.TryGetValue(thisObject.Handle, out var res))
+            {
+                // le debuggerinatoration
+                return res;
+            }
+            return null;
+
             case SerialHandle.Type.Array:
-            return ReadArray(thisObject);
+            return ReadArray(thisObject, deserializedObjects);
+
             default:
             return null;
         }
     }
 
-    public void WriteOutTree()
+    Array? ReadArray(SerialHandle handle, Dictionary<int, object?> deserializedObjects)
     {
-        (Type root, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[0];
-
-        TextWriter w = new StringWriter();
-        IndentedTextWriter writer = new(w);
-        //try{
-            RecursiveWriteTree(1, root, fields, writer);
-        //}catch(Exception e){ System.Console.WriteLine(e.Message);}
-        System.Console.WriteLine(w.ToString());
-    }
-
-    void RecursiveWriteTree(int serialHandleIndex, Type t, ReadOnlyCollection<FieldInfo?> fields, IndentedTextWriter output)
-    {
-        int currentField = serialHandleIndex;
-        output.WriteLine(t.Name);
-        output.Indent++;
-        foreach(var field in fields)
+        SerialHandle rank = _serializedObjects[handle.Handle];
+        var type = _indexedTypes[rank.IndexedType].Item1;
+        if(rank.Handle == 1)
         {
-            currentField++;
-            if(field is null)
-                continue;
-            
-            output.Write(field.Name);
-            SerialHandle handle = _serializedObjects[currentField];
-            
-            if(handle.SaveFields)
+            SerialHandle length = _serializedObjects[handle.Handle + 1];
+            Array res = Array.CreateInstance(type, length.Handle);
+            for(int i = 0; i<res.Length; i++)
             {
-                output.WriteLine();
-                if(handle.Handle == 0)
-                {
-                    output.WriteLine("    (reference was null.)");
-                    continue;
-                }
-
-                (Type fieldT, ReadOnlyCollection<FieldInfo?> infos, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[handle.IndexedType];
-                RecursiveWriteTree(handle.Handle-1, fieldT, infos, output);
+                var val = RecursiveDeserialize(handle.Handle+2, deserializedObjects);
+                res.SetValue(val, i);
             }
-            else 
-            switch(handle.SerialType)
-            {
-                case SerialHandle.Type.Primitive:
-                output.Write(" (primitive): ");
-                output.WriteLine(ReadPrimitive(handle) ?? "null");
-                break;
-                case SerialHandle.Type.Reference:
-                output.WriteLine(" (reference up the tree).");
-                break;
-                case SerialHandle.Type.Array:
-                output.WriteLine(" (yeah idk what to do with this)");
-                break;
-                default:
-                output.WriteLine(" (unknown serial type)");
-                break;
-            }
+            return res;
         }
-        output.Indent--;
+        throw new ArgumentException("Deserializing multi-dimensional arrays isnt supported yet.");
     }
 
-    Array? ReadArray(SerialHandle handle)
+    string? ReadString(SerialHandle handle)
     {
-        return null;
+        int count = BinaryPrimitives.ReadInt32LittleEndian(_primitiveData.AllValues.Slice(handle.Handle));
+        return Encoding.Unicode.GetString(_primitiveData.AllValues.Slice(handle.Handle + 4, count));
     }
 
     object? ReadPrimitive(SerialHandle handle)
@@ -177,6 +154,7 @@ public partial class SerializedObjectTree
         public enum Type
         {
             Reference, 
+            ReferenceToPrevious,
             Primitive, 
             Array,
             ArrayCount,
