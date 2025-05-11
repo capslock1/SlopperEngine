@@ -57,7 +57,11 @@ public partial class SerializedObjectTree
                 if(method is null) 
                     continue;
 
-                SerialHandle methodP = default;
+                SerialHandle methodP = _serializedObjects[currentField];
+                SerialHandle serialCount = _serializedObjects[methodP.Handle];
+                int refint = 0;
+                CustomSerializer serializer = new(methodP.Handle+1, serialCount.Handle, deserializedObjects, this, ref refint);
+                CallOnSerializeQuick(method, res, serializer);
             }
             return res;
         }

@@ -71,8 +71,6 @@ public partial class SceneObject
     {
         if(serializer.IsWriter)
             Initialize();
-
-        System.Console.WriteLine("yeah this got called!");
     }
 
     [OnRegister] void CompleteRegister() => _registryComplete = true;

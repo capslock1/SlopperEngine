@@ -1,3 +1,5 @@
+using SlopperEngine.SceneObjects.Serialization;
+
 namespace SlopperEngine.SceneObjects;
 
 public partial class SceneObject
@@ -27,8 +29,25 @@ public partial class SceneObject
         {
             Owner = owner;
             _currentlyRegistered = owner.InScene;
-            owner._childLists ??= new(1);
-            owner._childLists.Add(this);
+            Init();
+        }
+
+        void Init()
+        {
+            Owner._childLists ??= new(1);
+            Owner._childLists.Add(this);
+        }
+
+        [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+        {
+            if(serializer.IsReader) return;
+            
+            Init();
+            for(int i = 0; i<_children.Count; i++)
+            {
+                _children[i]._parentList = this;
+                _children[i]._parentListIndex = i;
+            }
         }
 
         public SceneObject GetOwner() => Owner;

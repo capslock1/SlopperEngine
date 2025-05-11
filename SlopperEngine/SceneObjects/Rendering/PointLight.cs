@@ -49,7 +49,7 @@ public class PointLight : SceneObject3D
         }
     }
 
-    [DontSerialize] float _sharpness = 1;
+    float _sharpness = 1;
     /// <summary>
     /// How sharply this point light falls off.
     /// </summary>
@@ -67,13 +67,6 @@ public class PointLight : SceneObject3D
         }
     }
 
-    // test serialization - make sure to DoSerialize _sharpness after deleting this
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
-    {
-        serializer.Serialize(ref _sharpness);
-    }
-
-    
     [OnRegister]
     void CreateData()
     {

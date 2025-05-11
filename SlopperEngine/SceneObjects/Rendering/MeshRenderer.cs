@@ -1,6 +1,7 @@
 using SlopperEngine.Graphics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.SceneObjects.Rendering;
 
@@ -9,7 +10,7 @@ namespace SlopperEngine.SceneObjects.Rendering;
 /// </summary>
 public class MeshRenderer : SceneObject3D
 {
-    SceneDataHandle _drawcallIndex;
+    [DontSerialize] SceneDataHandle _drawcallIndex;
 
     Mesh? _mesh;
     public Mesh? Mesh{

@@ -13,7 +13,6 @@ using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Physics.Colliders;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;
-using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.TestStuff;
 
@@ -177,10 +176,6 @@ public class TestGame : SceneObject
             _lamps[i] = lamp;
         }
 
-        var lamp0 = _lamps[0].Serialize();
-        // lamp0.WriteOutTree();
-        var instance = lamp0.Instantiate();
-
         _main.FrameUpdate(new(.0001f));
 
         StbImage.stbi_set_flip_vertically_on_load(0);
@@ -232,6 +227,14 @@ public class TestGame : SceneObject
         _UIScene?.InputUpdate(args);
         if (args.KeyboardState.IsKeyDown(Keys.Escape))
             _testWindow.Close();
+
+        if (args.KeyboardState.IsKeyPressed(Keys.N))
+        {
+            Random rand = new();
+            var serial = _lamps[rand.Next(0, _lamps.Length)].Serialize();
+            var instance = serial.Instantiate();
+            _main!.Children.Add(instance);
+        }
     }
 
     void OnFramebufferResize(FramebufferResizeEventArgs e)
