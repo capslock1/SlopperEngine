@@ -56,7 +56,7 @@ public class SpanList<T>
     /// </summary>
     /// <param name="lengthToAdd">The amount of elements to add.</param>
     /// <returns>A span for the caller to write into.</returns>
-    public ListSpan Add(int lengthToAdd)
+    public ListSpan AddMultiple(int lengthToAdd)
     {
         int currentCount = _usedSize;
         EnsureCapacity(_usedSize + lengthToAdd);

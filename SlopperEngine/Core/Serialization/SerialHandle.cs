@@ -18,5 +18,6 @@ public record struct SerialHandle
         CustomSerializedObjects,
         CustomSerializedObjectsCount,
         OutsideReference,
+        SerializedFromKey,
     }
 }

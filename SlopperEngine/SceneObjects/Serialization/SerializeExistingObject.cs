@@ -19,7 +19,7 @@ public partial class SerializedObjectTree
         if(toSerialize.InScene) 
             throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
         
-        var res = _serializedObjects.Add(2);
+        var res = _serializedObjects.AddMultiple(2);
         SerializationRefs refs = new();
         refs.ReferenceIDs = new();
         refs.TypeIndices = new();
@@ -47,7 +47,7 @@ public partial class SerializedObjectTree
         handle.Handle = _serializedObjects.Count;
         var fields = ReflectionCache.GetSerializableFields(type);
         var methods = ReflectionCache.GetOnSerializeMethods(type);
-        var dataSpan = _serializedObjects.Add(fields.Count + methods.Count);
+        var dataSpan = _serializedObjects.AddMultiple(fields.Count + methods.Count);
 
         int serialIndex = 0;
         // serialize the fields of the object
@@ -79,7 +79,7 @@ public partial class SerializedObjectTree
 
             if(results != null)
             {
-                var methodResultSpan = _serializedObjects.Add(results.Count);
+                var methodResultSpan = _serializedObjects.AddMultiple(results.Count);
                 for(int i = 0; i<results.Count; i++)
                 {
                     var obj = results[i];
@@ -149,7 +149,7 @@ public partial class SerializedObjectTree
         res.IndexedType = GetTypeIndex(typeof(string), refs);
         res.DebugTypeName = "string";
 
-        var span = _primitiveData.Add(Encoding.Unicode.GetByteCount(obj) + 4);
+        var span = _primitiveData.AddMultiple(Encoding.Unicode.GetByteCount(obj) + 4);
         BinaryPrimitives.WriteInt32LittleEndian(span, stringLength);
         Encoding.Unicode.GetBytes(obj, span.Slice(4));
 
@@ -163,7 +163,7 @@ public partial class SerializedObjectTree
         res.Handle = _serializedObjects.Count;
         int typeIndex = GetTypeIndex(array.GetType().GetElementType()!, refs);
 
-        var valueSpan = _serializedObjects.Add(array.Length + 1 + array.Rank);
+        var valueSpan = _serializedObjects.AddMultiple(array.Length + 1 + array.Rank);
         SerialHandle rank = default;
         rank.SerialType = SerialHandle.Type.ArrayCount;
         rank.Handle = array.Rank;
@@ -240,7 +240,7 @@ public partial class SerializedObjectTree
             res.IndexedType = GetTypeIndex(typeof(T), refs);
             res.DebugTypeName = typeof(T).Name;
 
-            var span = _primitiveData.Add(ssize);
+            var span = _primitiveData.AddMultiple(ssize);
             num.TryWriteLittleEndian(span, out _);
         }
         unsafe void WriteFloat<T>(T num, in SerializationRefs refs) where T : unmanaged, IBinaryFloatingPointIeee754<T>
@@ -249,7 +249,7 @@ public partial class SerializedObjectTree
             res.IndexedType = GetTypeIndex(typeof(T), refs);
             res.DebugTypeName = typeof(T).Name;
 
-            var span = _primitiveData.Add(ssize);
+            var span = _primitiveData.AddMultiple(ssize);
 
             if(ssize == 8)
             {
