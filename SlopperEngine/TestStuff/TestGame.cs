@@ -76,19 +76,14 @@ public class TestGame : SceneObject
             LocalPosition = new Vector3(0,0,-3),
         };
 
-        //addOneMillionBillionCubes();
-
         var rand = new System.Random();
         _main.Children.Add(new Plimbo());
         _main.Children.Add(sphereCol);
         _main.Children.Add(missing);
 
-        //_main.Children.Add(new StandalonePhysTest());
         //_main.Children.Add(new RotateCubeAdder(10, 1f));
         _main.Children.Add(new ComputeShaderTest());
         //_main.Children.Add(new AddRemoveSpeedTester());
-        //camera.AddChild(new OpenALtest());
-        //main.AddChild(new DiscordTest());
 
         _rb = new Rigidbody();
         _rb.Position = (2,0,0);

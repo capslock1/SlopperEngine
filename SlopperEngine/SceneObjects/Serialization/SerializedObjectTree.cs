@@ -84,6 +84,12 @@ public partial class SerializedObjectTree
             case SerialHandle.Type.Array:
             return ReadArray(thisObject, deserializedObjects);
 
+            case SerialHandle.Type.SerializedFromKey:
+            Type thisObjectType = _indexedTypes[thisObject.IndexedType].Item1;
+            Type keyType = _indexedTypes[_serializedObjects[thisObject.Handle].IndexedType].Item1;
+            object? key = RecursiveDeserialize(thisObject.Handle+1, deserializedObjects);
+            return ReflectionCache.DeserializeObjectFromKey(keyType, thisObjectType, key);
+
             default:
             return null;
         }

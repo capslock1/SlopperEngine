@@ -132,6 +132,21 @@ public partial class SerializedObjectTree
             res.SerialType = SerialHandle.Type.OutsideReference;
             return res;
         }
+
+        if(obj is ISerializableFromKeyBase serFromKey)
+        {
+            object? objKey = serFromKey.SerializeToObject();
+            res.SerialType = SerialHandle.Type.SerializedFromKey;
+            res.Handle = _serializedObjects.Count;
+            SerialHandle keyType = default;
+            keyType.SerialType = SerialHandle.Type.KeyType;
+            keyType.IndexedType = GetTypeIndex(serFromKey.GetKeyType(), refs);
+            _serializedObjects.Add(keyType);
+            _serializedObjects.Add(default);
+            var keyHandle = objKey != null ? SerializeRecursive(objKey, res.Handle, refs) : default;
+            _serializedObjects[res.Handle+1] = keyHandle;
+            return res;
+        }
         
         res.SerialType = SerialHandle.Type.Reference;
         refs.ReferenceIDs.Add(obj, destinationIndex);
