@@ -112,9 +112,11 @@ public partial class SerializedObjectTree
             return WritePrimitive(obj, refs);
         
         SerialHandle res = default;
-        res.SerialType = SerialHandle.Type.ReferenceToPrevious;
         if(refs.ReferenceIDs.TryGetValue(obj, out res.Handle))
+        {
+            res.SerialType = SerialHandle.Type.ReferenceToPrevious;
             return res;
+        }
 
         newReference = true;
         if(type == typeof(string))
@@ -122,6 +124,14 @@ public partial class SerializedObjectTree
 
         if(obj is Array arr)
             return SerializeArray(arr, refs);
+
+        if(obj is SceneObject sc && sc.InScene)
+        {
+            // dont serialize sceneobjects that are in the scene - these are *not* part of the tree, active, and should never *ever* be serialized
+            // this is because else, you risk serializing the entire scene, even if you only want to serialize a part
+            res.SerialType = SerialHandle.Type.OutsideReference;
+            return res;
+        }
         
         res.SerialType = SerialHandle.Type.Reference;
         refs.ReferenceIDs.Add(obj, destinationIndex);

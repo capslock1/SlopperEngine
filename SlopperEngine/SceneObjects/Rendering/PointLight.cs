@@ -2,7 +2,7 @@ using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Graphics.Lighting;
 using OpenTK.Mathematics;
-using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects.Rendering;
 
@@ -11,7 +11,7 @@ namespace SlopperEngine.SceneObjects.Rendering;
 /// </summary>
 public class PointLight : SceneObject3D
 {
-    SceneDataHandle _dataHandle;
+    [DontSerialize] SceneDataHandle _dataHandle;
 
     float _radius = 5;
     /// <summary>

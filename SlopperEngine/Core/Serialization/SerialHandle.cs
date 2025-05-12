@@ -17,5 +17,6 @@ public record struct SerialHandle
         ArrayCount,
         CustomSerializedObjects,
         CustomSerializedObjectsCount,
+        OutsideReference,
     }
 }
