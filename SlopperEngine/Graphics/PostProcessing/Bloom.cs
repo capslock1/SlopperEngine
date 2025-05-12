@@ -62,7 +62,7 @@ public class Bloom : IDisposable
 
             DownscaleTo(pTexture, _mipChain[i]);
         }
-        float contribution = 1f;
+        int currentCount = 1;
         for(int i = _mipChain.Length-1; i>=0; i--)
         {
             Texture2D nTexture;
@@ -70,8 +70,8 @@ public class Bloom : IDisposable
                 nTexture = target;
             else nTexture = _mipChain[i-1];
 
-            contribution *= .5f;
-            float lerp = 1-contribution;//1f-(float)i/_mipChain.Length*sharpness;
+            currentCount++;
+            float lerp = (currentCount-1)/(float)currentCount;//1-contribution;//1f-(float)i/_mipChain.Length*sharpness;
             UpscaleTo(_mipChain[i], nTexture, i == 0 ? intensity : lerp, i == 0 ? 1-intensity : 1-lerp);
         }
     }

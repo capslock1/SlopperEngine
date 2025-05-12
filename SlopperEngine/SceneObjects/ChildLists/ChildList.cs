@@ -1,4 +1,5 @@
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects;
 

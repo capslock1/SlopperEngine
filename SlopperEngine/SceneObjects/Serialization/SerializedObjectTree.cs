@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using SlopperEngine.Core.Collections;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects.Serialization;
 
@@ -150,24 +151,4 @@ public partial class SerializedObjectTree
     static unsafe void CallOnSerializeQuick(MethodInfo OnSerializeMethod, object target, CustomSerializer serializer) => 
         ((delegate*<object, CustomSerializer, void>)OnSerializeMethod.MethodHandle.GetFunctionPointer())
             (target, serializer);
-
-    public record struct SerialHandle
-    {
-        public int Handle;
-        public int IndexedType;
-        public string? DebugTypeName;
-        public Type SerialType;
-        public bool SaveFields;
-
-        public enum Type
-        {
-            Reference, 
-            ReferenceToPrevious,
-            Primitive, 
-            Array,
-            ArrayCount,
-            CustomSerializedObjects,
-            CustomSerializedObjectsCount,
-        }
-    }
 }

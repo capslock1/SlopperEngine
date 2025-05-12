@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using SlopperEngine.Core;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects.Serialization;
 
@@ -45,8 +45,8 @@ public partial class SerializedObjectTree
             return handle;
 
         handle.Handle = _serializedObjects.Count;
-        var fields = SceneObjectReflectionCache.GetSerializableFields(type);
-        var methods = SceneObjectReflectionCache.GetOnSerializeMethods(type);
+        var fields = ReflectionCache.GetSerializableFields(type);
+        var methods = ReflectionCache.GetOnSerializeMethods(type);
         var dataSpan = _serializedObjects.Add(fields.Count + methods.Count);
 
         int serialIndex = 0;
@@ -100,7 +100,7 @@ public partial class SerializedObjectTree
         if(refs.TypeIndices.TryGetValue(t, out var res)) 
             return res.Item1;
 
-        res = refs.TypeIndices[t] = (refs.TypeIndices.Count, SceneObjectReflectionCache.GetSerializableFields(t), SceneObjectReflectionCache.GetOnSerializeMethods(t));
+        res = refs.TypeIndices[t] = (refs.TypeIndices.Count, ReflectionCache.GetSerializableFields(t), ReflectionCache.GetOnSerializeMethods(t));
         return res.Item1;
     }
 

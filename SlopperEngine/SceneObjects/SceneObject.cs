@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
+using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.SceneObjects;

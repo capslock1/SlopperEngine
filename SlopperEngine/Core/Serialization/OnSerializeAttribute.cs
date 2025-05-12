@@ -1,4 +1,4 @@
-namespace SlopperEngine.SceneObjects.Serialization;
+namespace SlopperEngine.Core.Serialization;
 
 [AttributeUsage(AttributeTargets.Method)]
 public class OnSerializeAttribute : Attribute

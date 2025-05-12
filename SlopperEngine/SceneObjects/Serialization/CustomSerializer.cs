@@ -6,8 +6,6 @@ partial class SerializedObjectTree
     /// <summary>
     /// Serializes objects.
     /// </summary>
-    /// <param name="target"></param>
-    /// <param name="writes"></param>
     public ref struct CustomSerializer
     {
         /// <summary>

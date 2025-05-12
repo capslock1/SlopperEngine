@@ -1,7 +1,7 @@
 using SlopperEngine.Graphics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
-using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects.Rendering;
 
