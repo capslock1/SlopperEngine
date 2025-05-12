@@ -20,7 +20,7 @@ public static class ReflectionCache
     /// <param name="objectType">The type of the object (that implements ISerializableFromKey).</param>
     /// <param name="key">The key to deserialize from.</param>
     /// <returns>A new instance of an object created from the key, or null if any error occurs.</returns>
-    public static object? DeserializeTypeFromKey(Type keyType, Type objectType, object key)
+    public static object? DeserializeObjectFromKey(Type keyType, Type objectType, object key)
     {
         _deserialFromKeyMethod ??= typeof(ReflectionCache).GetMethod("DeserializeFromKey", BindingFlags.Static | BindingFlags.NonPublic);
         try
