@@ -2,6 +2,10 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Graphics.Renderers;
+using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.Graphics.DefaultResources;
+using SlopperEngine.Graphics.GPUResources.Shaders;
 
 namespace SlopperEngine.Graphics;
 

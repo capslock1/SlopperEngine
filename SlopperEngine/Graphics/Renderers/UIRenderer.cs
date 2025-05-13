@@ -6,6 +6,10 @@ using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.Core;
 using SlopperEngine.UI;
+using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Graphics.GPUResources.Textures;
+
 
 namespace SlopperEngine.Graphics.Renderers;
 

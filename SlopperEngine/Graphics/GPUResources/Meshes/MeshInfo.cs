@@ -1,7 +1,7 @@
 using System.CodeDom.Compiler;
 using SlopperEngine.Graphics.ShadingLanguage;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Meshes;
 
 /// <summary>
 /// Describes the format of a mesh. Should be privately implemented within mesh classes. <br/>

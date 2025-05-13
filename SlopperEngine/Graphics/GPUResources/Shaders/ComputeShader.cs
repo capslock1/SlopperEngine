@@ -1,6 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Shaders;
 
 /// <summary>
 /// A specialized type of programshader able to process arbitrary data.
@@ -64,5 +64,13 @@ public class ComputeShader : ProgramShader
             throw new Exception("Attempted to dispatch a compute shader with 0 or less groups");
         Use();
         GL.DispatchCompute(groupsX, groupsY, groupsZ);
+    }
+
+    protected override IGPUResourceOrigin GetOrigin() => new NoOrigin();
+    protected class NoOrigin : IGPUResourceOrigin
+    {
+        public GPUResource CreateResource() => Create(@"#version 450
+layout(local_size_x = 32, local_size_y = 32) in;
+void main() {}");
     }
 }

@@ -8,6 +8,7 @@ using StbImageSharp;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core;
 using SlopperEngine.Graphics.Renderers;
+using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Physics;
 using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Physics.Colliders;

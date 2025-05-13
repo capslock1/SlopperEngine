@@ -1,8 +1,6 @@
-using System.ComponentModel.Design;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Meshes;
 
 /// <summary>
 /// Abstract class that stores a mesh on the GPU side.

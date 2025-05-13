@@ -1,7 +1,7 @@
 using System;
 using OpenTK.Graphics.OpenGL4;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Textures;
 
 /// <summary>
 /// A 2D texture for use on the GPU.
@@ -38,6 +38,25 @@ public class Texture2D : Texture
 
         GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, width, height, 0, sentFormat, PixelType.UnsignedByte, data);
         return res;
+    }
+
+    protected override IGPUResourceOrigin GetOrigin() => new Tex2DOrigin(Width, Height, InternalFormat, MagnificationFilter, MinificationFilter, HorizontalWrap, VerticalWrap);
+    protected class Tex2DOrigin(int width, int height, SizedInternalFormat format, TextureMagFilter magFilter, TextureMinFilter minFilter, TextureWrapMode wrapModeH, TextureWrapMode wrapModeV) : IGPUResourceOrigin
+    {
+        int width = width;
+        int height = height;
+        SizedInternalFormat format = format;
+        TextureMagFilter magFilter = magFilter;
+        TextureMinFilter minFilter = minFilter;
+        TextureWrapMode wrapModeV = wrapModeV;
+        TextureWrapMode wrapModeH = wrapModeH;
+        public GPUResource CreateResource() 
+        {
+            var res = Create(width, height, format, magFilter:magFilter, minFilter:minFilter);
+            res.HorizontalWrap = wrapModeH;
+            res.VerticalWrap = wrapModeV;
+            return res;
+        }
     }
 
     protected override TextureTarget GetTarget() => TextureTarget.Texture2D;

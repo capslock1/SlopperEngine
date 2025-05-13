@@ -1,9 +1,11 @@
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
+using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Graphics.GPUResources.Textures;
 using StbImageSharp;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.Loaders;
 
 /// <summary>
 /// Loads a texture into VRAM from the disk.
@@ -29,7 +31,14 @@ public static class TextureLoader
         res = Texture2D.Create(image.Width, image.Height, format, PixelFormat.Rgba, image.Data);
 
         _textureCache.Set(filepath, res);
+        res.OverrideOrigin = new LoadedTextureOrigin(filepath);
         
         return res;
+    }
+
+    class LoadedTextureOrigin(string filepath) : IGPUResourceOrigin
+    {
+        string filepath = filepath;
+        public GPUResource CreateResource() => FromFilepath(filepath);
     }
 }

@@ -1,6 +1,8 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
+using SlopperEngine.Graphics.GPUResources.Shaders;
+using SlopperEngine.Graphics.GPUResources.Textures;
 
 namespace SlopperEngine.Graphics.PostProcessing;
 

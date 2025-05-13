@@ -7,6 +7,8 @@ using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.Lighting;
+using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Graphics.GPUResources.Textures;
 
 namespace SlopperEngine.Graphics.Renderers;
 

@@ -4,15 +4,19 @@ using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Graphics.ShadingLanguage;
+using SlopperEngine.Graphics.GPUResources.Shaders;
+using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.Graphics;
 
 /// <summary>
 /// A dynamically recompiled shader, conforming to the needs of a Mesh's format and the renderer.
 /// </summary>
-public class SlopperShader
+public class SlopperShader : ISerializableFromKey<string>
 {
     string? _name;
+    string _filePath;
     static Cache<string, SlopperShader> _shaderCache = new();
     Dictionary<(Type, MeshInfo), DrawShader> _drawCache = new(); 
     //VertexShaders do not get cached because they are unique to DrawShader's cache
@@ -21,9 +25,10 @@ public class SlopperShader
     //neither of these are using the actual Cache object, because the sloppershader instance itself should be collected
 
     public SyntaxTree? Scope {get; private set;}
-    protected SlopperShader(SyntaxTree scope)
+    protected SlopperShader(SyntaxTree scope, string filePath)
     {
         Scope = scope;
+        _filePath = filePath;
     }
 
     /// <summary>
@@ -45,7 +50,7 @@ public class SlopperShader
 
         SyntaxTree scope = Transpiler.Parse(source);
 
-        res = new(scope);
+        res = new(scope, filepath);
         _shaderCache.Set(filepath, res);
         res._name = filepath;
         return res;
@@ -218,4 +223,8 @@ void vertIn_Initialize();
         if(scope.pixel == null) throw new NullReferenceException("yeah pixel shader is missing lol");
         scope.pixel.Write(writer);
     }
+
+    string ISerializableFromKey<string>.Serialize() => _filePath;
+
+    static object? ISerializableFromKey<string>.Deserialize(string key) => Create(key);
 }

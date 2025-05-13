@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources;
 
 /// <summary>
 /// A GPU-side buffer containing arbitrary data. 
@@ -30,7 +30,7 @@ public class BufferObject : GPUResource
     /// <param name="type">The type of buffer object.</param>
     /// <param name="data">The data to store.</param>
     /// <param name="usage">Optionally, the usage hint.</param>
-    public static BufferObject Create<T>(BufferTarget type, Span<T> data, BufferUsageHint usage = BufferUsageHint.StreamDraw) where T : struct
+    public static BufferObject Create<T>(BufferTarget type, Span<T> data, BufferUsageHint usage = BufferUsageHint.DynamicDraw) where T : struct
     {
         int size = Unsafe.SizeOf<T>()*data.Length;
         var res = new BufferObject(size, type);
@@ -45,7 +45,7 @@ public class BufferObject : GPUResource
     /// <param name="type">The type of the buffer object.</param>
     /// <param name="size">The size of the buffer in bytes.</param>
     /// <param name="usage">Optionally, the usage hint.</param>
-    public static BufferObject Create(BufferTarget type, int size, BufferUsageHint usage = BufferUsageHint.StreamDraw) 
+    public static BufferObject Create(BufferTarget type, int size, BufferUsageHint usage = BufferUsageHint.DynamicDraw) 
     {
         var res = new BufferObject(size, type);
         GL.BufferData(type, size, 0, usage);
@@ -173,6 +173,15 @@ public class BufferObject : GPUResource
     }
     
     protected override ResourceData GetResourceData() => new BOResourceData(){ubo = this.Handle};
+
+    protected override IGPUResourceOrigin GetOrigin() => new BufferObjectOrigin(Size, BufferType);
+    protected class BufferObjectOrigin(int size, BufferTarget type) : IGPUResourceOrigin
+    {
+        int size = size;
+        BufferTarget type = type;
+        public GPUResource CreateResource() => Create(type, size);
+    }
+
     protected class BOResourceData : ResourceData
     {
         public int ubo;

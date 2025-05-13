@@ -3,6 +3,7 @@ using SlopperEngine.Core;
 using SlopperEngine.Physics;
 using SlopperEngine.Graphics;
 using SlopperEngine.SceneObjects;
+using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.TestStuff;
 

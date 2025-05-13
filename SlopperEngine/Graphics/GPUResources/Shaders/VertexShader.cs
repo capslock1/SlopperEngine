@@ -1,6 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Shaders;
 
 /// <summary>
 /// An abstract shader that describes the fragment function of a drawshader. Cannot be used outside of a DrawShader.
@@ -30,5 +30,15 @@ public class VertexShader : Shader
         }
 
         return new VertexShader(handle);
+    }
+
+    protected override IGPUResourceOrigin GetOrigin() => new NoOrigin();
+    protected class NoOrigin : IGPUResourceOrigin
+    {
+        public GPUResource CreateResource() => Create(@"#version 450 core
+void main()
+{
+    gl_Position = vec4(0);
+}");
     }
 }

@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
 using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.Graphics;
+using SlopperEngine.Graphics.GPUResources;
 
 namespace SlopperEngine.Windowing;
 

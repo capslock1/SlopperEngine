@@ -1,5 +1,8 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.Graphics.GPUResources.Shaders;
 
 namespace SlopperEngine.Graphics;
 

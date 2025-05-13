@@ -1,7 +1,7 @@
 using System;
 using OpenTK.Graphics.OpenGL4;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Textures;
 
 /// <summary>
 /// Abstract GPU-side texture class. Handles low level functions only.

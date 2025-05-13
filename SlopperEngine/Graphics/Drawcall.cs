@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using SlopperEngine.SceneObjects;
+using SlopperEngine.Graphics.GPUResources.Meshes;
 
 namespace SlopperEngine.Graphics;
 

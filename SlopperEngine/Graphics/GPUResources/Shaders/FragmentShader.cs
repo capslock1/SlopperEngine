@@ -1,6 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Shaders;
 
 /// <summary>
 /// An abstract shader that describes the fragment function of a drawshader. Cannot be used outside of a DrawShader.
@@ -30,5 +30,17 @@ public class FragmentShader : Shader
         }
 
         return new FragmentShader(handle);
+    }
+
+    protected override IGPUResourceOrigin GetOrigin() => new NoOrigin();
+    protected class NoOrigin : IGPUResourceOrigin
+    {
+        public GPUResource CreateResource() => Create(@"#version 450 core
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(0,0,0,1.0);
+}");
     }
 }

@@ -2,6 +2,8 @@ using SlopperEngine.Graphics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Graphics.DefaultResources;
 
 namespace SlopperEngine.SceneObjects.Rendering;
 

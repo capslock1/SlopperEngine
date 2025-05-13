@@ -4,6 +4,8 @@ using SlopperEngine.SceneObjects.Rendering;
 using OpenTK.Mathematics;
 using SlopperEngine.Physics;
 using SlopperEngine.Physics.Colliders;
+using SlopperEngine.Graphics.Loaders;
+using SlopperEngine.Graphics.GPUResources.Meshes;
 
 namespace SlopperEngine.TestStuff;
 

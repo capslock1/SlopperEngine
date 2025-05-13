@@ -1,9 +1,10 @@
-using Assimp;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
+using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Graphics.GPUResources.Meshes;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.Loaders;
 
 /// <summary>
 /// Loads meshes into VRAM from the disk.
@@ -22,10 +23,10 @@ public static class MeshLoader
         if(result != null)
             return result;
         
-        Scene scene;
+        Assimp.Scene scene;
         try
         {
-            AssimpContext context = new AssimpContext();
+            Assimp.AssimpContext context = new Assimp.AssimpContext();
             scene = context.ImportFile(filepath);
         }
         catch(FileNotFoundException)
@@ -196,6 +197,13 @@ public static class MeshLoader
         
         result = new OBJMesh(finalVertices.ToArray(), finalIndices.ToArray());
         _loadedMeshes.Set(filepath, result);
+        result.OverrideOrigin = new OBJMeshOrigin(filepath);
         return result;
+    }
+
+    class OBJMeshOrigin(string filepath) : IGPUResourceOrigin
+    {
+        string filepath = filepath;
+        public GPUResource CreateResource() => SimpleFromWavefrontOBJ(filepath);
     }
 }

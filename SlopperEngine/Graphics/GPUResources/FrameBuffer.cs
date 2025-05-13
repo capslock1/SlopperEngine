@@ -1,7 +1,8 @@
 using System.Collections.ObjectModel;
 using OpenTK.Graphics.OpenGL4;
+using SlopperEngine.Graphics.GPUResources.Textures;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources;
 
 /// <summary>
 /// A container for textures to draw to using a DrawShader.
@@ -70,6 +71,20 @@ public class FrameBuffer : GPUResource
     }
 
     protected override ResourceData GetResourceData() => new UBOResourceData(){FBO = this.FBO, RBO = this.RBO};
+
+    protected override IGPUResourceOrigin GetOrigin() => new FrameBufferOrigin(Width, Height, ColorAttachments.Count);
+    protected class FrameBufferOrigin(int width, int height, int colorAttachmentCount = 1) : IGPUResourceOrigin
+    {
+        int width = width;
+        int height = height;
+        int colorAttachmentCount = colorAttachmentCount;
+
+        public GPUResource CreateResource()
+        {
+            return new FrameBuffer(width, height, colorAttachmentCount);
+        }
+    }
+
     protected class UBOResourceData : ResourceData
     {
         public required int FBO;
@@ -79,5 +94,5 @@ public class FrameBuffer : GPUResource
             GL.DeleteFramebuffer(FBO);
             GL.DeleteRenderbuffer(RBO);
         }
-    } 
+    }
 }

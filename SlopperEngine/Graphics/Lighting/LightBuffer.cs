@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using SlopperEngine.Graphics.GPUResources;
 
 namespace SlopperEngine.Graphics.Lighting;
 

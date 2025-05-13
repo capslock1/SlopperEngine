@@ -1,6 +1,9 @@
+using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
+using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Graphics.GPUResources.Shaders;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.Loaders;
 
 /// <summary>
 /// Loads shaders into VRAM from the disk.
@@ -23,13 +26,14 @@ public static class ShaderLoader
         if(res != null)
             return res;
 
-        string VertexShaderSource = File.ReadAllText(Path.Combine("../",VertexFilepath));
-        string FragmentShaderSource = File.ReadAllText(Path.Combine("../",FragmentFilepath));
+        string VertexShaderSource = File.ReadAllText(Assets.GetPath(VertexFilepath));
+        string FragmentShaderSource = File.ReadAllText(Assets.GetPath(FragmentFilepath));
 
         VertexShader vert = VertexShader.Create(VertexShaderSource);
         FragmentShader frag = FragmentShader.Create(FragmentShaderSource);
 
         res = DrawShader.Create(vert, frag);
+        res.OverrideOrigin = new RawGLSLShaderOrigin(VertexFilepath, FragmentFilepath);
 
         vert.Dispose();
         frag.Dispose();
@@ -37,5 +41,12 @@ public static class ShaderLoader
         _shaderCache.Set(cacheKey, res);
         
         return res;
+    }
+
+    class RawGLSLShaderOrigin(string vertFilepath, string fragFilepath) : IGPUResourceOrigin
+    {
+        string vertexFilePath = vertFilepath;
+        string fragmentFilePath = fragFilepath;
+        public GPUResource CreateResource() => FromRawGLSLFilepaths(vertexFilePath, fragmentFilePath);
     }
 }

@@ -1,24 +1,23 @@
 using System.Collections.Concurrent;
-using SlopperEngine.Windowing;
+using SlopperEngine.Core.Serialization;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources;
 
 /// <summary>
 /// Abstract class to handle resources on the GPU.
 /// Automatically cleaned from VRAM if garbage collected.
 /// </summary>
-public abstract class GPUResource : IDisposable
+public abstract class GPUResource : IDisposable, ISerializableFromKey<IGPUResourceOrigin>
 {
     /// <summary>
     /// Gets called when the GPUResource gets disposed.
     /// </summary>
     public event Action? OnDispose = null;
 
-    //protected GPUResource()
-    //{
-    //    if(!MainContext.Instance.Context.IsCurrent)
-    //        System.Console.WriteLine($"Created a GPUResource ({this}) outside of the main context.");
-    //}
+    /// <summary>
+    /// Offers an override for the origin of this resource. If set, this will be used in serialization (and can prevent blank data after deserialization).
+    /// </summary>
+    public IGPUResourceOrigin? OverrideOrigin;
 
     private static ConcurrentQueue<ResourceData> _GCdResources = new();
     private bool _disposedValue = false;
@@ -58,6 +57,10 @@ public abstract class GPUResource : IDisposable
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    protected abstract IGPUResourceOrigin GetOrigin();
+    IGPUResourceOrigin ISerializableFromKey<IGPUResourceOrigin>.Serialize() => OverrideOrigin ?? GetOrigin();
+    static object? ISerializableFromKey<IGPUResourceOrigin>.Deserialize(IGPUResourceOrigin key) => key?.CreateResource();
 
     protected abstract class ResourceData
     {

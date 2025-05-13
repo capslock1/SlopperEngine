@@ -2,6 +2,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.Core;
 using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.SceneObjects;
+using SlopperEngine.Graphics.DefaultResources;
 using OpenTK.Mathematics;
 
 namespace SlopperEngine.TestStuff;

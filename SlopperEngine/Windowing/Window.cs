@@ -1,6 +1,8 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics;
+using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Graphics.GPUResources.Textures;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Common.Input;

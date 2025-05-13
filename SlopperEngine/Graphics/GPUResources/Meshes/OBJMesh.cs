@@ -2,7 +2,7 @@ using System.CodeDom.Compiler;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.ShadingLanguage;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Meshes;
 
 /// <summary>
 /// A mesh created from a wavefront .obj file.
@@ -86,6 +86,13 @@ layout (location = 2) in vec3 Model_Normal;";
         protected override bool Equals(MeshInfo other) => true;
     }
 
+    protected override IGPUResourceOrigin GetOrigin() => new OBJMeshOrigin(this);
+    private class OBJMeshOrigin(OBJMesh target) : IGPUResourceOrigin
+    {
+        float[] vertices = target._vertices;
+        uint[] indices = target._indices;
+        public GPUResource CreateResource() => new OBJMesh(vertices, indices);
+    }
     protected override ResourceData GetResourceData()
     {
         return new OBJMeshResourceData(base.GetResourceData(), _arrayBuffer, _elementBuffer);

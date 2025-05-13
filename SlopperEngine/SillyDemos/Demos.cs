@@ -9,6 +9,7 @@ using OpenTK.Windowing.Common;
 using SlopperEngine.Core.SceneComponents;
 using StbImageSharp;
 using OpenTK.Mathematics;
+using SlopperEngine.Graphics.Loaders;
 using SlopperEngine.TestStuff;
 
 namespace SlopperEngine.SillyDemos;

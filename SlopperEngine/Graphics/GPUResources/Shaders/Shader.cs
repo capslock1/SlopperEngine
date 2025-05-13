@@ -1,6 +1,6 @@
 using OpenTK.Graphics.OpenGL4;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Shaders;
 
 /// <summary>
 /// Abstract class describing an unbound shader object. Cannot be used outside of a ProgramShader.

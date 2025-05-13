@@ -16,7 +16,7 @@ public interface ISerializableFromKey<TKey> : ISerializableFromKeyBase
     /// </summary>
     /// <param name="key">The key to create the object from.</param>
     /// <returns>A new instance created using the key.</returns>
-    public static abstract object Deserialize(TKey key);
+    public static abstract object? Deserialize(TKey key);
     
     object? ISerializableFromKeyBase.SerializeToObject() => Serialize();
     Type ISerializableFromKeyBase.GetKeyType() => typeof(TKey);

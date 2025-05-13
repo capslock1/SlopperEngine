@@ -3,13 +3,14 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.ShadingLanguage;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Meshes;
 
 /// <summary>
 /// Represents a quad that lives in screenspace. Does not have a third dimension.
 /// </summary>
 public sealed class ScreenspaceQuadMesh : Mesh
 {
+    Box2 _currentShape;
     readonly BufferObject _arrayBuffer;
     readonly float[] _pointValues = new float[6*4];
 
@@ -31,6 +32,7 @@ public sealed class ScreenspaceQuadMesh : Mesh
     public void SetShape(Box2 shape)
     {
         SetPointValues(shape);
+        _currentShape = shape;
         _arrayBuffer.SetData(_pointValues.AsSpan(), 0);
     }
 
@@ -98,6 +100,14 @@ public sealed class ScreenspaceQuadMesh : Mesh
     public override MeshInfo GetMeshInfo() => _info;
 
     protected override ResourceData GetResourceData() => new SSQMResourceData(base.GetResourceData(), _arrayBuffer);
+
+    protected override IGPUResourceOrigin GetOrigin() => new SSQMOrigin(_currentShape);
+    class SSQMOrigin(Box2 shape) : IGPUResourceOrigin
+    {
+        Box2 shape = shape;
+        public GPUResource CreateResource() => new ScreenspaceQuadMesh(shape);
+    }
+
     class SSQMResourceData(ResourceData parent, BufferObject buffer) : ResourceData
     {
         readonly ResourceData _parent = parent;

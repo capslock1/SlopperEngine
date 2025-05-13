@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Shaders;
 
 /// <summary>
 /// A shader that can be used to draw a mesh into the bound framebuffer.
@@ -41,5 +41,10 @@ public class DrawShader : ProgramShader
         GL.DetachShader(handle, frag.Handle);
 
         return new DrawShader(handle);
+    }
+
+    protected override IGPUResourceOrigin GetOrigin()
+    {
+        return null!; // what the hell ever even
     }
 }

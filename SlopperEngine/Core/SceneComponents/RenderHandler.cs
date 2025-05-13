@@ -3,6 +3,7 @@ using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.SceneObjects.Rendering;
 using System.CodeDom.Compiler;
 using OpenTK.Mathematics;
+using SlopperEngine.Graphics.GPUResources.Textures;
 using OpenTK.Graphics.OpenGL4;
 
 namespace SlopperEngine.Core.SceneComponents;

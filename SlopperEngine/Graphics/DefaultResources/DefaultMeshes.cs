@@ -1,4 +1,7 @@
-namespace SlopperEngine.Graphics;
+using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Graphics.Loaders;
+
+namespace SlopperEngine.Graphics.DefaultResources;
 
 /// <summary>
 /// Contains several "default" meshes for easy use.

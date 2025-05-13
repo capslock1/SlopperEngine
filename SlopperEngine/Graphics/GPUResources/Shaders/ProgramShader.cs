@@ -1,7 +1,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Graphics.GPUResources.Shaders;
 
 /// <summary>
 /// A shader that can execute a program on the GPU. Used by DrawShader and ComputeShader.
