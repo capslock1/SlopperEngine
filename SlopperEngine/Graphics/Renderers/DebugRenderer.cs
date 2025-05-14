@@ -9,6 +9,7 @@ using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.Lighting;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.Graphics.Renderers;
 
@@ -18,7 +19,7 @@ namespace SlopperEngine.Graphics.Renderers;
 public class DebugRenderer : RenderHandler
 {
     public FrameBuffer Buffer {get; private set;}
-    LightBuffer _lights = new();
+    [DontSerialize] LightBuffer? _lights;
     Bloom _coolBloom;
     Vector2i _screenSize = (400,300);
     Vector2i _trueScreenSize = (800,600);
@@ -36,6 +37,7 @@ public class DebugRenderer : RenderHandler
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+        _lights ??= new();
         _lights.ClearBuffer();
         foreach(PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
             _lights.AddLight(dat);
@@ -78,7 +80,7 @@ public class DebugRenderer : RenderHandler
     {
         Buffer.DisposeAndTextures();
         globals.Dispose();
-        _lights.Dispose();
+        _lights?.Dispose();
         _coolBloom.Dispose();
     }
 

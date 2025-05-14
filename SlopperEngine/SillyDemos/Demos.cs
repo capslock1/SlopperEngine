@@ -51,7 +51,7 @@ public class Demos : Image
     // creates a simple undecorated window and attaches the scene's renderer's texture.
     Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : RenderHandler
     {
-        var window = Window.Create(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: new(_image));
+        var window = Window.Create(new(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: new(_image)));
         window.Scene = scene;
         window.WindowTexture = scene.Components.FirstOfType<TRenderer>()!.GetOutputTexture();
         window.CenterWindow();

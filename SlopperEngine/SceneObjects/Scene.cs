@@ -4,7 +4,9 @@ using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core.SceneData;
+using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics.Renderers;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.SceneObjects;
 
@@ -19,7 +21,7 @@ public sealed class Scene : SceneObject
     public RenderHandler? RenderHandler {get; private set;}
     public PhysicsHandler? PhysicsHandler {get; private set;}
 
-    FridgeDictionary<Type, ISceneDataContainer> _dataContainers = new();
+    [DontSerialize] FridgeDictionary<Type, ISceneDataContainer> _dataContainers = new();
     readonly RegisterHandler _register;
     static readonly List<Scene> _activeScenes = [];
 
@@ -28,6 +30,16 @@ public sealed class Scene : SceneObject
         _activeScenes.Add(this);
         _register = new(this);
         Components = new(this);
+    }
+    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        if(serializer.IsWriter)
+        {
+            _activeScenes.Add(this);
+            _dataContainers = new();
+            Components.CheckRegistered();
+            Children.CheckRegistered();
+        }
     }
 
     /// <summary>

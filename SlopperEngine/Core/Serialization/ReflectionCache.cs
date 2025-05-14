@@ -39,7 +39,7 @@ public static class ReflectionCache
             return null;
         }
     }
-    static object DeserializeFromKey<T, TSerial>(object key) where TSerial : ISerializableFromKey<T> => TSerial.Deserialize((T)key);
+    static object? DeserializeFromKey<T, TSerial>(object key) where TSerial : ISerializableFromKey<T> => TSerial.Deserialize((T)key);
 
     /// <summary>
     /// Gets the allowed serializable fields for a given type.

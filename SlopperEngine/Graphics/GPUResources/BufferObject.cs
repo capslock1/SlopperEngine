@@ -77,6 +77,7 @@ public class BufferObject : GPUResource
     /// <param name="index">The byte offset to write at.</param>
     public void SetData<T>(Span<T> data, int index) where T : struct
     {
+        if(data.Length < 1) return;
         Use();
         GL.BufferSubData(BufferType, index, data.Length * Unsafe.SizeOf<T>(), ref data[0]);
     }

@@ -4,13 +4,14 @@ using System.Runtime.InteropServices;
 using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.Windowing;
 
 /// <summary>
 /// Handles the main events loop of SlopperEngine.
 /// </summary>
-public class MainContext : GameWindow
+public class MainContext : GameWindow, ISerializableFromKey<byte>
 {
     /// <summary>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
@@ -118,4 +119,7 @@ id: {id}
             throw new Exception(message);
         }
     }
+
+    byte ISerializableFromKey<byte>.Serialize() => 0;
+    static object? ISerializableFromKey<byte>.Deserialize(byte key) => Instance;
 }

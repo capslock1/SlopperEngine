@@ -6,7 +6,9 @@ using BepuPhysics.Collidables;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core.SceneData;
+using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.Physics;
 
@@ -89,9 +91,9 @@ public class Rigidbody : PhysicsObject
     }
     protected OpenTK.Mathematics.Vector3 _lastKnownAngularVelocity = OpenTK.Mathematics.Vector3.Zero;
 
-    BodyHandle _bodyHandle;
-    SceneDataHandle _sceneHandle;
-    PhysicsHandler? _current;
+    [DontSerialize] BodyHandle _bodyHandle;
+    [DontSerialize] SceneDataHandle _sceneHandle;
+    [DontSerialize] PhysicsHandler? _current;
     bool _kinematic = false;
     List<(Vector3 impulse, Vector3 offset)> _queuedImpulses = new(1);
     List<Vector3> _queuedAngularImpulses = new(1);
@@ -153,6 +155,14 @@ public class Rigidbody : PhysicsObject
         var physHandler = Scene?.PhysicsHandler;
         if(physHandler == null) return;
         AddBody(physHandler!);
+    }
+
+    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        if(serializer.IsWriter)
+        {
+            
+        }
     }
 
     [OnRegister]

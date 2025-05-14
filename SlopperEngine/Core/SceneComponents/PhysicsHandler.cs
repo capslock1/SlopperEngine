@@ -1,5 +1,7 @@
 using BepuPhysics;
+using SlopperEngine.Core.Serialization;
 using SlopperEngine.Physics;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.Core.SceneComponents;
 
@@ -12,12 +14,19 @@ public class PhysicsHandler : SceneComponent
     public readonly float PhysicsDeltaTime = .02f;
     public float NormalizedPhysicsFrameTime {get; private set;} = 0; 
     public readonly bool SlowDownAtLowFPS = false;
-    public readonly Simulation Simulator;
+    [DontSerialize] public Simulation Simulator;
 
     float _timeSinceLastUpdate;
     bool _lateStart = true;
 
+    #pragma warning disable CS8618
     public PhysicsHandler()
+    #pragma warning restore CS8618
+    {
+        Init();
+    }
+
+    void Init()
     {
         Simulator = Simulation.Create(
             new BepuUtilities.Memory.BufferPool(),
@@ -25,6 +34,12 @@ public class PhysicsHandler : SceneComponent
             new ScenePoseIntegratorCallbacks(this),
             new SolveDescription(1,8)
             );
+    }
+
+    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        if(serializer.IsWriter)
+            Init();
     }
 
     [OnRegister]

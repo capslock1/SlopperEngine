@@ -14,6 +14,8 @@ using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Physics.Colliders;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;
+using SlopperEngine.Core.Serialization;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.TestStuff;
 
@@ -35,7 +37,7 @@ public class TestGame : SceneObject
     SlopperShader? _cubeShader = null;
     Camera _camera = new ManeuverableCamera();
     Rigidbody _rb;
-    TextBox _fpsCounter;
+    TextBox? _fpsCounter;
     PointLight[] _lamps;
 
     public TestGame(int width, int height, string title)
@@ -175,9 +177,9 @@ public class TestGame : SceneObject
         _main.FrameUpdate(new(.0001f));
 
         StbImage.stbi_set_flip_vertically_on_load(0);
-        _testWindow = Windowing.Window.Create(
+        _testWindow = Windowing.Window.Create(new(
             (width, height), 
-            null, 
+            default, 
             title, 
             WindowState.Normal, 
             true, 
@@ -187,12 +189,44 @@ public class TestGame : SceneObject
                 32, 
                 ImageResult.FromStream(
                     File.OpenRead(Assets.GetPath("defaultTextures/logo.png")),
-                    ColorComponents.RedGreenBlueAlpha).Data))
+                    ColorComponents.RedGreenBlueAlpha).Data)))
             );
 
         _testWindow.Scene = _main;
         _testWindow.WindowTexture = _UIScene.Components.FirstOfType<UIRenderer>()?.GetOutputTexture();
         _background.Uniforms[_backgroundTexIndex].Value = _main.RenderHandler!.GetOutputTexture();
+        _testWindow.FramebufferResize += OnFramebufferResize;
+    }
+
+    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer tree)
+    {
+        if(tree.IsReader) return;
+
+        _background = Material.Create(SlopperShader.Create("shaders/UI/PostProcessing.sesl"));
+        _backgroundTexIndex = _background.GetUniformIndexFromName("sourceTexture");
+        _UIScene = Scene.CreateEmpty();
+        _UIScene.Components.Add(new UpdateHandler());
+        _UIScene.Children.Add(new MaterialQuad(_background));
+        var rend = new UIRenderer();
+        _UIScene.Components.Add(rend);
+        rend.Resize(_testWindow.ClientSize);
+
+        _fpsCounter = new();
+        _fpsCounter.LocalShape = new(0,1,0,1);
+        _fpsCounter.Horizontal = Alignment.Max;
+        _fpsCounter.Vertical = Alignment.Min;
+        _fpsCounter.Text = "FPS: ";
+        _fpsCounter.Scale = 2;
+        _fpsCounter.BackgroundColor = new(0,0,0,.4f);
+        _UIScene.Children.Add(_fpsCounter);
+
+        // this crashes, because TestGame.OnSerialize gets called *before* the scene serializes.
+        // this is because the scene is not yet full deserialized. 
+        // should there be a OnSerializeLate?
+        _main!.FrameUpdate(new(.0001f));
+
+        _testWindow.WindowTexture = rend.GetOutputTexture();
+        _background.Uniforms[_backgroundTexIndex].Value = _main!.RenderHandler!.GetOutputTexture();
         _testWindow.FramebufferResize += OnFramebufferResize;
     }
 
@@ -203,6 +237,7 @@ public class TestGame : SceneObject
         _framesThisSecond++;
         if(_secsSinceStart > _intSecsSinceStart+1)
         {
+            if(_fpsCounter != null)
             _fpsCounter.Text = $"FPS: {_framesThisSecond}";
             _intSecsSinceStart++;
             _framesThisSecond = 0;
@@ -226,10 +261,8 @@ public class TestGame : SceneObject
 
         if (args.KeyboardState.IsKeyPressed(Keys.N))
         {
-            Random rand = new();
-            var serial = _lamps[rand.Next(0, _lamps.Length)].Serialize();
-            var instance = serial.Instantiate();
-            _main!.Children.Add(instance);
+            var serial = _main!.Serialize();
+            serial.Instantiate();
         }
     }
 

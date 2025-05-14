@@ -71,7 +71,11 @@ public partial class SceneObject
     [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
     {
         if(serializer.IsWriter)
+        {
             Initialize();
+            if(this is Scene s)
+                Scene = s;
+        }
     }
 
     [OnRegister] void CompleteRegister() => _registryComplete = true;
@@ -121,7 +125,6 @@ public partial class SceneObject
     {
         Unregister();
         SetDestroyed();
-        OnDestroyed();
         Remove();
     }
     private void SetDestroyed()
@@ -131,6 +134,7 @@ public partial class SceneObject
                 for(int i = 0; i < children.Count; i++)
                     children.Get(i).SetDestroyed();
 
+        OnDestroyed();
         Destroyed = true;
     }
     protected virtual void OnDestroyed(){}
