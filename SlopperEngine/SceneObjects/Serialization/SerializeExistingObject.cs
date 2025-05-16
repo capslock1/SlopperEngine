@@ -122,7 +122,9 @@ public partial class SerializedObjectTree
         }
 
         newReference = true;
-        if(type == typeof(string))
+        refs.ReferenceIDs.Add(obj, destinationIndex);
+        
+        if (type == typeof(string))
             return SerializeString((string)obj, refs);
 
         if(obj is Array arr)
@@ -152,7 +154,6 @@ public partial class SerializedObjectTree
         }
         
         res.SerialType = SerialHandle.Type.Reference;
-        refs.ReferenceIDs.Add(obj, destinationIndex);
         res.SaveFields = true;
         return res;
     }

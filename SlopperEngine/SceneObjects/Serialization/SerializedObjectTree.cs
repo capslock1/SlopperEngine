@@ -77,22 +77,30 @@ public partial class SerializedObjectTree
             return ReadPrimitive(thisObject);
 
             case SerialHandle.Type.Reference:
-            if(_indexedTypes[thisObject.IndexedType].Item1 == typeof(string))
-                return ReadString(thisObject);
+            if (_indexedTypes[thisObject.IndexedType].Item1 == typeof(string))
+            {
+                var res = ReadString(thisObject);
+                deserializedObjects[serialHandleIndex] = res;
+                return res;
+            }
             return null;
 
             case SerialHandle.Type.ReferenceToPrevious:
-            deserializedObjects.TryGetValue(thisObject.Handle, out var res);
-            return res;
+            deserializedObjects.TryGetValue(thisObject.Handle, out var res1);
+            return res1;
 
             case SerialHandle.Type.Array:
-            return ReadArray(thisObject, deserializedObjects);
+            var res2 = ReadArray(thisObject, deserializedObjects);
+            deserializedObjects[serialHandleIndex] = res2;
+            return res2;
 
             case SerialHandle.Type.SerializedFromKey:
             Type thisObjectType = _indexedTypes[thisObject.IndexedType].Item1;
             Type keyType = _indexedTypes[_serializedObjects[thisObject.Handle].IndexedType].Item1;
             object? key = RecursiveDeserialize(thisObject.Handle+1, deserializedObjects);
-            return ReflectionCache.DeserializeObjectFromKey(keyType, thisObjectType, key);
+            var res3 = ReflectionCache.DeserializeObjectFromKey(keyType, thisObjectType, key);
+            deserializedObjects[serialHandleIndex] = res3;
+            return res3;
 
             default:
             return null;
