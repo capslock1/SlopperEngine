@@ -48,5 +48,6 @@ public static class ShaderLoader
         string vertexFilePath = vertFilepath;
         string fragmentFilePath = fragFilepath;
         public GPUResource CreateResource() => FromRawGLSLFilepaths(vertexFilePath, fragmentFilePath);
+        public override string ToString() => $"Shader from filepaths: '{vertexFilePath}', '{fragmentFilePath}'";
     }
 }

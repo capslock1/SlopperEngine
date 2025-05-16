@@ -220,14 +220,13 @@ public class TestGame : SceneObject
         _fpsCounter.BackgroundColor = new(0,0,0,.4f);
         _UIScene.Children.Add(_fpsCounter);
 
-        // this crashes, because TestGame.OnSerialize gets called *before* the scene serializes.
-        // this is because the scene is not yet full deserialized. 
-        // should there be a OnSerializeLate?
-        _main!.FrameUpdate(new(.0001f));
-
-        _testWindow.WindowTexture = rend.GetOutputTexture();
-        _background.Uniforms[_backgroundTexIndex].Value = _main!.RenderHandler!.GetOutputTexture();
-        _testWindow.FramebufferResize += OnFramebufferResize;
+        tree.CallAfterSerialize(() =>
+        {
+            _testWindow.Scene = _main!;
+            _testWindow.WindowTexture = rend.GetOutputTexture();
+            _background.Uniforms[_backgroundTexIndex].Value = _main!.RenderHandler!.GetOutputTexture();
+            _testWindow.FramebufferResize += OnFramebufferResize;
+        });
     }
 
     [OnFrameUpdate]
@@ -237,8 +236,7 @@ public class TestGame : SceneObject
         _framesThisSecond++;
         if(_secsSinceStart > _intSecsSinceStart+1)
         {
-            if(_fpsCounter != null)
-            _fpsCounter.Text = $"FPS: {_framesThisSecond}";
+            //_fpsCounter!.Text = $"FPS: {_framesThisSecond}";
             _intSecsSinceStart++;
             _framesThisSecond = 0;
         }

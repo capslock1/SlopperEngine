@@ -16,9 +16,9 @@ public partial class SerializedObjectTree
     /// </summary>
     internal SerializedObjectTree(SceneObject toSerialize)
     {
-        if(toSerialize.InScene) 
+        if (toSerialize.InScene)
             throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
-        
+
         var res = _serializedObjects.AddMultiple(2);
         SerializationRefs refs = new();
         refs.ReferenceIDs = new();
@@ -26,10 +26,13 @@ public partial class SerializedObjectTree
         var rootHandle = SerializeRecursive(toSerialize, 1, refs);
         res[1] = rootHandle;
 
-        #pragma warning disable CS8620
-        foreach(var comb in refs.TypeIndices)
+#pragma warning disable CS8620
+        foreach (var comb in refs.TypeIndices)
             _indexedTypes.Add(comb.Value.Item1, (comb.Key, comb.Value.Item2, comb.Value.Item3));
-        #pragma warning restore CS8620
+#pragma warning restore CS8620
+        
+        _onFinishSerializing?.Invoke();
+        _onFinishSerializing = null;
     }
 
     SerialHandle SerializeRecursive(object toSerialize, int destinationIndex, in SerializationRefs refs)
@@ -64,7 +67,7 @@ public partial class SerializedObjectTree
         foreach(var meth in methods)
         {
             List<object?>? results = null;
-            CustomSerializer serializer = new(ref results);
+            CustomSerializer serializer = new(ref results, this);
             CallOnSerializeQuick(meth, toSerialize, serializer);
 
             SerialHandle methodResHandle = default;

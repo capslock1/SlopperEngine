@@ -57,6 +57,7 @@ public class Texture2D : Texture
             res.VerticalWrap = wrapModeV;
             return res;
         }
+        public override string ToString() => $"Procedural Texture2D ({width},{height})";
     }
 
     protected override TextureTarget GetTarget() => TextureTarget.Texture2D;

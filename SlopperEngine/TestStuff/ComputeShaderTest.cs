@@ -8,6 +8,7 @@ using SlopperEngine.Graphics.GPUResources.Shaders;
 using SlopperEngine.Graphics.DefaultResources;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.TestStuff;
 
@@ -20,6 +21,13 @@ public class ComputeShaderTest : SceneObject
     public ComputeShaderTest()
     {
         _texQuad = new(this);
+    }
+
+    [OnSerialize]
+    void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        if (serializer.IsWriter)
+            _texQuad = new(this);
     }
 
     //how do we cope with wanting to use materials for compute shaders? are we doing sesl compute shaders now?

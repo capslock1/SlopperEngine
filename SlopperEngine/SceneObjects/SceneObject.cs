@@ -73,8 +73,11 @@ public partial class SceneObject
         if(serializer.IsWriter)
         {
             Initialize();
-            if(this is Scene s)
+            if (this is Scene s)
+            {
                 Scene = s;
+                serializer.CallAfterSerialize(() => { Register(s); });
+            }
         }
     }
 

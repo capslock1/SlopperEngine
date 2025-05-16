@@ -157,14 +157,6 @@ public class Rigidbody : PhysicsObject
         AddBody(physHandler!);
     }
 
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
-    {
-        if(serializer.IsWriter)
-        {
-            
-        }
-    }
-
     [OnRegister]
     void Register()
     {
@@ -175,6 +167,11 @@ public class Rigidbody : PhysicsObject
     [OnUnregister]
     void Unregister(Scene scene)
     {
+        if (_current != null)
+        {
+            _lastKnownAngularVelocity = AngularVelocity;
+            _lastKnownVelocity = Velocity;
+        }
         _current?.Simulator.Bodies.Remove(_bodyHandle);
         scene?.UnregisterSceneData<RigidBodyData>(_sceneHandle, default);
         _current = null;

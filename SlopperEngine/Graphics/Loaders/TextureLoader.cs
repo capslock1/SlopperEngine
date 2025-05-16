@@ -40,5 +40,6 @@ public static class TextureLoader
     {
         string filepath = filepath;
         public GPUResource CreateResource() => FromFilepath(filepath);
+        public override string ToString() => $"Texture from filepath: '{filepath}'";
     }
 }

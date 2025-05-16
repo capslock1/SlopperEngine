@@ -18,11 +18,15 @@ public partial class SerializedObjectTree
     Dictionary<int, (Type, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods)> _indexedTypes = new();
     SpanList<SerialHandle> _serializedObjects = new(); // warning: this is 1 indexed! 0 is for null and should NEVER be deserialized.
     SpanList<byte> _primitiveData = new();
+    event Action? _onFinishSerializing;
 
     public SceneObject Instantiate()
     {
         Dictionary<int, object?> deserializedObjects = new();
-        return (SceneObject)RecursiveDeserialize(1, deserializedObjects)!;
+        var res = (SceneObject)RecursiveDeserialize(1, deserializedObjects)!;
+        _onFinishSerializing?.Invoke();
+        _onFinishSerializing = null;
+        return res;
     }
     object? RecursiveDeserialize(int serialHandleIndex, Dictionary<int, object?> deserializedObjects)
     {

@@ -22,7 +22,7 @@ public sealed class Scene : SceneObject
     public PhysicsHandler? PhysicsHandler {get; private set;}
 
     [DontSerialize] FridgeDictionary<Type, ISceneDataContainer> _dataContainers = new();
-    readonly RegisterHandler _register;
+    [DontSerialize] RegisterHandler _register;
     static readonly List<Scene> _activeScenes = [];
 
     private Scene()
@@ -33,12 +33,12 @@ public sealed class Scene : SceneObject
     }
     [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
     {
-        if(serializer.IsWriter)
+        if (serializer.IsWriter)
         {
             _activeScenes.Add(this);
             _dataContainers = new();
-            Components.CheckRegistered();
-            Children.CheckRegistered();
+            _register = new(this);
+            serializer.CallAfterSerialize(UpdateRegister);
         }
     }
 

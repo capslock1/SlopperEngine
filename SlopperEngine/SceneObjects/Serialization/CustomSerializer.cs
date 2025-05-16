@@ -17,17 +17,17 @@ partial class SerializedObjectTree
         /// True if this Serializer reads from given values (leaves the ref intact).
         /// </summary>
         public bool IsReader => !_writes;
-        
+
         bool _writes;
+        SerializedObjectTree _tree;
 
         readonly ref List<object?>? _target;
 
         int _serializedObjectsIndex;
         int _serializedObjectsCount;
         Dictionary<int, object?>? _deserializedObjects;
-        SerializedObjectTree? _tree;
         ref int _currentIndex;
-        
+
         public CustomSerializer(int objectsIndex, int count, Dictionary<int, object?> deserializedObjects, SerializedObjectTree tree, ref int referenceInt)
         {
             _serializedObjectsIndex = objectsIndex;
@@ -39,10 +39,11 @@ partial class SerializedObjectTree
             _currentIndex = 0;
         }
 
-        public CustomSerializer(ref List<object?>? target)
+        public CustomSerializer(ref List<object?>? target, SerializedObjectTree tree)
         {
             _target = ref target;
             _writes = false;
+            _tree = tree;
         }
 
         /// <summary>
@@ -51,14 +52,14 @@ partial class SerializedObjectTree
         /// <param name="Value">The value to serialize.</param>
         public void Serialize<T>(ref T Value)
         {
-            if(_writes)
+            if (_writes)
             {
                 // write to refs
-                if(_currentIndex >= _serializedObjectsCount)
+                if (_currentIndex >= _serializedObjectsCount)
                     throw new Exception("Attempted to read back more values than were previously written.");
 
                 var val = _tree!.RecursiveDeserialize(_serializedObjectsIndex + _currentIndex, _deserializedObjects!);
-                if(val != null) Value = (T)val;
+                if (val != null) Value = (T)val;
                 _currentIndex++;
             }
             else
@@ -67,6 +68,15 @@ partial class SerializedObjectTree
                 _target ??= new();
                 _target.Add(Value);
             }
+        }
+
+        /// <summary>
+        /// Calls the method after serialization finishes. It's safe to interact with objects higher in the tree after this.
+        /// </summary>
+        /// <param name="methodToCall">The method to have called after the entire tree is serialized.</param>
+        public void CallAfterSerialize(Action methodToCall)
+        {
+            _tree._onFinishSerializing += methodToCall;
         }
     }
 }

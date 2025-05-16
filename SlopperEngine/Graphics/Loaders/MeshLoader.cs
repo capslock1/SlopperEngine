@@ -205,5 +205,6 @@ public static class MeshLoader
     {
         string filepath = filepath;
         public GPUResource CreateResource() => SimpleFromWavefrontOBJ(filepath);
+        public override string ToString() => $"OBJMesh from filepath: '{filepath}'";
     }
 }
