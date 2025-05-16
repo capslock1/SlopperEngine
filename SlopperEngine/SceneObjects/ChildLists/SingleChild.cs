@@ -30,7 +30,6 @@ public partial class SceneObject
                 if(_child == null) 
                     return;
                 
-                _child.Remove();
                 _child._parentList = this;
                 if(_currentlyRegistered)
                     _child.Register(Owner.Scene!);
@@ -65,9 +64,11 @@ public partial class SceneObject
         public void CheckRegistered()
         {
             if(_currentlyRegistered == Owner.InScene) return;
-            if(_child == null) return;
+            _currentlyRegistered = Owner.InScene;
+            
+            if (_child == null) return;
 
-            if(_currentlyRegistered)
+            if (_currentlyRegistered)
                 _child.Register(Owner.Scene!);
             else _child.Unregister();
         }

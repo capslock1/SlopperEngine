@@ -236,7 +236,7 @@ public class TestGame : SceneObject
         _framesThisSecond++;
         if(_secsSinceStart > _intSecsSinceStart+1)
         {
-            //_fpsCounter!.Text = $"FPS: {_framesThisSecond}";
+            _fpsCounter!.Text = $"FPS: {_framesThisSecond}";
             _intSecsSinceStart++;
             _framesThisSecond = 0;
         }
