@@ -43,7 +43,7 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
         
         FrameBuffer.Unuse();
         GL.Viewport(0,0,ClientSize.X, ClientSize.Y);
-        FullScreenTriangle.Draw(WindowTexture);
+        FullScreenTriangle.Draw(WindowTexture, this);
         
         Context.SwapBuffers();
     }

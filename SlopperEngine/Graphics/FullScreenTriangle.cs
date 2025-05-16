@@ -3,6 +3,8 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.GPUResources.Shaders;
+using OpenTK.Windowing.Desktop;
+using System.ComponentModel;
 
 namespace SlopperEngine.Graphics;
 
@@ -11,7 +13,7 @@ namespace SlopperEngine.Graphics;
 /// </summary>
 public unsafe class FullScreenTriangle
 {
-    static Dictionary<IntPtr, FullScreenTriangle> _renderers = new();
+    static Dictionary<NativeWindow, FullScreenTriangle> _renderers = new();
     int _vertexArrayObject;
     int _vertexBufferObject;
     DrawShader? _shader;
@@ -70,19 +72,20 @@ void main()
     }
 
     /// <summary>
-    /// Draws the texture to the screen.
+    /// Draws a texture to the screen. Expects currentWindow to be the current context.
     /// </summary>
     /// <param name="texture">The texture to draw to the screen.</param>
-    public static void Draw(Texture2D texture)
+    /// <param name="currentWindow">The window being drawn to.</param>
+    public static void Draw(Texture2D texture, NativeWindow currentWindow)
     {
-        Window* currentContext = GLFW.GetCurrentContext();
-        if(_renderers.TryGetValue((IntPtr)currentContext, out var trongle))
+        if(_renderers.TryGetValue(currentWindow, out var trongle))
         {
             trongle._draw(texture);
             return;
         }
         trongle = new();
-        _renderers.Add((IntPtr)currentContext, trongle);
+        _renderers.Add(currentWindow, trongle);
+        currentWindow.Closing += (CancelEventArgs _) => { _renderers.Remove(currentWindow); };
         trongle._draw(texture);
     }
     void _draw(Texture2D texture)
