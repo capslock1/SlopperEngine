@@ -30,7 +30,7 @@ public class TestGame : SceneObject
 
     Scene? _main;
     Scene? _UIScene;
-    Material? _background;
+    [DontSerialize] Material? _background;
     int _backgroundTexIndex;
     Windowing.Window _testWindow;
     
@@ -234,11 +234,12 @@ public class TestGame : SceneObject
     {
         _secsSinceStart += args.DeltaTime;
         _framesThisSecond++;
-        if(_secsSinceStart > _intSecsSinceStart+1)
+        if (_secsSinceStart > _intSecsSinceStart + 1)
         {
             _fpsCounter!.Text = $"FPS: {_framesThisSecond}";
             _intSecsSinceStart++;
             _framesThisSecond = 0;
+            MainContext.Instance.UpdateFrequency = 30 + Random.Shared.Next(-5, 0);
         }
 
         _rb.AddImpulse(45 * args.DeltaTime * Vector3.UnitY * (MathF.Sin((float)_secsSinceStart)+1));

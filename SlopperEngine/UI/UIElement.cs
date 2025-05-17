@@ -113,7 +113,7 @@ public class UIElement : SceneObject
     {
         var tex = GetMaterial();
         if(tex != null)
-        renderer.AddRenderToQueue(lastGlobalShape, tex);
+            renderer.AddRenderToQueue(lastGlobalShape, tex);
         foreach(var ch in UIChildren.All)
             ch.Render(renderer);
     }

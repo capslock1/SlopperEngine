@@ -10,6 +10,7 @@ using SlopperEngine.Graphics.Lighting;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.Graphics.Renderers;
 
@@ -18,39 +19,50 @@ namespace SlopperEngine.Graphics.Renderers;
 /// </summary>
 public class DebugRenderer : RenderHandler
 {
-    public FrameBuffer Buffer {get; private set;}
-    [DontSerialize] LightBuffer? _lights;
-    Bloom _coolBloom;
+    [field:DontSerialize] public FrameBuffer Buffer {get; private set;}
+    [DontSerialize] LightBuffer _lights;
+    [DontSerialize] Bloom _coolBloom;
     Vector2i _screenSize = (400,300);
     Vector2i _trueScreenSize = (800,600);
 
     public DebugRenderer() : base()
     {
-        Buffer = new(400,300);
-        _coolBloom = new(new(400,300));
+        Buffer = new(400, 300);
+        _coolBloom = new(new(400, 300));
+        _lights = new();
+    }
+
+    [OnSerialize]
+    void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        if (serializer.IsWriter)
+        {
+            Buffer = new(_screenSize.X, _screenSize.Y, 1);
+            _coolBloom = new(_screenSize);
+            _lights = new();
+        }
     }
 
     protected override void RenderInternal()
     {
-        if(Scene == null) return;
+        if (Scene == null) return;
 
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-        _lights ??= new();
         _lights.ClearBuffer();
-        foreach(PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
+        foreach (PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
             _lights.AddLight(dat);
         _lights.UseBuffer();
 
-        foreach(Camera cam in cameras)
+        foreach (Camera cam in cameras)
         {
             globals.Use();
             globals.CameraProjection = cam.Projection;
             var camTransform = cam.GetGlobalTransform();
             globals.CameraView = camTransform.Inverted();
-            globals.CameraPosition = new(camTransform.ExtractTranslation(),1.0f);
-            foreach(Drawcall call in Scene.GetDataContainerEnumerable<Drawcall>())
+            globals.CameraPosition = new(camTransform.ExtractTranslation(), 1.0f);
+            foreach (Drawcall call in Scene.GetDataContainerEnumerable<Drawcall>())
             {
                 call.Material.Use(call.Model.GetMeshInfo(), this);
                 globals.Model = call.Owner.GetGlobalTransform();

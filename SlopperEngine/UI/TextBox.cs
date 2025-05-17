@@ -1,6 +1,8 @@
 using OpenTK.Mathematics;
+using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.UI;
 
@@ -18,8 +20,7 @@ public class TextBox : UIElement
         {
             if(_currentText == value) return;
             _currentText = value;
-            _texture?.Dispose();
-            _texture = null;
+            _invalidateTexture = true;
         }
     }
 
@@ -32,8 +33,7 @@ public class TextBox : UIElement
         {
             if(_currentFont == value) return;
             _currentFont = value;
-            _texture?.Dispose();
-            _texture = null;
+            _invalidateTexture = true;
         }
     }
 
@@ -73,26 +73,22 @@ public class TextBox : UIElement
 
     string _currentText = string.Empty;
     RasterFont _currentFont = RasterFont.EightXSixteen;
-    Texture2D? _texture;
-    Material _material;
+    [DontSerialize] Texture2D? _texture;
+    [DontSerialize] Material _material;
     Vector4 _textColor;
     Vector4 _backgroundColor;
+    bool _invalidateTexture = true;
     
     static SlopperShader? _shader;
     static int _materialTexIndex = -1;
     static int _matBackgroundColIndex = -1;
     static int _matTextColIndex = -1; 
 
+#pragma warning disable CS8618
     public TextBox(Vector4 textColor, Vector4 backgroundColor = default) : base()
+#pragma warning restore CS8618
     {
-        _shader ??= SlopperShader.Create("shaders/UI/TextBox.sesl");
-        _material = Material.Create(_shader);
-        if(_materialTexIndex == -1)
-        {
-            _materialTexIndex = _material.GetUniformIndexFromName("TextTexture");
-            _matBackgroundColIndex = _material.GetUniformIndexFromName("BackgroundColor");
-            _matTextColIndex = _material.GetUniformIndexFromName("TextColor");
-        }
+        Init();
         TextColor = textColor;
         BackgroundColor = backgroundColor;
     }
@@ -106,11 +102,37 @@ public class TextBox : UIElement
         Text = text;
     }
 
+    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    {
+        if (serializer.IsWriter)
+        {
+            Init();
+            Text = _currentText;
+            Font = _currentFont;
+            BackgroundColor = _backgroundColor;
+            TextColor = _textColor;
+        }
+    }
+
+    void Init()
+    {
+        _shader ??= SlopperShader.Create("shaders/UI/TextBox.sesl");
+        _material = Material.Create(_shader);
+        if(_materialTexIndex == -1)
+        {
+            _materialTexIndex = _material.GetUniformIndexFromName("TextTexture");
+            _matBackgroundColIndex = _material.GetUniformIndexFromName("BackgroundColor");
+            _matTextColIndex = _material.GetUniformIndexFromName("TextColor");
+        }
+    }
+
     protected override Material? GetMaterial() => _material;
     protected override UIElementSize GetSizeConstraints()
     {
-        if(_texture == null) 
+        if(_invalidateTexture) 
         {
+            _invalidateTexture = false;
+            _texture?.Dispose();
             _texture = RasterFontWriter.WriteToTexture2D(Text, Font);
             _material.Uniforms[_materialTexIndex].Value = _texture;
         }

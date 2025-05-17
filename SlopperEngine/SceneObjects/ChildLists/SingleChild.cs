@@ -12,7 +12,7 @@ public partial class SceneObject
     public class SingleChild<TSceneObject> : IChildList where TSceneObject : SceneObject
     {
         public SceneObject Owner {get; private set;}
-        public int Count => _child == null ? 0 : 1;
+        int IChildList.Count => _child == null ? 0 : 1;
 
         /// <summary>
         /// The child stored in the SingleChild.
@@ -25,7 +25,7 @@ public partial class SceneObject
                 if(Owner == value) throw new Exception("Cannot set a SceneObject as its own child!");
                 if(value is Scene) throw new Exception("Cannot set a Scene as a child!");
                 
-                Remove(0);
+                (this as IChildList).Remove(0);
                 _child = value;
                 if(_child == null) 
                     return;
@@ -61,7 +61,7 @@ public partial class SceneObject
                 _child._parentList = this;
         }
 
-        public void CheckRegistered()
+        void IChildList.CheckRegistered()
         {
             if(_currentlyRegistered == Owner.InScene) return;
             _currentlyRegistered = Owner.InScene;
@@ -73,9 +73,9 @@ public partial class SceneObject
             else _child.Unregister();
         }
 
-        public SceneObject Get(int index) => _child!; // if you nullref here, thats intentional.
+        SceneObject IChildList.Get(int index) => _child!; // if you nullref here, thats intentional.
 
-        public void Remove(int index)
+        void IChildList.Remove(int index)
         {
             if(_child == null) return;
             if(_child.Scene is not null)
