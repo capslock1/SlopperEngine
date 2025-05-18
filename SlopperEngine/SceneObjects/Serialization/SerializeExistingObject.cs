@@ -28,7 +28,7 @@ public partial class SerializedObjectTree
 
 #pragma warning disable CS8620
         foreach (var comb in refs.TypeIndices)
-            _indexedTypes.Add(comb.Value.Item1, (comb.Key, comb.Value.Item2, comb.Value.Item3));
+            _indexedTypes.Add(comb.Value.Item1, new(comb.Key, comb.Value.Item2, comb.Value.Item3));
 #pragma warning restore CS8620
         
         _onFinishSerializing?.Invoke();
@@ -68,7 +68,7 @@ public partial class SerializedObjectTree
         {
             List<object?>? results = null;
             CustomSerializer serializer = new(ref results, this);
-            CallOnSerializeQuick(meth, toSerialize, serializer);
+            CallOnSerializeQuick(meth.Item1, toSerialize, serializer);
 
             SerialHandle methodResHandle = default;
             methodResHandle.SerialType = SerialHandle.Type.CustomSerializedObjects;
@@ -287,6 +287,6 @@ public partial class SerializedObjectTree
     ref struct SerializationRefs
     {
         public Dictionary<object, int> ReferenceIDs;
-        public Dictionary<Type, (int, ReadOnlyCollection<FieldInfo>, ReadOnlyCollection<MethodInfo>)> TypeIndices;
+        public Dictionary<Type, (int, ReadOnlyCollection<FieldInfo>, ReadOnlyCollection<(MethodInfo method, Type originatingType)>)> TypeIndices;
     }
 }

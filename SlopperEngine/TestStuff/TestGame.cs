@@ -239,7 +239,6 @@ public class TestGame : SceneObject
             _fpsCounter!.Text = $"FPS: {_framesThisSecond}";
             _intSecsSinceStart++;
             _framesThisSecond = 0;
-            MainContext.Instance.UpdateFrequency = 30 + Random.Shared.Next(-5, 0);
         }
 
         _rb.AddImpulse(45 * args.DeltaTime * Vector3.UnitY * (MathF.Sin((float)_secsSinceStart)+1));
@@ -262,6 +261,11 @@ public class TestGame : SceneObject
         {
             var serial = _main!.Serialize();
             serial.Instantiate();
+        }
+        if (args.KeyboardState.IsKeyPressed(Keys.K))
+        {
+            var serial = _lamps[0].Serialize();
+            serial.SaveBinaryUncompressed("myCoolFile.slsc");
         }
     }
 

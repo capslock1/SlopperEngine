@@ -8,7 +8,7 @@ namespace SlopperEngine.Core.Serialization;
 public static class ReflectionCache
 {
     static FridgeDictionary<Type, ReadOnlyCollection<FieldInfo>> _fieldInfos = new();
-    static FridgeDictionary<Type, ReadOnlyCollection<MethodInfo>> _onSerializes = new();
+    static FridgeDictionary<Type, ReadOnlyCollection<(MethodInfo, Type)>> _onSerializes = new();
     static MethodInfo? _deserialFromKeyMethod;
     static object?[] _singleObject = new object[1];
     static Type?[] _twoTypes = new Type[2];
@@ -69,12 +69,12 @@ public static class ReflectionCache
     /// <summary>
     /// Gets the first method of the type with a correct OnSerialize attribute.
     /// </summary>
-    public static ReadOnlyCollection<MethodInfo> GetOnSerializeMethods(Type type)
+    public static ReadOnlyCollection<(MethodInfo, Type)> GetOnSerializeMethods(Type type)
     {
         if(_onSerializes.TryGetValue(type, out var res))
             return res;
 
-        var list = new List<MethodInfo>();
+        var list = new List<(MethodInfo,Type)>();
         RecursiveAddMethods(type);
 
         void RecursiveAddMethods(Type t)
@@ -103,7 +103,7 @@ public static class ReflectionCache
                     continue;
                 }
 
-                list.Add(meth);
+                list.Add((meth, t));
             }
         }
 

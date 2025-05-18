@@ -15,7 +15,7 @@ namespace SlopperEngine.SceneObjects.Serialization;
 /// </summary>
 public partial class SerializedObjectTree
 {
-    Dictionary<int, (Type, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods)> _indexedTypes = new();
+    Dictionary<int, SerializedTypeInfo> _indexedTypes = new(); // just realized this is just a list? the index is from 0..count... im not fixing this rn but what the hell
     SpanList<SerialHandle> _serializedObjects = new(); // warning: this is 1 indexed! 0 is for null and should NEVER be deserialized.
     SpanList<byte> _primitiveData = new();
     event Action? _onFinishSerializing;
@@ -37,15 +37,15 @@ public partial class SerializedObjectTree
                 // nullref - dont set anything
                 return null;
 
-            (Type t, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods) = _indexedTypes[thisObject.IndexedType];
+            var t = _indexedTypes[thisObject.IndexedType];
             
             object res;
-            try{res = RuntimeHelpers.GetUninitializedObject(t);}
+            try{res = RuntimeHelpers.GetUninitializedObject(t.Type);}
             catch(ArgumentException){return null;}
 
             deserializedObjects[serialHandleIndex] = res;
             int currentField = thisObject.Handle - 1;
-            foreach(var field in fields)
+            foreach(var field in t.Fields)
             {
                 currentField++;
                 if(field is null)
@@ -56,17 +56,17 @@ public partial class SerializedObjectTree
                 if(fieldValue != null)
                     field.SetValue(res, fieldValue);
             }
-            foreach(var method in onSerializeMethods)
+            foreach(var method in t.OnSerializeMethods)
             {
                 currentField++;
-                if(method is null) 
+                if(method.method is null) 
                     continue;
 
                 SerialHandle methodP = _serializedObjects[currentField];
                 SerialHandle serialCount = _serializedObjects[methodP.Handle];
                 int refint = 0;
                 CustomSerializer serializer = new(methodP.Handle+1, serialCount.Handle, deserializedObjects, this, ref refint);
-                CallOnSerializeQuick(method, res, serializer);
+                CallOnSerializeQuick(method.method, res, serializer);
             }
             return res;
         }
@@ -77,7 +77,7 @@ public partial class SerializedObjectTree
             return ReadPrimitive(thisObject);
 
             case SerialHandle.Type.Reference:
-            if (_indexedTypes[thisObject.IndexedType].Item1 == typeof(string))
+            if (_indexedTypes[thisObject.IndexedType].Type == typeof(string))
             {
                 var res = ReadString(thisObject);
                 deserializedObjects[serialHandleIndex] = res;
@@ -95,8 +95,8 @@ public partial class SerializedObjectTree
             return res2;
 
             case SerialHandle.Type.SerializedFromKey:
-            Type thisObjectType = _indexedTypes[thisObject.IndexedType].Item1;
-            Type keyType = _indexedTypes[_serializedObjects[thisObject.Handle].IndexedType].Item1;
+            Type thisObjectType = _indexedTypes[thisObject.IndexedType].Type;
+            Type keyType = _indexedTypes[_serializedObjects[thisObject.Handle].IndexedType].Type;
             object? key = RecursiveDeserialize(thisObject.Handle+1, deserializedObjects);
             var res3 = ReflectionCache.DeserializeObjectFromKey(keyType, thisObjectType, key);
             deserializedObjects[serialHandleIndex] = res3;
@@ -110,7 +110,7 @@ public partial class SerializedObjectTree
     Array? ReadArray(SerialHandle handle, Dictionary<int, object?> deserializedObjects)
     {
         SerialHandle rank = _serializedObjects[handle.Handle];
-        var type = _indexedTypes[rank.IndexedType].Item1;
+        var type = _indexedTypes[rank.IndexedType].Type;
         if(rank.Handle == 1)
         {
             SerialHandle length = _serializedObjects[handle.Handle + 1];
@@ -133,7 +133,7 @@ public partial class SerializedObjectTree
 
     object? ReadPrimitive(SerialHandle handle)
     {
-        Type t = _indexedTypes[handle.IndexedType].Item1;
+        Type t = _indexedTypes[handle.IndexedType].Type;
         int primitiveSize = Marshal.SizeOf(t);
         if(t == typeof(bool)) return _primitiveData.AllValues[handle.Handle] != 0;
         var span = _primitiveData.AllValues.Slice(handle.Handle, primitiveSize);
