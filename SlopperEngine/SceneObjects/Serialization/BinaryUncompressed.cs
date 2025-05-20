@@ -32,12 +32,13 @@ public partial class SerializedObjectTree
         int typeCount = ReadInt();
         if (typeCount < 1) return null;
 
-        Type?[] types = new Type?[typeCount];
+        Dictionary<int, Type?> allNamedTypes = new();
         for (int i = 0; i < typeCount; i++)
         {
+            int index = ReadInt();
             var fullname = ReadString();
             if (fullname != null)
-                types[i] = Type.GetType(fullname);
+                allNamedTypes[index] = Type.GetType(fullname);
         }
 
         int serialTypeCount = ReadInt();
@@ -49,7 +50,7 @@ public partial class SerializedObjectTree
 
         for (int i = 0; i < serialTypeCount; i++)
         {
-            var type = types[i];
+            var type = allNamedTypes[i];
             if (type == null) continue;
 
             int fieldCount = ReadInt();
@@ -57,12 +58,14 @@ public partial class SerializedObjectTree
             for (int f = 0; f < fieldCount; f++)
             {
                 int declaringTypeIndex = ReadInt();
-                var t = types[declaringTypeIndex];
-                System.Console.WriteLine(t?.Name);
-                if (declaringTypeIndex == -1) continue;
+                var t = allNamedTypes[declaringTypeIndex];
+                if (declaringTypeIndex == -1)
+                {
+                    Console.WriteLine("Missing type:" + ReadString());
+                    continue;
+                }
 
                 var fieldName = ReadString();
-                System.Console.WriteLine(fieldName);
                 if (fieldName == null) continue;
 
                 fields[f] = t?.GetField(fieldName, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -70,6 +73,23 @@ public partial class SerializedObjectTree
 
             int methodCount = ReadInt();
             MethodInfo?[] methods = new MethodInfo?[methodCount];
+            for (int m = 0; m < methodCount; m++)
+            {
+                int declaringTypeIndex = ReadInt();
+                var t = allNamedTypes[declaringTypeIndex];
+                System.Console.Write(t?.Name);
+                System.Console.Write(' ');
+                if (declaringTypeIndex == -1)
+                {
+                    Console.WriteLine("Missing type:" + ReadString());
+                    continue;
+                }
+
+                var methodName = ReadString();
+                if (methodName == null) continue;
+
+                methods[m] = t?.GetMethod(methodName, BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            }
 
             indexedTypes.Add(i, new(type, new(fields), new(methods)));
         }
@@ -85,7 +105,6 @@ public partial class SerializedObjectTree
         string? ReadString()
         {
             int length = ReadInt();
-            System.Console.WriteLine(length);
             if (length < 1) return null;
 
             StringBuilder builder = new(length, length);
@@ -116,51 +135,54 @@ public partial class SerializedObjectTree
         WriteIntToStream(_BinaryUncompressedVersion); // version
 
         Dictionary<Type, int> allNamedTypes = new();
-        int typeCount = _indexedTypes.Count;
-        for (int i = 0; i < typeCount; i++)
+        foreach (var type in _indexedTypes)
+            allNamedTypes.Add(type.Value.Type, allNamedTypes.Count);
+
+        for (int i = 0; i < _indexedTypes.Count; i++)
         {
             var type = _indexedTypes[i];
-            allNamedTypes.TryAdd(type.Type, -1);
             foreach (var field in type.Fields)
             {
                 if (field?.DeclaringType != null)
-                    allNamedTypes.TryAdd(field.DeclaringType, -1);
+                    allNamedTypes.TryAdd(field.DeclaringType, allNamedTypes.Count);
             }
             foreach (var method in type.OnSerializeMethods)
             {
                 if (method?.DeclaringType != null)
-                    allNamedTypes.TryAdd(method.DeclaringType, -1);
+                    allNamedTypes.TryAdd(method.DeclaringType, allNamedTypes.Count);
             }
         }
-        var types = allNamedTypes.ToArray();
 
         int typeIndex = 0;
-        WriteIntToStream(types.Length); // the amount of types
-        foreach ((var type, var _) in types)
+        WriteIntToStream(allNamedTypes.Count); // the amount of types
+        foreach (var namedType in allNamedTypes)
         {
-            allNamedTypes[type] = typeIndex;
-            if (!TryWriteStringToStream(type.AssemblyQualifiedName)) // every single type's full name
-                System.Console.WriteLine($"Type {type} couldnt be written to a string.");
+            WriteIntToStream(namedType.Value);
+            if (!TryWriteStringToStream(namedType.Key.AssemblyQualifiedName)) // every single type's full name
+                System.Console.WriteLine($"Type {namedType.Key} couldnt be written to a string.");
 
             typeIndex++;
         }
 
-        WriteIntToStream(typeCount); // amount of serialized types
+        WriteIntToStream(_indexedTypes.Count); // amount of serialized types
 
-        for (int i = 0; i < typeCount; i++)
+        for (int i = 0; i < _indexedTypes.Count; i++)
         {
             var type = _indexedTypes[i];
             var index = allNamedTypes[type.Type];
             WriteIntToStream(type.Fields.Count); // amount of fields
             foreach (var f in type.Fields)
             {
-                WriteIntToStream(f?.DeclaringType != null ? allNamedTypes[f.DeclaringType] : -1); // declaring type of the field
+                int fieldDeclaringTypeIndex = f?.DeclaringType != null ? allNamedTypes[f.DeclaringType] : -1;
+                WriteIntToStream(fieldDeclaringTypeIndex); // declaring type of the field
                 TryWriteStringToStream(f?.Name); // name of the field
             }
+
             WriteIntToStream(type.OnSerializeMethods.Count); // amount of OnSerialize methods
             foreach (var method in type.OnSerializeMethods)
             {
-                WriteIntToStream(method?.DeclaringType != null ? allNamedTypes[method.DeclaringType] : -1); // declaring type of the method
+                int methodDeclaringTypeIndex = method?.DeclaringType != null ? allNamedTypes[method.DeclaringType] : -1;
+                WriteIntToStream(methodDeclaringTypeIndex); // declaring type of the method
                 TryWriteStringToStream(method?.Name); // name of the method
             }
         }
