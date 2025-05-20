@@ -9,25 +9,30 @@ public class SpanList<T>
     T[] _values;
     int _usedSize;
     
-    public SpanList(uint startCapacity = 4)
+    public SpanList(int startCapacity = 4)
     {
         _values = new T[startCapacity];
     }
 
     public int Count => _usedSize;
+
+    /// <summary>
+    /// All available values in the SpanList. Should directly be written to, as it is volatile.
+    /// </summary>
     public Span<T> AllValues => new(_values, 0, _usedSize);
-    public int Capacity 
+
+    public int Capacity
     {
         get => _values.Length;
-        set 
+        set
         {
-            if(value < _usedSize)
+            if (value < _usedSize)
                 throw new ArgumentOutOfRangeException("Setting capacity below Count is not allowed!");
-            
-            if(value == _usedSize || value < 5) return;
+
+            if (value == _usedSize || value < 5) return;
 
             T[] newArray = new T[value];
-            if(_usedSize > 0)
+            if (_usedSize > 0)
                 Array.Copy(_values, newArray, _usedSize);
             _values = newArray;
         }

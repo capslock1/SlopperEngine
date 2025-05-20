@@ -8,7 +8,7 @@ public record struct SerialHandle
     public Type SerialType;
     public bool SaveFields;
 
-    public enum Type
+    public enum Type : byte
     {
         Reference, 
         ReferenceToPrevious,

@@ -45,8 +45,6 @@ public partial class SerializedObjectTree
         if (serialTypeCount < 1) return null;
 
         Dictionary<int, SerializedTypeInfo> indexedTypes = new();
-        SpanList<SerialHandle> serializedObjects = new();
-        SpanList<byte> primitiveData = new();
 
         for (int i = 0; i < serialTypeCount; i++)
         {
@@ -77,8 +75,6 @@ public partial class SerializedObjectTree
             {
                 int declaringTypeIndex = ReadInt();
                 var t = allNamedTypes[declaringTypeIndex];
-                System.Console.Write(t?.Name);
-                System.Console.Write(' ');
                 if (declaringTypeIndex == -1)
                 {
                     Console.WriteLine("Missing type:" + ReadString());
@@ -94,7 +90,23 @@ public partial class SerializedObjectTree
             indexedTypes.Add(i, new(type, new(fields), new(methods)));
         }
 
-        return null!;
+        int serializedObjectCount = ReadInt();
+        if (serializedObjectCount < 1) return null;
+
+        SpanList<SerialHandle> serializedObjects = new(serializedObjectCount);
+        for (int i = 0; i < serializedObjectCount; i++)
+            serializedObjects.Add(ReadSerialHandle());
+
+        int primitiveDataCount = ReadInt();
+        SpanList<byte>? primitiveData = default;
+        if (primitiveDataCount > 0)
+        {
+            primitiveData = new(primitiveDataCount);
+            primitiveData.AddMultiple(primitiveDataCount);
+            stream.Read(primitiveData.AllValues);
+        }
+
+        return new(indexedTypes, serializedObjects, primitiveData ?? new());
 
         int ReadInt()
         {
@@ -115,6 +127,15 @@ public partial class SerializedObjectTree
                 builder.Append((char)BinaryPrimitives.ReadInt16LittleEndian(binaryChar));
             }
             return builder.ToString();
+        }
+        SerialHandle ReadSerialHandle()
+        {
+            SerialHandle res = default;
+            res.Handle = ReadInt();
+            res.IndexedType = ReadInt();
+            res.SerialType = (SerialHandle.Type)stream.ReadByte();
+            res.SaveFields = stream.ReadByte() == 1 ? true : false;
+            return res;
         }
     }
 
@@ -187,6 +208,14 @@ public partial class SerializedObjectTree
             }
         }
 
+        WriteIntToStream(_serializedObjects.Count); // amount of serialHandles
+
+        foreach (var h in _serializedObjects.AllValues)
+            WriteSerialHandleToStream(h);
+
+        WriteIntToStream(_primitiveData.Count); // amount of primitive data
+        stream.Write(_primitiveData.AllValues);
+
         bool TryWriteStringToStream(string? value)
         {
             if (value == null)
@@ -204,6 +233,15 @@ public partial class SerializedObjectTree
             Span<byte> binaryInt = stackalloc byte[4];
             BinaryPrimitives.WriteInt32LittleEndian(binaryInt, value);
             stream.Write(binaryInt);
+        }
+        void WriteSerialHandleToStream(SerialHandle value)
+        {
+            Span<byte> asBytes = stackalloc byte[4 + 4 + 1 + 1];
+            BinaryPrimitives.WriteInt32LittleEndian(asBytes, value.Handle);
+            BinaryPrimitives.WriteInt32LittleEndian(asBytes.Slice(4), value.IndexedType);
+            asBytes[8] = (byte)value.SerialType;
+            asBytes[9] = value.SaveFields ? (byte)1 : (byte)0;
+            stream.Write(asBytes);
         }
     }
 }

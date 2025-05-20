@@ -270,7 +270,9 @@ public class TestGame : SceneObject
         if (args.KeyboardState.IsKeyPressed(Keys.L))
         {
             var serial = SerializedObjectTree.LoadBinaryUncompressed("myCoolFile.slsc");
-            //_main!.Children.Add(serial.Instantiate());
+            if (serial != null)
+                _main!.Children.Add(serial.Instantiate());
+            else System.Console.WriteLine("IT WAS NULL WAHHHH");
         }
     }
 
