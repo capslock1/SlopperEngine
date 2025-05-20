@@ -20,6 +20,13 @@ public partial class SerializedObjectTree
     SpanList<byte> _primitiveData = new();
     event Action? _onFinishSerializing;
 
+    private SerializedObjectTree(Dictionary<int, SerializedTypeInfo> indexedTypes, SpanList<SerialHandle> serializedObjects, SpanList<byte> primitiveData)
+    {
+        _indexedTypes = indexedTypes;
+        _serializedObjects = serializedObjects;
+        _primitiveData = primitiveData;
+    }
+
     public SceneObject Instantiate()
     {
         Dictionary<int, object?> deserializedObjects = new();
@@ -59,14 +66,14 @@ public partial class SerializedObjectTree
             foreach(var method in t.OnSerializeMethods)
             {
                 currentField++;
-                if(method.method is null) 
+                if(method is null) 
                     continue;
 
                 SerialHandle methodP = _serializedObjects[currentField];
                 SerialHandle serialCount = _serializedObjects[methodP.Handle];
                 int refint = 0;
                 CustomSerializer serializer = new(methodP.Handle+1, serialCount.Handle, deserializedObjects, this, ref refint);
-                CallOnSerializeQuick(method.method, res, serializer);
+                CallOnSerializeQuick(method, res, serializer);
             }
             return res;
         }

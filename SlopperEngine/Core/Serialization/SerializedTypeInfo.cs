@@ -6,7 +6,7 @@ namespace SlopperEngine.Core.Serialization;
 /// <summary>
 /// Represents information about a type that has gone through the serialization process.
 /// </summary>
-public record struct SerializedTypeInfo(Type type, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<(MethodInfo? method, Type? originatingType)> onSerializeMethods)
+public record struct SerializedTypeInfo(Type type, ReadOnlyCollection<FieldInfo?> fields, ReadOnlyCollection<MethodInfo?> onSerializeMethods)
 {
     /// <summary>
     /// The type being represented.
@@ -21,10 +21,5 @@ public record struct SerializedTypeInfo(Type type, ReadOnlyCollection<FieldInfo?
     /// <summary>
     /// The "OnSerialize" methods of the type. Null if it could not be found.
     /// </summary>
-    public ReadOnlyCollection<(MethodInfo? method, Type? originatingType)> OnSerializeMethods = onSerializeMethods;
-
-    public static SerializedTypeInfo FromAssemblyQualifiedNames(string typeName, Span<string> fieldNames, Span<(string methodName, string typeName)> onSerializeNames)
-    {
-        return default;
-    }
+    public ReadOnlyCollection<MethodInfo?> OnSerializeMethods = onSerializeMethods;
 }

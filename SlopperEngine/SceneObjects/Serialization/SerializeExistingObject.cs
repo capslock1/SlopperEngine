@@ -68,7 +68,7 @@ public partial class SerializedObjectTree
         {
             List<object?>? results = null;
             CustomSerializer serializer = new(ref results, this);
-            CallOnSerializeQuick(meth.Item1, toSerialize, serializer);
+            CallOnSerializeQuick(meth, toSerialize, serializer);
 
             SerialHandle methodResHandle = default;
             methodResHandle.SerialType = SerialHandle.Type.CustomSerializedObjects;
@@ -287,6 +287,6 @@ public partial class SerializedObjectTree
     ref struct SerializationRefs
     {
         public Dictionary<object, int> ReferenceIDs;
-        public Dictionary<Type, (int, ReadOnlyCollection<FieldInfo>, ReadOnlyCollection<(MethodInfo method, Type originatingType)>)> TypeIndices;
+        public Dictionary<Type, (int, ReadOnlyCollection<FieldInfo>, ReadOnlyCollection<MethodInfo>)> TypeIndices;
     }
 }

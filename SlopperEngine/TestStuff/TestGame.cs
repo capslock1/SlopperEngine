@@ -267,6 +267,11 @@ public class TestGame : SceneObject
             var serial = _lamps[0].Serialize();
             serial.SaveBinaryUncompressed("myCoolFile.slsc");
         }
+        if (args.KeyboardState.IsKeyPressed(Keys.L))
+        {
+            var serial = SerializedObjectTree.LoadBinaryUncompressed("myCoolFile.slsc");
+            //_main!.Children.Add(serial.Instantiate());
+        }
     }
 
     void OnFramebufferResize(FramebufferResizeEventArgs e)
