@@ -29,13 +29,18 @@ public class UIElement : SceneObject
     /// The last global shape that was calculated of this UIElement, in normalized device coordinates.
     /// </summary>
     protected Box2 lastGlobalShape {get; private set;}
+    /// <summary>
+    /// A set of hidden UI elements.
+    /// </summary>
+    protected ChildList<UIElement> hiddenUIChildren { get; private set; }
 
     bool _isUIRoot;
     SceneDataHandle _UIRootUpdateHandle;
 
-    public UIElement() : this(new(0,0,1,1)){}
+    public UIElement() : this(new(0, 0, 1, 1)) { }
     public UIElement(Box2 localShape)
     {
+        hiddenUIChildren = new(this);
         UIChildren = new(this);
         LocalShape = localShape;
     }
@@ -80,6 +85,8 @@ public class UIElement : SceneObject
         var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, size.GrowY);
         globalShape = new(minX,minY,maxX,maxY);
 
+        foreach (var ch in hiddenUIChildren.All)
+            ch.UpdateShape(globalShape, renderer);
         foreach(var ch in UIChildren.All)
             ch.UpdateShape(globalShape, renderer);
 
@@ -112,9 +119,11 @@ public class UIElement : SceneObject
     private void Render(UIRenderer renderer)
     {
         var tex = GetMaterial();
-        if(tex != null)
+        if (tex != null)
             renderer.AddRenderToQueue(lastGlobalShape, tex);
-        foreach(var ch in UIChildren.All)
+        foreach (var ch in hiddenUIChildren.All)
+            ch.Render(renderer);
+        foreach (var ch in UIChildren.All)
             ch.Render(renderer);
     }
 

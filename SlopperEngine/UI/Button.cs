@@ -7,7 +7,7 @@ namespace SlopperEngine.UI;
 
 public abstract class Button : UIElement
 {
-    bool _hovering;
+    protected bool hovering { get; private set; }
 
     [OnInputUpdate]
     void OnInput(InputUpdateArgs args)
@@ -18,13 +18,13 @@ public abstract class Button : UIElement
         mousePos -= new Vector2(1);
         mousePos.Y = -mousePos.Y;
 
-        bool pHovering = _hovering;
-        _hovering = lastGlobalShape.ContainsInclusive(mousePos);
+        bool pHovering = hovering;
+        hovering = lastGlobalShape.ContainsInclusive(mousePos);
 
-        if(!_hovering && !pHovering)
+        if(!hovering && !pHovering)
             return;
 
-        bool hoverChange = pHovering != _hovering;
+        bool hoverChange = pHovering != hovering;
         for(int i = 0; i<=(int)MouseButton.Last; i++)
         {
             var butt = (MouseButton)i;
@@ -37,7 +37,7 @@ public abstract class Button : UIElement
 
         if(hoverChange)
         {
-            if(_hovering) 
+            if(hovering) 
                 OnHoverStart();
             else OnHoverEnd();
         }
