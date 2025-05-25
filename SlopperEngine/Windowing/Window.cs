@@ -3,13 +3,13 @@ using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Textures;
-using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Common.Input;
 using SlopperEngine.SceneObjects;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using SlopperEngine.Core.Serialization;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.Windowing;
 
@@ -18,11 +18,13 @@ namespace SlopperEngine.Windowing;
 /// </summary>
 public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
 {
-    static List<Window> _allWindows = new();
     public static ReadOnlyCollection<Window> AllWindows => _allWindows.AsReadOnly();
     public Texture2D? WindowTexture;
     public Scene? Scene;
     public bool KeepProgramAlive = true;
+
+    static List<Window> _allWindows = new();
+    SpanList<TextInputEvent> _textInputQueue = new();
 
     // Considering shared resources are a PAIN IN THE buttock,
     // windows only have two responsibilities - draw a texture to the screen, and receive user inputs
@@ -34,19 +36,29 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
     /// </summary>
     public void Render()
     {
-        if(WindowTexture == null)
+        if (WindowTexture == null)
             return;
-        if(Context == null)
+        if (Context == null)
             return;
 
         Context.MakeCurrent();
-        
+
         FrameBuffer.Unuse();
-        GL.Viewport(0,0,ClientSize.X, ClientSize.Y);
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
         FullScreenTriangle.Draw(WindowTexture, this);
-        
+
         Context.SwapBuffers();
     }
+
+    /// <summary>
+    /// Gets all text input events collected this frame.
+    /// </summary>
+    public SpanList<TextInputEvent>.ReadOnlySpanList GetTextInputs() => new(_textInputQueue);
+
+    /// <summary>
+    /// Clears all text input events. 
+    /// </summary>
+    public void ClearTextInputs() => _textInputQueue.Clear();
 
     Window(NativeWindowSettings settings) : base(settings)
     {
@@ -54,10 +66,30 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
         MainContext.Instance.MakeCurrent();
     }
 
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
+        base.OnTextInput(e);
+        AddChar(e.Unicode);
+
+        void AddChar(int toAdd)
+        {
+            _textInputQueue.Add(new(
+                this,
+                toAdd,
+                KeyboardState.IsKeyDown(Keys.LeftControl),
+                KeyboardState.IsKeyDown(Keys.LeftShift),
+                KeyboardState.IsKeyDown(Keys.LeftAlt),
+                KeyboardState.IsKeyDown(Keys.RightControl),
+                KeyboardState.IsKeyDown(Keys.RightShift),
+                KeyboardState.IsKeyDown(Keys.RightAlt),
+                KeyboardState.IsKeyDown(Keys.LeftSuper)));
+        }
+    }
+
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if(disposing)
+        if (disposing)
             _allWindows.Remove(this);
     }
     protected override void OnClosing(CancelEventArgs e)

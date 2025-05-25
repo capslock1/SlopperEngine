@@ -1,14 +1,16 @@
 
+using System.Runtime.CompilerServices;
+
 namespace SlopperEngine.Core.Collections;
 
 /// <summary>
 /// A list for writing spans into directly.
 /// </summary>
-public class SpanList<T> 
+public class SpanList<T>
 {
     T[] _values;
     int _usedSize;
-    
+
     public SpanList(int startCapacity = 4)
     {
         _values = new T[startCapacity];
@@ -40,7 +42,8 @@ public class SpanList<T>
     public T this[int index]
     {
         get => _values[index];
-        set {
+        set
+        {
             T temp = value;
             _values[index] = temp;
         }
@@ -76,12 +79,24 @@ public class SpanList<T>
     public void EnsureCapacity(int capacity)
     {
         // implementation was shamelessly stolen from System.Collections.Generic.List
-        if(capacity <= Capacity) return;
+        if (capacity <= Capacity) return;
         int newCapacity = 2 * _values.Length;
         if ((uint)newCapacity > Array.MaxLength) newCapacity = Array.MaxLength;
         if (newCapacity < capacity) newCapacity = capacity;
 
         Capacity = newCapacity;
+    }
+
+    /// <summary>
+    /// Clears the list's values. Garbage data can remain, if AddMultiple is used and T is unmanaged.
+    /// </summary>
+    public void Clear()
+    {
+        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>() && _usedSize > 0)
+        {
+            Array.Clear(_values, 0, _usedSize);
+        }
+        _usedSize = 0;
     }
 
     public ref struct ListSpan(SpanList<T> owner, int startIndex, int length)
@@ -100,8 +115,17 @@ public class SpanList<T>
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
         /// <returns></returns>
-        public ListSpan Slice(int start) => new ListSpan(_owner, _startIndex+start, _length-start);
+        public ListSpan Slice(int start) => new ListSpan(_owner, _startIndex + start, _length - start);
 
         public static implicit operator Span<T>(ListSpan r) => new(r._owner._values, r._startIndex, r.Length);
+    }
+
+    public struct ReadOnlySpanList(SpanList<T> owner)
+    {
+        private SpanList<T> _owner = owner;
+
+        public int Count => _owner.Count;
+        public readonly T this[int index] => _owner._values[index];
+        public static implicit operator ReadOnlySpan<T>(ReadOnlySpanList r) => new(r._owner._values, 0, r._owner.Count);
     }
 }

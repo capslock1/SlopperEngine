@@ -47,13 +47,14 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
 
         //first update inputs
         int aliveWindows = 0;
-        for(int i = Window.AllWindows.Count-1; i>=0; i--)
+        for (int i = Window.AllWindows.Count - 1; i >= 0; i--)
         {
             var win = Window.AllWindows[i];
-            if(win.KeepProgramAlive) 
+            if (win.KeepProgramAlive)
                 aliveWindows++;
-            if(win.Scene != null && !win.Scene.Destroyed) 
-                win.Scene.InputUpdate(new(win.KeyboardState, win.MouseState));
+            if (win.Scene != null && !win.Scene.Destroyed)
+                win.Scene.InputUpdate(new(win.KeyboardState, win.MouseState, win.GetTextInputs()));
+            win.ClearTextInputs();
             win.NewInputFrame();
         }
 

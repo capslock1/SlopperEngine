@@ -1,4 +1,5 @@
 using SlopperEngine.Core;
+using SlopperEngine.Windowing;
 
 namespace SlopperEngine.UI;
 
@@ -36,6 +37,11 @@ public class TextField : Button
     [OnInputUpdate]
     void Input(InputUpdateArgs args)
     {
+        foreach (var j in (ReadOnlySpan<TextInputEvent>)args.TextInputEvents)
+        {
+            if (j.TryGetAsChar(out char c)) Text += c;
+            else Text += j.GetAsString();
+        }
         if (args.MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left) && !hovering)
         {
             _cursorPosition = -1;

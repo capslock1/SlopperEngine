@@ -161,6 +161,8 @@ public class TestGame : SceneObject
         fonttest.BackgroundColor = new(0,0,0,.4f);
         _UIScene.Children.Add(fonttest);
 
+        _UIScene.Children.Add(new TextField(10));
+
         _lamps = new PointLight[10];
         var lampShader = SlopperShader.Create("shaders/UnlitColor.sesl");
         for(int i = 0; i<_lamps.Length; i++)
