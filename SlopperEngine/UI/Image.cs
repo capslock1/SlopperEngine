@@ -30,8 +30,9 @@ public class Image : UIElement
             _matTextureIndex = _material.GetUniformIndexFromName("mainTexture");
     }
     public Image() : this(new(0,0,1,1)){}
-    public Image(Box2 shape, Texture material) : this(shape)
+    public Image(Box2 shape, Texture texture) : this(shape)
     {
+        Texture = texture;
     }
 
     protected override Material? GetMaterial()

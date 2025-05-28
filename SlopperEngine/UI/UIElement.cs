@@ -24,11 +24,13 @@ public class UIElement : SceneObject
     /// <summary>
     /// The last renderer that used this UIElement.
     /// </summary>
-    protected UIRenderer? lastRenderer {get; private set;}
+    public UIRenderer? LastRenderer {get; private set;}
     /// <summary>
     /// The last global shape that was calculated of this UIElement, in normalized device coordinates.
     /// </summary>
-    protected Box2 lastGlobalShape {get; private set;}
+    public Box2 LastGlobalShape {get; private set;}
+    public UIElementSize LastSizeConstraints { get; private set; }
+    
     /// <summary>
     /// A set of hidden UI elements.
     /// </summary>
@@ -66,7 +68,7 @@ public class UIElement : SceneObject
     protected virtual UIElementSize GetSizeConstraints() => new(default, default, 0, 0);
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
     {
-        lastRenderer = renderer;
+        LastRenderer = renderer;
 
         Box2 globalShape = new(
             float.Lerp(parentShape.Min.X, parentShape.Max.X, LocalShape.Min.X),
@@ -76,13 +78,13 @@ public class UIElement : SceneObject
         );
 
         var screenScale = renderer.GetPixelScale();
-        UIElementSize size = GetSizeConstraints();
-        float minSizeX = size.MinimumSizeX * screenScale.X;
-        float maxSizeX = size.MaximumSizeX * screenScale.X;
-        float minSizeY = size.MinimumSizeY * screenScale.Y;
-        float maxSizeY = size.MaximumSizeY * screenScale.Y;
-        var (minX, maxX) = Resize(globalShape.Min.X, globalShape.Max.X, minSizeX, maxSizeX, size.GrowX);
-        var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, size.GrowY);
+        LastSizeConstraints = GetSizeConstraints();
+        float minSizeX = LastSizeConstraints.MinimumSizeX * screenScale.X;
+        float maxSizeX = LastSizeConstraints.MaximumSizeX * screenScale.X;
+        float minSizeY = LastSizeConstraints.MinimumSizeY * screenScale.Y;
+        float maxSizeY = LastSizeConstraints.MaximumSizeY * screenScale.Y;
+        var (minX, maxX) = Resize(globalShape.Min.X, globalShape.Max.X, minSizeX, maxSizeX, LastSizeConstraints.GrowX);
+        var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
         globalShape = new(minX,minY,maxX,maxY);
 
         foreach (var ch in hiddenUIChildren.All)
@@ -90,7 +92,7 @@ public class UIElement : SceneObject
         foreach(var ch in UIChildren.All)
             ch.UpdateShape(globalShape, renderer);
 
-        lastGlobalShape = globalShape;
+        LastGlobalShape = globalShape;
 
         static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {
@@ -120,20 +122,10 @@ public class UIElement : SceneObject
     {
         var tex = GetMaterial();
         if (tex != null)
-            renderer.AddRenderToQueue(lastGlobalShape, tex);
+            renderer.AddRenderToQueue(LastGlobalShape, tex);
         foreach (var ch in hiddenUIChildren.All)
             ch.Render(renderer);
         foreach (var ch in UIChildren.All)
             ch.Render(renderer);
-    }
-
-    protected struct UIElementSize(Alignment growX, Alignment growY, int minimumSizeX, int minimumSizeY, int maximumSizeX = int.MaxValue, int maximumSizeY = int.MaxValue)
-    {
-        public Alignment GrowX = growX;
-        public Alignment GrowY = growY;
-        public int MinimumSizeX = minimumSizeX;
-        public int MinimumSizeY = minimumSizeY;
-        public int MaximumSizeX = maximumSizeX;
-        public int MaximumSizeY = maximumSizeY;
     }
 }

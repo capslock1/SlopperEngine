@@ -1,0 +1,22 @@
+vertOut vec4 position;
+
+vertIn vec4 position;
+vertIn vec2 UVCoordinates;
+
+vertToPix vec2 uvCoords;
+
+void vertex()
+{
+    vertToPix.uvCoords = vertIn.UVCoordinates;
+    vertOut.position = vertIn.position;
+}
+
+pixOut vec3 Albedo;
+pixOut float Transparency;
+uniform vec4 mainColor;
+
+void pixel()
+{
+    pixOut.Albedo = mainColor.xyz;
+    pixOut.Transparency = mainColor.w;
+}

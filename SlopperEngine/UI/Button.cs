@@ -12,14 +12,14 @@ public abstract class Button : UIElement
     [OnInputUpdate]
     void OnInput(InputUpdateArgs args)
     {
-        if(lastRenderer == null) return;
+        if(LastRenderer == null) return;
 
-        Vector2 mousePos = args.MouseState.Position * lastRenderer.GetPixelScale();
+        Vector2 mousePos = args.MouseState.Position * LastRenderer.GetPixelScale();
         mousePos -= new Vector2(1);
         mousePos.Y = -mousePos.Y;
 
         bool pHovering = hovering;
-        hovering = lastGlobalShape.ContainsInclusive(mousePos);
+        hovering = LastGlobalShape.ContainsInclusive(mousePos);
 
         if(!hovering && !pHovering)
             return;
