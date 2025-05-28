@@ -261,24 +261,6 @@ public class TestGame : SceneObject
         _UIScene?.InputUpdate(args);
         if (args.KeyboardState.IsKeyDown(Keys.Escape))
             _testWindow.Close();
-
-        if (args.KeyboardState.IsKeyPressed(Keys.N))
-        {
-            var serial = _main!.Serialize();
-            serial.Instantiate();
-        }
-        if (args.KeyboardState.IsKeyPressed(Keys.K))
-        {
-            var serial = _lamps[0].Serialize();
-            serial.SaveBinaryUncompressed("myCoolFile.slsc");
-        }
-        if (args.KeyboardState.IsKeyPressed(Keys.L))
-        {
-            var serial = SerializedObjectTree.LoadBinaryUncompressed("myCoolFile.slsc");
-            if (serial != null)
-                _main!.Children.Add(serial.Instantiate());
-            else System.Console.WriteLine("IT WAS NULL WAHHHH");
-        }
     }
 
     void OnFramebufferResize(FramebufferResizeEventArgs e)

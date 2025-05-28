@@ -66,16 +66,16 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
         MainContext.Instance.MakeCurrent();
     }
 
-    protected override void OnTextInput(TextInputEventArgs e)
+    protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
-        base.OnTextInput(e);
-        AddChar(e.Unicode);
+        base.OnKeyDown(e);
 
-        void AddChar(int toAdd)
-        {
+        // only triggered when ctrl is held
+        if(e.Control || e.Command)
             _textInputQueue.Add(new(
                 this,
-                toAdd,
+                -1,
+                e.Key,
                 KeyboardState.IsKeyDown(Keys.LeftControl),
                 KeyboardState.IsKeyDown(Keys.LeftShift),
                 KeyboardState.IsKeyDown(Keys.LeftAlt),
@@ -83,7 +83,23 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
                 KeyboardState.IsKeyDown(Keys.RightShift),
                 KeyboardState.IsKeyDown(Keys.RightAlt),
                 KeyboardState.IsKeyDown(Keys.LeftSuper)));
-        }
+    }
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
+        base.OnTextInput(e);
+        
+        // only triggered when ctrl isn't held
+        _textInputQueue.Add(new(
+            this,
+            e.Unicode,
+            Keys.Unknown,
+            KeyboardState.IsKeyDown(Keys.LeftControl),
+            KeyboardState.IsKeyDown(Keys.LeftShift),
+            KeyboardState.IsKeyDown(Keys.LeftAlt),
+            KeyboardState.IsKeyDown(Keys.RightControl),
+            KeyboardState.IsKeyDown(Keys.RightShift),
+            KeyboardState.IsKeyDown(Keys.RightAlt),
+            KeyboardState.IsKeyDown(Keys.LeftSuper)));
     }
 
     protected override void Dispose(bool disposing)

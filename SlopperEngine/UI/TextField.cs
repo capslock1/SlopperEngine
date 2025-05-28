@@ -95,8 +95,27 @@ public class TextField : Button
     {
         foreach (var j in args.TextInputEvents)
         {
-            if (j.TryGetAsChar(out char c)) Text += c;
-            else Text += j.GetAsString();
+            if (j.CharacterIsAsKey)
+            {
+                switch (j.CharacterAsKey)
+                {
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.C:
+                        if (_selectionLength < 1) break;
+                        if ((uint)_cursorPosition >= _fullText.Length) break;
+                        if ((uint)(_cursorPosition + _selectionLength) >= _fullText.Length) break;
+                        MainContext.Instance.ClipboardString = _fullText.Substring(_cursorPosition, _selectionLength);
+                        break;
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.V:
+                        Text += MainContext.Instance.ClipboardString;
+                        break;
+                }
+                continue;
+            }
+            else
+            {
+                if (j.TryGetAsChar(out char c)) Text += c;
+                    else Text += j.GetAsString();
+            }
         }
         if (args.MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left) && !hovering)
         {
