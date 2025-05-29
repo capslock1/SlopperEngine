@@ -236,7 +236,7 @@ public class TextField : Button
                                 break;
                             }
                             if (_selectionLength > 0 || _selectionMin > 0)
-                                    _selectionLength--;
+                                _selectionLength--;
                             break;
                         }
                         if (_selectionLength == 0)
@@ -275,6 +275,24 @@ public class TextField : Button
                             _cursorPosition = _selectionMax;
                             _selectionLength = 0;
                         }
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Home:
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up:
+                        _cursorPosition = 0;
+                        _invalidateRenderer = true;
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.End:
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down:
+                        _cursorPosition = _fullText.Length;
+                        _invalidateRenderer = true;
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Enter:
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.KeyPadEnter:
+                        _cursorPosition = -1;
+                        _fieldSelected = false;
                         break;
                 }
                 continue;
