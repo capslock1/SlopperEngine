@@ -17,11 +17,12 @@ public class TextField : Button
         {
             _fullText = value;
             _invalidateRenderer = true;
+            _cursorPosition = int.Min(_cursorPosition, value.Length);
         }
     }
 
     /// <summary>
-    /// The actual renderer of the text. Avoid setting the string in here, as it will not properly update.
+    /// The actual renderer of the text. After making any changes, call "UpdateTextRenderer()". Setting the Text string of the TextRenderer does not work.
     /// </summary>
     public TextBox TextRenderer { get; private set; }
 
@@ -66,9 +67,14 @@ public class TextField : Button
     }
 
     /// <summary>
-    /// Call this after changing the font of the TextRenderer.
+    /// Call this after making any changes to the text renderer.
     /// </summary>
-    public void ForceUpdateRenderer()
+    public void UpdateTextRenderer()
+    {
+        _invalidateRenderer = true;
+    }
+
+    void ForceUpdateRenderer()
     {
         _invalidateRenderer = false;
 
@@ -155,27 +161,72 @@ public class TextField : Button
             {
                 switch (j.CharacterAsKey)
                 {
-                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.X:
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Backspace: // remove previous character or all selected characters
+                        if (_selectionLength != 0)
+                        {
+                            DeleteSelected();
+                            break;
+                        }
+                        if (_cursorPosition < 1) break;
+                        if (_fullText.Length < 1) break;
+
+                        _invalidateRenderer = true;
+                        _fullText = _fullText.Substring(0, _cursorPosition - 1) + _fullText.Substring(_cursorPosition);
+                        _cursorPosition--;
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Delete: // remove next character or all selected characters
+                        if (_selectionLength != 0)
+                        {
+                            DeleteSelected();
+                            break;
+                        }
+                        if (_cursorPosition >= _fullText.Length) break;
+                        if (_fullText.Length < 1) break;
+
+                        _invalidateRenderer = true;
+                        _fullText = _fullText.Substring(0, _cursorPosition) + _fullText.Substring(_cursorPosition + 1);
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.A: // select all
+                        if (!j.AnyControlheld) break;
+                        _cursorPosition = 0;
+                        _selectionLength = _fullText.Length;
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.X: // cut selection out
+                        if (!j.AnyControlheld) break;
+                        if (_selectionLength == 0) break;
+
+                        SelectionToClipboard();
+                        DeleteSelected();
+                        break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.C: // copy selection to clipboard
                         if (!j.AnyControlheld) break;
 
                         SelectionToClipboard();
-                        // remove text here
                         break;
-                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.C:
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.V: // paste clipboard
                         if (!j.AnyControlheld) break;
 
-                        SelectionToClipboard();
-                        break;
-                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.V:
-                        if (!j.AnyControlheld) break;
-
-                        Text += MainContext.Instance.ClipboardString;
+                        string clipboard = MainContext.Instance.ClipboardString;
+                        if (clipboard.Length == 0)
+                        {
+                            DeleteSelected();
+                            break;
+                        }
+                        _invalidateRenderer = true;
+                        _fullText = _fullText.Substring(0, _selectionMin) + clipboard + _fullText.Substring(_selectionMax);
+                        _cursorPosition = _selectionMin + clipboard.Length;
+                        _selectionLength = 0;
                         break;
 
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left:
                         if (j.AnyShiftHeld)
                         {
-                            if(_selectionLength > 0 || _selectionMin > 0)
+                            if (_selectionLength > 0 || _selectionMin > 0)
                                 _selectionLength--;
                             break;
                         }
@@ -187,10 +238,11 @@ public class TextField : Button
                             _selectionLength = 0;
                         }
                         break;
+
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right:
                         if (j.AnyShiftHeld)
                         {
-                            if(_selectionLength < 0 || _selectionMax < _fullText.Length)
+                            if (_selectionLength < 0 || _selectionMax < _fullText.Length)
                                 _selectionLength++;
                             break;
                         }
@@ -207,10 +259,34 @@ public class TextField : Button
             }
             else
             {
-                if (j.TryGetAsChar(out char c)) Text += c;
-                else Text += j.GetAsString();
+                if (_cursorPosition >= _fullText.Length && _selectionLength == 0)
+                {
+                    if (j.TryGetAsChar(out char c)) Text += c;
+                    else Text += j.GetAsString();
+                    _cursorPosition = _fullText.Length;
+                }
+                else
+                {
+                    _invalidateRenderer = true;
+                    string added = j.GetAsString();
+                    _fullText = _fullText.Substring(0, _selectionMin) + added + _fullText.Substring(_selectionMax);
+                    _cursorPosition = _selectionMin + added.Length;
+                    _selectionLength = 0;
+                }
             }
         }
+    }
+
+    void DeleteSelected()
+    {
+        if (_selectionLength == 0) return;
+
+        int start = _selectionMin;
+        int end = _selectionMax;
+        _cursorPosition = start;
+        _selectionLength = 0;
+        _invalidateRenderer = true;
+        _fullText = _fullText.Substring(0, start) + _fullText.Substring(end);
     }
 
     void SelectionToClipboard()
