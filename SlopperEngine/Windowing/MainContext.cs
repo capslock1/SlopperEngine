@@ -5,6 +5,7 @@ using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Core.Serialization;
+using OpenTK.Mathematics;
 
 namespace SlopperEngine.Windowing;
 
@@ -53,7 +54,12 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             if (win.KeepProgramAlive)
                 aliveWindows++;
             if (win.Scene != null && !win.Scene.Destroyed)
-                win.Scene.InputUpdate(new(win.KeyboardState, win.MouseState, win.GetTextInputs()));
+            {
+                Vector2 mousePosNorm = win.MouseState.Position;
+                mousePosNorm /= win.ClientSize;
+                mousePosNorm.Y = 1 - mousePosNorm.Y;
+                win.Scene.InputUpdate(new(win.KeyboardState, win.MouseState, win.GetTextInputs(), mousePosNorm));
+            }
             win.ClearTextInputs();
             win.NewInputFrame();
         }

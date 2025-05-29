@@ -70,29 +70,10 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
     {
         base.OnKeyDown(e);
 
-        // only triggered when ctrl is held
-        if(e.Control || e.Command)
-            _textInputQueue.Add(new(
-                this,
-                -1,
-                e.Key,
-                KeyboardState.IsKeyDown(Keys.LeftControl),
-                KeyboardState.IsKeyDown(Keys.LeftShift),
-                KeyboardState.IsKeyDown(Keys.LeftAlt),
-                KeyboardState.IsKeyDown(Keys.RightControl),
-                KeyboardState.IsKeyDown(Keys.RightShift),
-                KeyboardState.IsKeyDown(Keys.RightAlt),
-                KeyboardState.IsKeyDown(Keys.LeftSuper)));
-    }
-    protected override void OnTextInput(TextInputEventArgs e)
-    {
-        base.OnTextInput(e);
-        
-        // only triggered when ctrl isn't held
         _textInputQueue.Add(new(
             this,
-            e.Unicode,
-            Keys.Unknown,
+            -1,
+            e.Key,
             KeyboardState.IsKeyDown(Keys.LeftControl),
             KeyboardState.IsKeyDown(Keys.LeftShift),
             KeyboardState.IsKeyDown(Keys.LeftAlt),
@@ -100,6 +81,39 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
             KeyboardState.IsKeyDown(Keys.RightShift),
             KeyboardState.IsKeyDown(Keys.RightAlt),
             KeyboardState.IsKeyDown(Keys.LeftSuper)));
+    }
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
+        base.OnTextInput(e);
+
+        int lastIndex = _textInputQueue.Count - 1;
+        if (_textInputQueue[lastIndex].CharacterAsUnicode == -1)
+        {
+            var inp = _textInputQueue[lastIndex];
+            var newinp = new TextInputEvent(
+                this,
+                e.Unicode,
+                inp.CharacterAsKey,
+                inp.LeftControlHeld,
+                inp.LeftShiftHeld,
+                inp.LeftAltHeld,
+                inp.RightControlHeld,
+                inp.RightShiftHeld,
+                inp.RightAltHeld,
+                inp.SuperKeyHeld);
+            _textInputQueue[lastIndex] = newinp; // this sucks
+        }
+        else _textInputQueue.Add(new(
+                this,
+                e.Unicode,
+                Keys.Unknown,
+                KeyboardState.IsKeyDown(Keys.LeftControl),
+                KeyboardState.IsKeyDown(Keys.LeftShift),
+                KeyboardState.IsKeyDown(Keys.LeftAlt),
+                KeyboardState.IsKeyDown(Keys.RightControl),
+                KeyboardState.IsKeyDown(Keys.RightShift),
+                KeyboardState.IsKeyDown(Keys.RightAlt),
+                KeyboardState.IsKeyDown(Keys.LeftSuper)));
     }
 
     protected override void Dispose(bool disposing)

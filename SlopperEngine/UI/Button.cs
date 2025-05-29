@@ -14,9 +14,8 @@ public abstract class Button : UIElement
     {
         if(LastRenderer == null) return;
 
-        Vector2 mousePos = args.MouseState.Position * LastRenderer.GetPixelScale();
+        Vector2 mousePos = args.NormalizedMousePosition * 2;
         mousePos -= new Vector2(1);
-        mousePos.Y = -mousePos.Y;
 
         bool pHovering = hovering;
         hovering = LastGlobalShape.ContainsInclusive(mousePos);

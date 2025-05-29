@@ -43,7 +43,7 @@ public readonly record struct TextInputEvent(
     public bool AnyAltHeld => LeftAltHeld || RightAltHeld;
 
     /// <summary>
-    /// Whether or not CharacterAsKey contains the value of the event. Generally applies when ctrl or super is held.
+    /// Whether or not CharacterAsKey contains the value of the event. Generally applies when ctrl or super is held, or if the key is not a unicode character (like arrows or backspace or any modifiers).
     /// </summary>
     public bool CharacterIsAsKey => CharacterAsUnicode == -1;
 
