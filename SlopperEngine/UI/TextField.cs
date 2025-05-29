@@ -101,9 +101,9 @@ public class TextField : Button
             _shownTextOffset += _cursorPosition + _selectionLength - _shownTextOffset - _fieldLength + 1;
             _invalidateRenderer = true;
         }
-        if (_shownTextOffset > 0 && _cursorPosition + _selectionLength - _shownTextOffset < 0)
+        if (_shownTextOffset > 0 && _cursorPosition + _selectionLength - _shownTextOffset < 1)
         {
-            _shownTextOffset += _cursorPosition + _selectionLength - _shownTextOffset;
+            _shownTextOffset += _cursorPosition + _selectionLength - _shownTextOffset - 1;
             _invalidateRenderer = true;
         }
 
@@ -162,6 +162,8 @@ public class TextField : Button
                 switch (j.CharacterAsKey)
                 {
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Backspace: // remove previous character or all selected characters
+                        if (j.AnyControlheld)
+                            SelectUntilNextWhitespace(true);
                         if (_selectionLength != 0)
                         {
                             DeleteSelected();
@@ -176,6 +178,8 @@ public class TextField : Button
                         break;
 
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Delete: // remove next character or all selected characters
+                        if (j.AnyControlheld)
+                            SelectUntilNextWhitespace(false);
                         if (_selectionLength != 0)
                         {
                             DeleteSelected();
@@ -226,12 +230,21 @@ public class TextField : Button
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left:
                         if (j.AnyShiftHeld)
                         {
+                            if (j.AnyControlheld)
+                            {
+                                SelectUntilNextWhitespace(true);
+                                break;
+                            }
                             if (_selectionLength > 0 || _selectionMin > 0)
-                                _selectionLength--;
+                                    _selectionLength--;
                             break;
                         }
                         if (_selectionLength == 0)
-                            _cursorPosition = int.Max(0, _cursorPosition - 1);
+                        {
+                            if (j.AnyControlheld)
+                                _cursorPosition = IndexOfNextWhitespace(_cursorPosition, true);
+                            else _cursorPosition = int.Max(0, _cursorPosition - 1);
+                        }
                         else
                         {
                             _cursorPosition = _selectionMin;
@@ -242,12 +255,21 @@ public class TextField : Button
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right:
                         if (j.AnyShiftHeld)
                         {
+                            if (j.AnyControlheld)
+                            {
+                                SelectUntilNextWhitespace(false);
+                                break;
+                            }
                             if (_selectionLength < 0 || _selectionMax < _fullText.Length)
                                 _selectionLength++;
                             break;
                         }
                         if (_selectionLength == 0)
-                            _cursorPosition = int.Min(_fullText.Length, _cursorPosition + 1);
+                        {
+                            if (j.AnyControlheld)
+                                _cursorPosition = IndexOfNextWhitespace(_cursorPosition, false);
+                            else _cursorPosition = int.Min(_fullText.Length, _cursorPosition + 1);
+                        }
                         else
                         {
                             _cursorPosition = _selectionMax;
@@ -275,6 +297,41 @@ public class TextField : Button
                 }
             }
         }
+    }
+
+    void SelectUntilNextWhitespace(bool backwards)
+    {
+        int startPos = _cursorPosition;
+        if (_selectionLength < 0)
+            startPos = _selectionMin;
+        if (_selectionLength > 0)
+            startPos = _selectionMax;
+
+        int index = IndexOfNextWhitespace(startPos, backwards);
+        _selectionLength = index - _cursorPosition;
+    }
+
+    int IndexOfNextWhitespace(int indexToSearchFrom, bool backwards)
+    {
+        int increment = backwards ? -1 : 1;
+        bool encounteredNormalChar = false;
+        if (!((uint)indexToSearchFrom < _fullText.Length) || backwards)
+            indexToSearchFrom += increment;
+
+        while ((uint)indexToSearchFrom < _fullText.Length)
+        {
+            var ch = _fullText[indexToSearchFrom];
+
+            if (char.IsWhiteSpace(ch))
+            {
+                if (encounteredNormalChar)
+                    return int.Clamp(indexToSearchFrom + (backwards ? 1 : 0), 0, _fullText.Length);
+            }
+            else encounteredNormalChar = true;
+
+            indexToSearchFrom += increment;
+        }
+        return int.Clamp(indexToSearchFrom, 0, _fullText.Length);
     }
 
     void DeleteSelected()
