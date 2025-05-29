@@ -41,7 +41,7 @@ public class TextField : Button
     /// <summary>
     /// The color of the overlay on selected text.
     /// </summary>
-    public Color4 SelectionColor = new(0,1,1,.4f);
+    public Color4 SelectionColor = new(0, 1, 1, .4f);
 
     string _fullText = "";
     int _fieldLength;
@@ -54,7 +54,9 @@ public class TextField : Button
     int _cursorPosition = -1;
     int _selectionLength = 0;
 
-    
+    int _selectionMax => int.Max(_cursorPosition, _cursorPosition + _selectionLength);
+    int _selectionMin => int.Min(_cursorPosition, _cursorPosition + _selectionLength);
+
     public TextField(int length)
     {
         Length = length;
@@ -71,10 +73,10 @@ public class TextField : Button
         _invalidateRenderer = false;
 
         StringBuilder builder = new();
-        int pos = _shownTextOffset;
-        while (pos < _fullText.Length && pos < _fieldLength)
+        int pos = 0;
+        while (pos + _shownTextOffset < _fullText.Length && pos < _fieldLength)
         {
-            builder.Append(_fullText[pos]);
+            builder.Append(_fullText[pos + _shownTextOffset]);
             pos++;
         }
         while (pos < _fieldLength)
@@ -88,8 +90,19 @@ public class TextField : Button
 
     void UpdateCursor()
     {
+        if (_cursorPosition + _selectionLength - _shownTextOffset >= _fieldLength)
+        {
+            _shownTextOffset += _cursorPosition + _selectionLength - _shownTextOffset - _fieldLength + 1;
+            _invalidateRenderer = true;
+        }
+        if (_shownTextOffset > 0 && _cursorPosition + _selectionLength - _shownTextOffset < 0)
+        {
+            _shownTextOffset += _cursorPosition + _selectionLength - _shownTextOffset;
+            _invalidateRenderer = true;
+        }
+
         if (_cursor.InScene && !_fieldSelected)
-            _cursor.Remove();
+                _cursor.Remove();
         if (!_cursor.InScene && _fieldSelected)
             hiddenUIChildren.Add(_cursor);
 
@@ -104,8 +117,12 @@ public class TextField : Button
 
         float invFieldLength = 1f / _fieldLength;
         cursorCharacterLength *= invFieldLength;
-        float cursorPos = _cursorPosition * invFieldLength;
-        _cursor.LocalShape = new(cursorPos, 0.1f, cursorPos + cursorCharacterLength, 0.9f);
+        float cursorPos = (_cursorPosition - _shownTextOffset) * invFieldLength;
+        _cursor.LocalShape = new(
+            float.Clamp(cursorPos, 0, 1),
+            0.1f,
+            float.Clamp(cursorPos + cursorCharacterLength, 0, 1),
+            0.9f);
     }
 
     [OnInputUpdate]
@@ -154,6 +171,37 @@ public class TextField : Button
 
                         Text += MainContext.Instance.ClipboardString;
                         break;
+
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left:
+                        if (j.AnyShiftHeld)
+                        {
+                            if(_selectionLength > 0 || _selectionMin > 0)
+                                _selectionLength--;
+                            break;
+                        }
+                        if (_selectionLength == 0)
+                            _cursorPosition = int.Max(0, _cursorPosition - 1);
+                        else
+                        {
+                            _cursorPosition = _selectionMin;
+                            _selectionLength = 0;
+                        }
+                        break;
+                    case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right:
+                        if (j.AnyShiftHeld)
+                        {
+                            if(_selectionLength < 0 || _selectionMax < _fullText.Length)
+                                _selectionLength++;
+                            break;
+                        }
+                        if (_selectionLength == 0)
+                            _cursorPosition = int.Min(_fullText.Length, _cursorPosition + 1);
+                        else
+                        {
+                            _cursorPosition = _selectionMax;
+                            _selectionLength = 0;
+                        }
+                        break;
                 }
                 continue;
             }
@@ -170,12 +218,10 @@ public class TextField : Button
         if (_selectionLength == 0)
             return;
 
-        int selectionMax = int.Max(_cursorPosition, _cursorPosition + _selectionLength);
-        int selectionMin = int.Min(_cursorPosition, _cursorPosition + _selectionLength);
-        if ((uint)selectionMax > _fullText.Length || (uint)selectionMin >= _fullText.Length)
+        if ((uint)_selectionMax > _fullText.Length || (uint)_selectionMin >= _fullText.Length)
             return;
 
-        MainContext.Instance.ClipboardString = _fullText.Substring(selectionMin, selectionMax - selectionMin);
+        MainContext.Instance.ClipboardString = _fullText.Substring(_selectionMin, _selectionMax - _selectionMin);
     }
 
     int GetCharOffsetFromMousePos(float mouseX)
@@ -188,15 +234,16 @@ public class TextField : Button
         mouseX /= sizeX; // range 0..1
         mouseX *= Length;
         mouseX += .2f; // select slightly to the right
-        return (int)mouseX;
+        return int.Clamp((int)mouseX + _shownTextOffset, 0, _fullText.Length);
     }
 
     protected override UIElementSize GetSizeConstraints()
     {
+        UpdateCursor();
+
         if (_invalidateRenderer)
             ForceUpdateRenderer();
 
-        UpdateCursor();
         return TextRenderer.LastSizeConstraints;
     }
 }
