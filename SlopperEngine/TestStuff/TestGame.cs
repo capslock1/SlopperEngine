@@ -166,6 +166,8 @@ public class TestGame : SceneObject
         myText.LocalShape = new(.5f,.5f,.5f,.5f);
         myText.TextRenderer.BackgroundColor = new(0,0,0,.3f);
         myText.UpdateTextRenderer();
+        myText.OnEntered += ()=>System.Console.WriteLine("wow text entered");
+        myText.OnTextChanged += ()=>System.Console.WriteLine("wow text changed");
         _UIScene.Children.Add(myText);
 
         _lamps = new PointLight[10];

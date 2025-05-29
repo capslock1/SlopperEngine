@@ -5,6 +5,9 @@ using SlopperEngine.Windowing;
 
 namespace SlopperEngine.UI;
 
+/// <summary>
+/// An editable line of text.
+/// </summary>
 public class TextField : Button
 {
     /// <summary>
@@ -18,6 +21,7 @@ public class TextField : Button
             _fullText = value;
             _invalidateRenderer = true;
             _cursorPosition = int.Min(_cursorPosition, value.Length);
+            OnTextChanged?.Invoke();
         }
     }
 
@@ -42,7 +46,17 @@ public class TextField : Button
     /// <summary>
     /// The color of the overlay on selected text.
     /// </summary>
-    public Color4 SelectionColor = new(0, 1, 1, .4f);
+    public Color4 SelectionColor = new(0, 1, 1, 0.4f);
+
+    /// <summary>
+    /// Gets called when the text of the text field gets changed in any way.
+    /// </summary>
+    public event Action? OnTextChanged;
+
+    /// <summary>
+    /// Gets called when the textbox is clicked off, or if the Enter key gets hit.
+    /// </summary>
+    public event Action? OnEntered;
 
     string _fullText = "";
     int _fieldLength;
@@ -108,7 +122,7 @@ public class TextField : Button
         }
 
         if (_cursor.InScene && !_fieldSelected)
-                _cursor.Remove();
+            _cursor.Remove();
         if (!_cursor.InScene && _fieldSelected)
             hiddenUIChildren.Add(_cursor);
 
@@ -153,6 +167,9 @@ public class TextField : Button
         {
             _cursorPosition = -1;
             _fieldSelected = false;
+            _shownTextOffset = 0;
+            _invalidateRenderer = true;
+            OnEntered?.Invoke();
         }
 
         foreach (var j in args.TextInputEvents)
@@ -173,7 +190,7 @@ public class TextField : Button
                         if (_fullText.Length < 1) break;
 
                         _invalidateRenderer = true;
-                        _fullText = _fullText.Substring(0, _cursorPosition - 1) + _fullText.Substring(_cursorPosition);
+                        Text = _fullText.Substring(0, _cursorPosition - 1) + _fullText.Substring(_cursorPosition);
                         _cursorPosition--;
                         break;
 
@@ -189,7 +206,7 @@ public class TextField : Button
                         if (_fullText.Length < 1) break;
 
                         _invalidateRenderer = true;
-                        _fullText = _fullText.Substring(0, _cursorPosition) + _fullText.Substring(_cursorPosition + 1);
+                        Text = _fullText.Substring(0, _cursorPosition) + _fullText.Substring(_cursorPosition + 1);
                         break;
 
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.A: // select all
@@ -222,7 +239,7 @@ public class TextField : Button
                             break;
                         }
                         _invalidateRenderer = true;
-                        _fullText = _fullText.Substring(0, _selectionMin) + clipboard + _fullText.Substring(_selectionMax);
+                        Text = _fullText.Substring(0, _selectionMin) + clipboard + _fullText.Substring(_selectionMax);
                         _cursorPosition = _selectionMin + clipboard.Length;
                         _selectionLength = 0;
                         break;
@@ -292,7 +309,10 @@ public class TextField : Button
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Enter:
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.KeyPadEnter:
                         _cursorPosition = -1;
+                        _shownTextOffset = 0;
+                        _invalidateRenderer = true;
                         _fieldSelected = false;
+                        OnEntered?.Invoke();
                         break;
                 }
                 continue;
@@ -309,7 +329,7 @@ public class TextField : Button
                 {
                     _invalidateRenderer = true;
                     string added = j.GetAsString();
-                    _fullText = _fullText.Substring(0, _selectionMin) + added + _fullText.Substring(_selectionMax);
+                    Text = _fullText.Substring(0, _selectionMin) + added + _fullText.Substring(_selectionMax);
                     _cursorPosition = _selectionMin + added.Length;
                     _selectionLength = 0;
                 }
@@ -361,7 +381,7 @@ public class TextField : Button
         _cursorPosition = start;
         _selectionLength = 0;
         _invalidateRenderer = true;
-        _fullText = _fullText.Substring(0, start) + _fullText.Substring(end);
+        Text = _fullText.Substring(0, start) + _fullText.Substring(end);
     }
 
     void SelectionToClipboard()
