@@ -1,7 +1,7 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.Renderers;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Base;
 
 /// <summary>
 /// Handles to the update functions of the UIElement root.

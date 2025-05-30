@@ -1,6 +1,7 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics;
+using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI;
 

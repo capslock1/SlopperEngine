@@ -3,8 +3,9 @@ using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.UI.Base;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Text;
 
 /// <summary>
 /// Contains text.

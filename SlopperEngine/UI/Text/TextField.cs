@@ -2,8 +2,9 @@ using System.Text;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Windowing;
+using SlopperEngine.UI.Base;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Text;
 
 /// <summary>
 /// An editable line of text.

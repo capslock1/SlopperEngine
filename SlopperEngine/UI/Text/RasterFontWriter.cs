@@ -1,7 +1,7 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Text;
 
 /// <summary>
 /// Converts strings to textures using a raster font image.

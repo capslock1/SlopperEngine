@@ -1,4 +1,3 @@
-using BepuPhysics.Collidables;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
@@ -6,7 +5,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.SceneObjects;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Base;
 
 /// <summary>
 /// Describes an element of the UI, with a texture and an AABB shape.

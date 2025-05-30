@@ -1,10 +1,9 @@
 using System.Collections.Frozen;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
-using SlopperEngine.Core.Collections;
 using StbImageSharp;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Text;
 
 /// <summary>
 /// Describes a monospace font, made from a texture.

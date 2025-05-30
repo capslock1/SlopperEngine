@@ -1,9 +1,8 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
-using SlopperEngine.Graphics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Base;
 
 public abstract class Button : UIElement
 {

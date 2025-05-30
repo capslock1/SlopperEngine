@@ -1,4 +1,4 @@
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Base;
 
 /// <summary>
 /// Alignment options for UI.

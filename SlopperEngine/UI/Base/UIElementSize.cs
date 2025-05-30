@@ -1,5 +1,5 @@
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Base;
 
 /// <summary>
 /// Describes the scaling of a UI element.
