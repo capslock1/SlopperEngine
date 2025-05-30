@@ -17,7 +17,7 @@ public class UIRenderer : RenderHandler
 {
     public FrameBuffer Buffer {get; private set;} = new(400,300);
 
-    readonly List<(Box2 shape, Material mat)> _UIElementRenderQueue = [];
+    readonly List<(Box2 shape, Material mat, Box2 scissor)> _UIElementRenderQueue = [];
     readonly ScreenspaceQuadMesh _drawMesh = new(default);
     Vector2i _screenSize = (400,300);
 
@@ -37,13 +37,44 @@ public class UIRenderer : RenderHandler
         
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
+        GL.Disable(EnableCap.ScissorTest);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        foreach(var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            uiRoot.AddRender(this);
+        bool scissorActive = false;
+        Box2 viewport = new(default, _screenSize);
 
-        foreach(var (shape, mat) in _UIElementRenderQueue)
+        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+            uiRoot.AddRender(new(Vector2.NegativeInfinity, Vector2.PositiveInfinity), this);
+
+        foreach (var (shape, mat, scissor) in _UIElementRenderQueue)
         {
+            Box2 screenScaleScissor = new((scissor.Min + Vector2.One) * 0.5f, (scissor.Max + Vector2.One) * 0.5f);
+            screenScaleScissor.Min *= _screenSize;
+            screenScaleScissor.Max *= _screenSize;
+            if (screenScaleScissor.Min.X <= viewport.Min.X &&
+                screenScaleScissor.Max.X >= viewport.Max.X &&
+                screenScaleScissor.Min.Y <= viewport.Min.Y &&
+                screenScaleScissor.Max.Y >= viewport.Max.Y
+            )
+            {
+                if (scissorActive)
+                {
+                    GL.Disable(EnableCap.ScissorTest);
+                    scissorActive = false;
+                }
+            }
+            else
+            {
+                if (!scissorActive)
+                    GL.Enable(EnableCap.ScissorTest);
+                scissorActive = true;
+                GL.Scissor(
+                    (int)screenScaleScissor.Min.X,
+                    (int)screenScaleScissor.Min.Y,
+                    (int)screenScaleScissor.Size.X,
+                    (int)screenScaleScissor.Size.Y);
+            }
+
             _drawMesh.SetShape(shape);
             mat.Use(_drawMesh.GetMeshInfo(), this);
             _drawMesh.Draw();
@@ -51,6 +82,8 @@ public class UIRenderer : RenderHandler
         _UIElementRenderQueue.Clear();
 
         GL.Enable(EnableCap.DepthTest);
+        if(scissorActive)
+            GL.Disable(EnableCap.ScissorTest);
 
         FrameBuffer.Unuse();
     }
@@ -62,7 +95,7 @@ public class UIRenderer : RenderHandler
             uiRoot.UpdateShape(new(-1,-1,1,1),this);
     }
 
-    public void AddRenderToQueue(Box2 shape, Material material) => _UIElementRenderQueue.Add((shape, material));
+    public void AddRenderToQueue(Box2 shape, Material material, Box2 scissor) => _UIElementRenderQueue.Add((shape, material, scissor));
 
     public override Texture2D GetOutputTexture() => Buffer.ColorAttachments[0];
     public override Vector2i GetScreenSize() => _screenSize;

@@ -94,6 +94,8 @@ public class TextField : Button
 
         StringBuilder builder = new();
         int pos = 0;
+        if (_shownTextOffset < 0)
+            _shownTextOffset = 0;
         while (pos + _shownTextOffset < _fullText.Length && pos < _fieldLength)
         {
             builder.Append(_fullText[pos + _shownTextOffset]);

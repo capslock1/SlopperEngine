@@ -9,5 +9,5 @@ namespace SlopperEngine.UI;
 public struct UIRootUpdate
 {
     public Action<Box2, UIRenderer> UpdateShape;
-    public Action<UIRenderer> AddRender;
+    public Action<Box2, UIRenderer> AddRender;
 }

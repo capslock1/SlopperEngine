@@ -1,3 +1,4 @@
+using BepuPhysics.Collidables;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
@@ -64,17 +65,26 @@ public class UIElement : SceneObject
             scene!.UnregisterSceneData<UIRootUpdate>(_UIRootUpdateHandle, default);
     }
 
+    /// <summary>
+    /// Gets the material for this UIElement. Return null to render nothing at all.
+    /// </summary>
     protected virtual Material? GetMaterial() => null;
+    /// <summary>
+    /// Gets the size constraints for this UIElement.
+    /// </summary>
     protected virtual UIElementSize GetSizeConstraints() => new(default, default, 0, 0);
+    /// <summary>
+    /// The region of range 0-1 inside this UIElement where children should be cut out of.
+    /// </summary>
+    protected virtual Box2 GetScissorRegion() => new(Vector2.NegativeInfinity, Vector2.PositiveInfinity);
+
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
     {
         LastRenderer = renderer;
 
         Box2 globalShape = new(
-            float.Lerp(parentShape.Min.X, parentShape.Max.X, LocalShape.Min.X),
-            float.Lerp(parentShape.Min.Y, parentShape.Max.Y, LocalShape.Min.Y),
-            float.Lerp(parentShape.Min.X, parentShape.Max.X, LocalShape.Max.X),
-            float.Lerp(parentShape.Min.Y, parentShape.Max.Y, LocalShape.Max.Y)
+            Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Min),
+            Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Max)
         );
 
         var screenScale = renderer.GetPixelScale();
@@ -85,11 +95,11 @@ public class UIElement : SceneObject
         float maxSizeY = LastSizeConstraints.MaximumSizeY * screenScale.Y;
         var (minX, maxX) = Resize(globalShape.Min.X, globalShape.Max.X, minSizeX, maxSizeX, LastSizeConstraints.GrowX);
         var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
-        globalShape = new(minX,minY,maxX,maxY);
+        globalShape = new(minX, minY, maxX, maxY);
 
         foreach (var ch in hiddenUIChildren.All)
             ch.UpdateShape(globalShape, renderer);
-        foreach(var ch in UIChildren.All)
+        foreach (var ch in UIChildren.All)
             ch.UpdateShape(globalShape, renderer);
 
         LastGlobalShape = globalShape;
@@ -98,34 +108,50 @@ public class UIElement : SceneObject
         {
             float size = max - min;
             float difference = 0;
-            if(size > maxSize)
-                difference = maxSize - size; 
-            if(size < minSize)
+            if (size > maxSize)
+                difference = maxSize - size;
+            if (size < minSize)
                 difference = minSize - size;
-            switch(direction)
+            switch (direction)
             {
                 case Alignment.Middle:
-                min -= difference*.5f;
-                max += difference*.5f;
-                break;
+                    min -= difference * .5f;
+                    max += difference * .5f;
+                    break;
                 case Alignment.Min:
-                min -= difference;
-                break;
+                    min -= difference;
+                    break;
                 case Alignment.Max:
-                max += difference;
-                break;
+                    max += difference;
+                    break;
             }
-            return (min,max);
+            return (min, max);
         }
     }
-    private void Render(UIRenderer renderer)
+    private void Render(Box2 parentScissorRegion, UIRenderer renderer)
     {
-        var tex = GetMaterial();
-        if (tex != null)
-            renderer.AddRenderToQueue(LastGlobalShape, tex);
+        var mat = GetMaterial();
+        var scissor = GetScissorRegion();
+        Box2 globalScissor = new(
+            Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Min),
+            Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Max));
+        globalScissor.Min = Vector2.ComponentMax(globalScissor.Min, parentScissorRegion.Min);
+        globalScissor.Max = Vector2.ComponentMin(globalScissor.Max, parentScissorRegion.Max);
+
+        Box2 NDC = new(-1, -1, 1, 1);
+        Box2 global = LastGlobalShape;
+        if (mat != null &&
+            globalScissor.Size.X > 0 &&
+            globalScissor.Size.Y > 0 &&
+            NDC.Min.X <= global.Max.X &&
+            NDC.Max.X >= global.Min.X &&
+            NDC.Min.Y <= global.Max.Y &&
+            NDC.Max.X >= global.Min.Y
+            )
+            renderer.AddRenderToQueue(LastGlobalShape, mat, globalScissor);
         foreach (var ch in hiddenUIChildren.All)
-            ch.Render(renderer);
+            ch.Render(globalScissor, renderer);
         foreach (var ch in UIChildren.All)
-            ch.Render(renderer);
+            ch.Render(globalScissor, renderer);
     }
 }
