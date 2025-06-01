@@ -17,7 +17,7 @@ namespace SlopperEngine.SillyDemos;
 /// <summary>
 /// Creates a new scene and window for the demos on constructor call.
 /// </summary>
-public class Demos : Image
+public class Demos : ImageRectangle
 {
     List<(Window window, Vector2 size, Vector2 position, float delay)> _additionalWindows = new();
     OpenTK.Windowing.Common.Input.Image _image;
@@ -108,7 +108,7 @@ public class Demos : Image
                 // most interesting part about this scene is the shader itself tbh
                 Material fractal = Material.Create(SlopperShader.Create(Assets.GetPath("shaders/PlimbobrotSet.sesl")));
                 fractal.Uniforms[fractal.GetUniformIndexFromName("mainTexture")].Value = TextureLoader.FromFilepath(Assets.GetPath("textures/croAA.png"));
-                sc.Children.Add(new MaterialQuad(fractal));
+                sc.Children.Add(new MaterialRectangle(fractal));
                 _additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1,1)), (1,1), (0,0), .2f));
             }
 

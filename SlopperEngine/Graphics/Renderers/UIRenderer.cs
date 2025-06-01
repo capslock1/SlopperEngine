@@ -9,6 +9,7 @@ using SlopperEngine.UI;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.UI.Base;
 
 
 namespace SlopperEngine.Graphics.Renderers;

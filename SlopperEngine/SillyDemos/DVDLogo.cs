@@ -7,7 +7,7 @@ namespace SlopperEngine.SillyDemos;
 /// <summary>
 /// Bounces around in the container its in.
 /// </summary>
-public class DVDLogo : Image
+public class DVDLogo : ImageRectangle
 {
     public event Action? OnBounce;
 

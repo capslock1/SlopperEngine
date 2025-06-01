@@ -18,6 +18,7 @@ using SlopperEngine.UI.Text;
 using SlopperEngine.Windowing;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.UI.Navigation;
 
 namespace SlopperEngine.TestStuff;
 
@@ -125,7 +126,7 @@ public class TestGame : SceneObject
         _backgroundTexIndex = _background.GetUniformIndexFromName("sourceTexture");
         _UIScene = Scene.CreateEmpty();
         _UIScene.Components.Add(new UpdateHandler());
-        _UIScene.Children.Add(new MaterialQuad(_background));
+        _UIScene.Children.Add(new MaterialRectangle(_background));
         var rend = new UIRenderer();
         _UIScene.Components.Add(rend);
         rend.Resize((width, height));
@@ -169,6 +170,10 @@ public class TestGame : SceneObject
         myText.TextRenderer.BackgroundColor = new(0,0,0,.3f);
         myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
+
+        var bar = new VerticalScrollBar(Color4.AntiqueWhite, Color4.SlateGray, 3);
+        bar.LocalShape = new(0, 0, 0.05f,1);
+        _UIScene.Children.Add(bar);
 
         _lamps = new PointLight[10];
         var lampShader = SlopperShader.Create("shaders/UnlitColor.sesl");
@@ -215,7 +220,7 @@ public class TestGame : SceneObject
         _backgroundTexIndex = _background.GetUniformIndexFromName("sourceTexture");
         _UIScene = Scene.CreateEmpty();
         _UIScene.Components.Add(new UpdateHandler());
-        _UIScene.Children.Add(new MaterialQuad(_background));
+        _UIScene.Children.Add(new MaterialRectangle(_background));
         var rend = new UIRenderer();
         _UIScene.Components.Add(rend);
         rend.Resize(_testWindow.ClientSize);

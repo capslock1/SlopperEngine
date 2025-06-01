@@ -42,6 +42,7 @@ public class ColorRectangle : UIElement
 
     protected override Material? GetMaterial()
     {
+        if (_color.A == 0) return null; // dont render if alpha is zero. waste of resources
         return _material ?? Material.MissingMaterial;
     }
 }
