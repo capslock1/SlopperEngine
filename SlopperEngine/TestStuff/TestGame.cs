@@ -171,8 +171,8 @@ public class TestGame : SceneObject
         myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
 
-        var bar = new VerticalScrollBar(Color4.AntiqueWhite, Color4.SlateGray, 3);
-        bar.LocalShape = new(0, 0, 0.05f,1);
+        var bar = new ScrollBar(Color4.AntiqueWhite, Color4.SlateGray, 3, false, 0);
+        bar.LocalShape = new(0, 0, 1, 0.05f);
         _UIScene.Children.Add(bar);
 
         _lamps = new PointLight[10];

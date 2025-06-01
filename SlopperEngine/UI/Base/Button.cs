@@ -27,7 +27,7 @@ public abstract class Button : UIElement
         {
             var butt = (MouseButton)i;
             if(args.MouseState.IsButtonPressed(butt))
-                OnClick(butt);
+                OnClick(butt, mousePos);
             
             if(args.MouseState.IsButtonReleased(butt))
                 OnRelease(butt);
@@ -45,7 +45,8 @@ public abstract class Button : UIElement
     /// Gets called when the Button gets clicked using any mouse button.
     /// </summary>
     /// <param name="button">The mouse button that was clicked.</param>
-    protected virtual void OnClick(MouseButton button){}
+    /// <param name="NDCMousePosition">The position where the mouse was on click.</param>
+    protected virtual void OnClick(MouseButton button, Vector2 NDCMousePosition) { }
     
     /// <summary>
     /// Gets called when any mouse button lets go of the Button.

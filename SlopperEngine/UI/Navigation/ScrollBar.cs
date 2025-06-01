@@ -1,0 +1,152 @@
+using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using SlopperEngine.Core;
+using SlopperEngine.UI.Base;
+
+namespace SlopperEngine.UI.Navigation;
+
+public class ScrollBar : Button
+{
+    /// <summary>
+    /// How far up or down the scrollbar is. 0 for min value (down/left), 1 for max value (up/right). 
+    /// </summary>
+    public float ScrollValue
+    {
+        get => _scrollValue;
+        set
+        {
+            float newVal = float.Clamp(value, 0, 1);
+            if (newVal != _scrollValue)
+            {
+                _scrollValue = newVal;
+                UpdateBar();
+                OnScroll?.Invoke();
+            }
+        }
+    }
+    float _scrollValue = 0;
+
+    /// <summary>
+    /// The ratio between the content and the container. If below one, the scrollbar will not be able to move.
+    /// </summary>
+    public float ContentToContainerRatio
+    {
+        get => _contentRatio;
+        set
+        {
+            float newRatio = float.Max(value, 1);
+            _scrollValue *= _contentRatio / newRatio;
+            _scrollValue = float.Min(_scrollValue, 1);
+            _contentRatio = newRatio;
+            UpdateBar();
+        }
+    }
+    float _contentRatio;
+
+    /// <summary>
+    /// Whether the ScrollBar is vertical. Horizontal if false.
+    /// </summary>
+    public bool Vertical
+    {
+        get => _vertical;
+        set
+        {
+            _vertical = value;
+            UpdateBar();
+        }
+    }
+    bool _vertical = true;
+
+    public float MinimumBarSize
+    {
+        get => _minBarSize;
+        set
+        {
+            _minBarSize = value;
+            UpdateBar();
+        }
+    }
+    float _minBarSize = 0.1f;
+
+    /// <summary>
+    /// Gets called when the ScrollValue gets changed.
+    /// </summary>
+    public event Action? OnScroll;
+
+    ColorRectangle _background;
+    ColorRectangle _bar;
+    bool _barHeld = false;
+    float _mouseBarHeldOffsetNDC = 0;
+    float _barSize => float.Max(1 / _contentRatio, _minBarSize);
+
+    public ScrollBar(Color4 backgroundColor, Color4 barColor, float contentRatio, bool vertical = true, float scrollValue = 1)
+    {
+        _background = new(new(0, 0, 1, 1), backgroundColor);
+        _bar = new(new(0, 0.3f, 1, 0.9f), barColor);
+        hiddenUIChildren.Add(_background);
+        hiddenUIChildren.Add(_bar);
+        _scrollValue = float.Clamp(scrollValue, 0, 1);
+        _contentRatio = float.Max(contentRatio, 1);
+        _vertical = vertical;
+        UpdateBar();
+    }
+
+    void UpdateBar()
+    {
+        float barSize = _barSize;
+        float barPosition = (1 - barSize) * ScrollValue;
+        if (Vertical)
+            _bar.LocalShape = new(0, barPosition, 1, barPosition + barSize);
+        else _bar.LocalShape = new(barPosition, 0, barPosition + barSize, 1);
+    }
+
+    [OnInputUpdate]
+    void OnInput(InputUpdateArgs args)
+    {
+        if (!_barHeld)
+            return;
+
+        if (args.MouseState.IsButtonReleased(MouseButton.Left))
+        {
+            _barHeld = false;
+            return;
+        }
+
+        Vector2 mousePosNDC = args.NormalizedMousePosition;
+        mousePosNDC *= 2;
+        mousePosNDC -= Vector2.One;
+        if (Vertical)
+            mousePosNDC.Y += _mouseBarHeldOffsetNDC;
+        else mousePosNDC.X += _mouseBarHeldOffsetNDC;
+        ScrollValue = MousePosToScrollValue(mousePosNDC);
+    }
+
+    float MousePosToScrollValue(Vector2 NDCMousePos)
+    {
+        float mousePos = Vertical ? NDCMousePos.Y : NDCMousePos.X;
+        mousePos -= Vertical ? LastGlobalShape.Min.Y : LastGlobalShape.Min.X;
+        mousePos /= Vertical ? LastGlobalShape.Size.Y : LastGlobalShape.Size.X; // range 0-1
+        float barSize = _barSize;
+        float barRange = 1 - barSize;
+        if (barRange <= 0)
+            return 0;
+        mousePos -= .5f * barSize;
+        mousePos /= barRange;
+        return mousePos;
+    }
+
+    protected override void OnClick(MouseButton button, Vector2 NDCMousePosition)
+    {
+        if (button != MouseButton.Left)
+            return;
+
+        _mouseBarHeldOffsetNDC = Vertical ? _bar.LastGlobalShape.Center.Y : _bar.LastGlobalShape.Center.X;
+        _mouseBarHeldOffsetNDC -= Vertical ? NDCMousePosition.Y : NDCMousePosition.X;
+        _barHeld = true;
+        if (!_bar.LastGlobalShape.ContainsInclusive(NDCMousePosition))
+        {
+            ScrollValue = MousePosToScrollValue(NDCMousePosition);
+            _mouseBarHeldOffsetNDC = 0;
+        }
+    }
+}

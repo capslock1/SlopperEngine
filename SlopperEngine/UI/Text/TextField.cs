@@ -194,7 +194,8 @@ public class TextField : Button
 
                         _invalidateRenderer = true;
                         Text = _fullText.Substring(0, _cursorPosition - 1) + _fullText.Substring(_cursorPosition);
-                        _cursorPosition--;
+                        if(_cursorPosition != _fullText.Length)
+                            _cursorPosition--;
                         break;
 
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Delete: // remove next character or all selected characters
