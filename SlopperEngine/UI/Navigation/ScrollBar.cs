@@ -140,7 +140,6 @@ public class ScrollBar : UIElement
         if (e.PressedButton != MouseButton.Left)
             return;
 
-        e.Use();
         _mouseBarHeldOffsetNDC = Vertical ? _bar.LastGlobalShape.Center.Y : _bar.LastGlobalShape.Center.X;
         _mouseBarHeldOffsetNDC -= Vertical ? e.NDCPosition.Y : e.NDCPosition.X;
         _barHeld = true;
@@ -149,5 +148,6 @@ public class ScrollBar : UIElement
             ScrollValue = MousePosToScrollValue(e.NDCPosition);
             _mouseBarHeldOffsetNDC = 0;
         }
+        e.Use();
     }
 }

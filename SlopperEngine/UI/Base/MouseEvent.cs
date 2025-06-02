@@ -14,6 +14,9 @@ namespace SlopperEngine.UI.Base;
 /// <param name="moveOrDrag">Whether this event represents the mouse moving or being dragged.</param>
 public ref struct MouseEvent(Vector2 position, Vector2 delta, MouseButton pressedButton, MouseButton releasedButton, MouseState state, bool moveOrDrag)
 {
+    /// <summary>
+    /// Whether the event represents the mouse moving, or being dragged.
+    /// </summary>
     public bool IsMoveOrDrag { get; private set; } = moveOrDrag;
 
     /// <summary>
@@ -37,7 +40,7 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, MouseButton presse
     public MouseButton ReleasedButton { get; private set; } = releasedButton;
 
     /// <summary>
-    /// Whether or not the event has been used by a UIElement.
+    /// Whether or not the event has been used by a UIElement down the tree. No need to check - UIElement does this on its own.
     /// </summary>
     public bool Used { get; private set; } = false;
 
@@ -49,10 +52,6 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, MouseButton presse
     public void Use()
     {
         Used = true;
-        NDCPosition = default;
-        NDCDelta = default;
-        PressedButton = (MouseButton)(-1);
-        ReleasedButton = (MouseButton)(-1);
     }
 
     /// <summary>
