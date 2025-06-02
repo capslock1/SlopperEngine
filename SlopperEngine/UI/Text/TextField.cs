@@ -9,7 +9,7 @@ namespace SlopperEngine.UI.Text;
 /// <summary>
 /// An editable line of text.
 /// </summary>
-public class TextField : Button
+public class TextField : UIElement
 {
     /// <summary>
     /// The text that is editable/shown in the TextField.
@@ -148,27 +148,34 @@ public class TextField : Button
             0.9f);
     }
 
+    protected override void HandleEvent(ref MouseEvent e)
+    {
+        if (e.PressedButton == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
+        {
+            _cursorPosition = GetCharOffsetFromMousePos(e.NDCPosition.X);
+            _selectionLength = 0;
+            _fieldSelected = true;
+            e.Use();
+            return;
+        }
+        if (e.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
+        {
+            _selectionLength = GetCharOffsetFromMousePos(e.NDCPosition.X) - _cursorPosition;
+            e.Use();
+            return;
+        }
+    }
+
     [OnInputUpdate]
     void Input(InputUpdateArgs args)
     {
-        if (hovering)
-        {
-            if (args.MouseState.IsButtonPressed(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
-            {
-                _cursorPosition = GetCharOffsetFromMousePos(args.NormalizedMousePosition.X);
-                _fieldSelected = true;
-            }
-            if (args.MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
-            {
-                _selectionLength = GetCharOffsetFromMousePos(args.NormalizedMousePosition.X) - _cursorPosition;
-            }
-        }
+        if (!_fieldSelected)
+            return;
 
-        if (!_fieldSelected) return;
-
-        if (!hovering && args.MouseState.IsButtonPressed(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
+        if (!LastGlobalShape.ContainsInclusive(args.NormalizedMousePosition * 2 - Vector2.One) && args.MouseState.IsButtonPressed(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
         {
             _cursorPosition = -1;
+            _selectionLength = 0;
             _fieldSelected = false;
             _shownTextOffset = 0;
             _invalidateRenderer = true;
@@ -301,12 +308,14 @@ public class TextField : Button
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Home:
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up:
                         _cursorPosition = 0;
+                        _selectionLength = 0;
                         _invalidateRenderer = true;
                         break;
 
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.End:
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down:
                         _cursorPosition = _fullText.Length;
+                        _selectionLength = 0;
                         _invalidateRenderer = true;
                         break;
 
@@ -314,6 +323,7 @@ public class TextField : Button
                     case OpenTK.Windowing.GraphicsLibraryFramework.Keys.KeyPadEnter:
                         _cursorPosition = -1;
                         _shownTextOffset = 0;
+                        _selectionLength = 0;
                         _invalidateRenderer = true;
                         _fieldSelected = false;
                         OnEntered?.Invoke();
@@ -328,6 +338,7 @@ public class TextField : Button
                     if (j.TryGetAsChar(out char c)) Text += c;
                     else Text += j.GetAsString();
                     _cursorPosition = _fullText.Length;
+                    _selectionLength = 0;
                 }
                 else
                 {
@@ -401,8 +412,6 @@ public class TextField : Button
 
     int GetCharOffsetFromMousePos(float mouseX)
     {
-        mouseX *= 2;
-        mouseX -= 1;
         float minX = LastGlobalShape.Min.X;
         float sizeX = LastGlobalShape.Size.X;
         mouseX -= minX;

@@ -5,11 +5,11 @@ using SlopperEngine.Core.SceneComponents;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.Core;
-using SlopperEngine.UI;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.UI.Base;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 
 namespace SlopperEngine.Graphics.Renderers;
@@ -21,6 +21,8 @@ public class UIRenderer : RenderHandler
     readonly List<(Box2 shape, Material mat, Box2 scissor)> _UIElementRenderQueue = [];
     readonly ScreenspaceQuadMesh _drawMesh = new(default);
     Vector2i _screenSize = (400,300);
+
+    Vector2 _previousMousePosition;
 
     public UIRenderer()
     {
@@ -89,11 +91,48 @@ public class UIRenderer : RenderHandler
         FrameBuffer.Unuse();
     }
 
+    public override void InputUpdate(InputUpdateArgs input)
+    {
+        base.InputUpdate(input);
+        Vector2 NDCPos = input.NormalizedMousePosition * 2 - Vector2.One;
+        Vector2 NDCDelta = NDCPos - _previousMousePosition;
+        _previousMousePosition = NDCPos;
+
+        for (int m = 0; m < (int)MouseButton.Last; m++)
+        {
+            var butt = (MouseButton)m;
+            if (input.MouseState.IsButtonPressed(butt))
+            {
+                foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+                {
+                    var e = new MouseEvent(NDCPos, NDCDelta, butt, (MouseButton)(-1), input.MouseState, false);
+                    root.OnMouse(ref e);
+                }
+            }
+            if (input.MouseState.IsButtonReleased(butt))
+            {
+                foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+                {
+                    var e = new MouseEvent(NDCPos, NDCDelta, (MouseButton)(-1), butt, input.MouseState, false);
+                    root.OnMouse(ref e);
+                }
+            }
+        }
+        if (NDCDelta != default)
+        {
+            foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+            {
+                var e = new MouseEvent(NDCPos, NDCDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, true);
+                root.OnMouse(ref e);
+            }
+        }
+    }
+
     public override void FrameUpdate(FrameUpdateArgs args)
     {
         base.FrameUpdate(args);
-        foreach(var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            uiRoot.UpdateShape(new(-1,-1,1,1),this);
+        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+            uiRoot.UpdateShape(new(-1, -1, 1, 1), this);
     }
 
     public void AddRenderToQueue(Box2 shape, Material material, Box2 scissor) => _UIElementRenderQueue.Add((shape, material, scissor));

@@ -21,7 +21,7 @@ public partial class SceneObject
         //the reason ChildList isnt IEnumerable, is that you get 1 million extension methods on there.
         //this isnt inherently bad, but definitely obfuscates the intended way to interact with ChildList (where you remove or add, no other complicated stuff)
         //but getting an IEnumerable is convenient (in foreach in particular), so the All property is here to save us.
-        public IEnumerable<TSceneObject> All => _children.AsReadOnly(); 
+        public IEnumerable<TSceneObject> All => _children; 
 
         readonly List<TSceneObject> _children = [];
         bool _currentlyRegistered;

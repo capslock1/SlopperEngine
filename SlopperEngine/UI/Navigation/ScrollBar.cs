@@ -5,7 +5,7 @@ using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Navigation;
 
-public class ScrollBar : Button
+public class ScrollBar : UIElement
 {
     /// <summary>
     /// How far up or down the scrollbar is. 0 for min value (down/left), 1 for max value (up/right). 
@@ -135,17 +135,18 @@ public class ScrollBar : Button
         return mousePos;
     }
 
-    protected override void OnClick(MouseButton button, Vector2 NDCMousePosition)
+    protected override void HandleEvent(ref MouseEvent e)
     {
-        if (button != MouseButton.Left)
+        if (e.PressedButton != MouseButton.Left)
             return;
 
+        e.Use();
         _mouseBarHeldOffsetNDC = Vertical ? _bar.LastGlobalShape.Center.Y : _bar.LastGlobalShape.Center.X;
-        _mouseBarHeldOffsetNDC -= Vertical ? NDCMousePosition.Y : NDCMousePosition.X;
+        _mouseBarHeldOffsetNDC -= Vertical ? e.NDCPosition.Y : e.NDCPosition.X;
         _barHeld = true;
-        if (!_bar.LastGlobalShape.ContainsInclusive(NDCMousePosition))
+        if (!_bar.LastGlobalShape.ContainsInclusive(e.NDCPosition))
         {
-            ScrollValue = MousePosToScrollValue(NDCMousePosition);
+            ScrollValue = MousePosToScrollValue(e.NDCPosition);
             _mouseBarHeldOffsetNDC = 0;
         }
     }

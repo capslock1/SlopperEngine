@@ -10,4 +10,7 @@ public struct UIRootUpdate
 {
     public Action<Box2, UIRenderer> UpdateShape;
     public Action<Box2, UIRenderer> AddRender;
+    public OnMouseEvent OnMouse;
+
+    public delegate void OnMouseEvent(ref MouseEvent e);
 }

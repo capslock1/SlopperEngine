@@ -52,9 +52,11 @@ public class UIElement : SceneObject
         //this doesnt really work if you accidentally add a UIElement to another UIElement's "Children" childlist. oh well
         if(_isUIRoot = Parent is not UIElement)
         {
-            _UIRootUpdateHandle = Scene!.RegisterSceneData<UIRootUpdate>(new(){
-                UpdateShape = UpdateShape, 
-                AddRender = Render
+            _UIRootUpdateHandle = Scene!.RegisterSceneData<UIRootUpdate>(new()
+            {
+                UpdateShape = UpdateShape,
+                AddRender = Render,
+                OnMouse = ReceiveEvent
                 });
         }
     } 
@@ -76,6 +78,30 @@ public class UIElement : SceneObject
     /// The region of range 0-1 inside this UIElement where children should be cut out of.
     /// </summary>
     protected virtual Box2 GetScissorRegion() => new(Vector2.NegativeInfinity, Vector2.PositiveInfinity);
+    /// <summary>
+    /// Handles a mouse event. Remember to call e.Use() when using info from the event in any way (or to simply block it);
+    /// </summary>
+    protected virtual void HandleEvent(ref MouseEvent e) { }
+
+    private void ReceiveEvent(ref MouseEvent e)
+    {
+        if (!LastGlobalShape.ContainsInclusive(e.NDCPosition))
+            return;
+
+        foreach (var ch in hiddenUIChildren.All)
+        {
+            ch.ReceiveEvent(ref e);
+            if (e.Used)
+                return;
+        }
+        foreach (var ch in UIChildren.All)
+        {
+            ch.ReceiveEvent(ref e);
+            if (e.Used)
+                return;
+        }
+        HandleEvent(ref e);
+    }
 
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
     {
