@@ -16,6 +16,7 @@ public class UIElement : SceneObject
     /// The size of the UIElement relative to the container.
     /// </summary>
     public Box2 LocalShape;
+
     /// <summary>
     /// The children of the UIElement to consider part of the UI.
     /// </summary>
@@ -25,19 +26,30 @@ public class UIElement : SceneObject
     /// The last renderer that used this UIElement.
     /// </summary>
     public UIRenderer? LastRenderer {get; private set;}
+
     /// <summary>
     /// The last global shape that was calculated of this UIElement, in normalized device coordinates.
     /// </summary>
-    public Box2 LastGlobalShape {get; private set;}
+    public Box2 LastGlobalShape { get; private set; }
+
+    /// <summary>
+    /// The last size constraints of this UIElement.
+    /// </summary>
     public UIElementSize LastSizeConstraints { get; private set; }
+
+    /// <summary>
+    /// The last global scissor region that was calculated of this UIElement, in normalized device coordinates.
+    /// </summary>
+    public Box2 LastGlobalScissor { get; private set; }
     
     /// <summary>
     /// A set of hidden UI elements.
     /// </summary>
     protected ChildList<UIElement> hiddenUIChildren { get; private set; }
 
-    bool _isUIRoot;
+    Box2 _lastChildrenIncludedBounds;
     SceneDataHandle _UIRootUpdateHandle;
+    bool _isUIRoot;
 
     public UIElement() : this(new(0, 0, 1, 1)) { }
     public UIElement(Box2 localShape)
@@ -49,7 +61,7 @@ public class UIElement : SceneObject
 
     [OnRegister] void Register()
     {
-        //this doesnt really work if you accidentally add a UIElement to another UIElement's "Children" childlist. oh well
+        // this doesnt really work if you accidentally add a UIElement to another UIElement's "Children" childlist. oh well
         if(_isUIRoot = Parent is not UIElement)
         {
             _UIRootUpdateHandle = Scene!.RegisterSceneData<UIRootUpdate>(new()
@@ -85,9 +97,9 @@ public class UIElement : SceneObject
 
     private void ReceiveEvent(ref MouseEvent e)
     {
-        if (!LastGlobalShape.ContainsInclusive(e.NDCPosition))
+        if (!_lastChildrenIncludedBounds.ContainsInclusive(e.NDCPosition) || !LastGlobalScissor.ContainsInclusive(e.NDCPosition))
             return;
-
+            
         foreach (var ch in hiddenUIChildren.All)
         {
             ch.ReceiveEvent(ref e);
@@ -100,7 +112,8 @@ public class UIElement : SceneObject
             if (e.Used)
                 return;
         }
-        HandleEvent(ref e);
+        if (LastGlobalShape.ContainsInclusive(e.NDCPosition))
+            HandleEvent(ref e);
     }
 
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
@@ -121,11 +134,20 @@ public class UIElement : SceneObject
         var (minX, maxX) = Resize(globalShape.Min.X, globalShape.Max.X, minSizeX, maxSizeX, LastSizeConstraints.GrowX);
         var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
         globalShape = new(minX, minY, maxX, maxY);
+        _lastChildrenIncludedBounds = globalShape;
 
         foreach (var ch in hiddenUIChildren.All)
+        {
             ch.UpdateShape(globalShape, renderer);
+            _lastChildrenIncludedBounds.Extend(ch.LastGlobalShape.Min);
+            _lastChildrenIncludedBounds.Extend(ch.LastGlobalShape.Max);
+        }
         foreach (var ch in UIChildren.All)
+        {
             ch.UpdateShape(globalShape, renderer);
+            _lastChildrenIncludedBounds.Extend(ch.LastGlobalShape.Min);
+            _lastChildrenIncludedBounds.Extend(ch.LastGlobalShape.Max);
+        }
 
         LastGlobalShape = globalShape;
 
@@ -162,18 +184,21 @@ public class UIElement : SceneObject
             Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Max));
         globalScissor.Min = Vector2.ComponentMax(globalScissor.Min, parentScissorRegion.Min);
         globalScissor.Max = Vector2.ComponentMin(globalScissor.Max, parentScissorRegion.Max);
+        LastGlobalScissor = globalScissor;
+
+        if (globalScissor.Size.X <= 0 || globalScissor.Size.Y <= 0)
+            return;
 
         Box2 NDC = new(-1, -1, 1, 1);
         Box2 global = LastGlobalShape;
         if (mat != null &&
-            globalScissor.Size.X > 0 &&
-            globalScissor.Size.Y > 0 &&
             NDC.Min.X <= global.Max.X &&
             NDC.Max.X >= global.Min.X &&
             NDC.Min.Y <= global.Max.Y &&
             NDC.Max.X >= global.Min.Y
             )
             renderer.AddRenderToQueue(LastGlobalShape, mat, globalScissor);
+
         foreach (var ch in hiddenUIChildren.All)
             ch.Render(globalScissor, renderer);
         foreach (var ch in UIChildren.All)
