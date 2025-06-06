@@ -171,7 +171,7 @@ public class TestGame : SceneObject
         myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
 
-        var bar = new ScrollBar(Color4.AntiqueWhite, Color4.SlateGray, 3, false, 0);
+        var bar = new Slider(Color4.AntiqueWhite, Color4.SlateGray, 3, false, 0);
         bar.LocalShape = new(0, 0, 1, 0.05f);
         _UIScene.Children.Add(bar);
 

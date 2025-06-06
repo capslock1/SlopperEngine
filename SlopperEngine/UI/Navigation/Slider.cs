@@ -5,7 +5,7 @@ using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Navigation;
 
-public class ScrollBar : UIElement
+public class Slider : UIElement
 {
     /// <summary>
     /// How far up or down the scrollbar is. 0 for min value (down/left), 1 for max value (up/right). 
@@ -79,7 +79,7 @@ public class ScrollBar : UIElement
     float _mouseBarHeldOffsetNDC = 0;
     float _barSize => float.Max(1 / _contentRatio, _minBarSize);
 
-    public ScrollBar(Color4 backgroundColor, Color4 barColor, float contentRatio, bool vertical = true, float scrollValue = 1)
+    public Slider(Color4 backgroundColor, Color4 barColor, float contentRatio, bool vertical = true, float scrollValue = 1)
     {
         _background = new(new(0, 0, 1, 1), backgroundColor);
         _bar = new(new(0, 0.3f, 1, 0.9f), barColor);

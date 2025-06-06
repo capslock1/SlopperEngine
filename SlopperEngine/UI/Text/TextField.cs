@@ -70,8 +70,8 @@ public class TextField : UIElement
     int _cursorPosition = -1;
     int _selectionLength = 0;
 
-    int _selectionMax => int.Max(_cursorPosition, _cursorPosition + _selectionLength);
-    int _selectionMin => int.Min(_cursorPosition, _cursorPosition + _selectionLength);
+    int _selectionMax => int.Min(_fullText.Length+1, int.Max(_cursorPosition, _cursorPosition + _selectionLength));
+    int _selectionMin => int.Max(0, int.Min(_cursorPosition, _cursorPosition + _selectionLength));
 
     public TextField(int length)
     {
@@ -160,7 +160,7 @@ public class TextField : UIElement
         }
         if (e.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
         {
-            _selectionLength = GetCharOffsetFromMousePos(e.NDCPosition.X) - _cursorPosition;
+            _selectionLength = int.Max(-_cursorPosition, GetCharOffsetFromMousePos(e.NDCPosition.X) - _cursorPosition);
             e.Use();
             return;
         }
@@ -393,7 +393,7 @@ public class TextField : UIElement
 
         int start = _selectionMin;
         int end = _selectionMax;
-        _cursorPosition = start;
+        _cursorPosition = int.Max(0,start);
         _selectionLength = 0;
         _invalidateRenderer = true;
         Text = _fullText.Substring(0, start) + _fullText.Substring(end);
