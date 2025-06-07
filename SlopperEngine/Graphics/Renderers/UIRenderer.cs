@@ -14,13 +14,16 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace SlopperEngine.Graphics.Renderers;
 
+/// <summary>
+/// Renders and updates UIElements.
+/// </summary>
 public class UIRenderer : RenderHandler
 {
-    public FrameBuffer Buffer {get; private set;} = new(400,300);
+    public FrameBuffer Buffer { get; private set; } = new(400, 300);
 
     readonly List<(Box2 shape, Material mat, Box2 scissor)> _UIElementRenderQueue = [];
     readonly ScreenspaceQuadMesh _drawMesh = new(default);
-    Vector2i _screenSize = (400,300);
+    Vector2i _screenSize = (400, 300);
 
     Vector2 _previousMousePosition;
 
@@ -33,11 +36,11 @@ public class UIRenderer : RenderHandler
 
     protected override void RenderInternal()
     {
-        if(Scene == null) return;
+        if (Scene == null) return;
         Buffer.Use();
         globals.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        
+
         GL.Disable(EnableCap.DepthTest);
         GL.Enable(EnableCap.Blend);
         GL.Disable(EnableCap.ScissorTest);
@@ -85,7 +88,7 @@ public class UIRenderer : RenderHandler
         _UIElementRenderQueue.Clear();
 
         GL.Enable(EnableCap.DepthTest);
-        if(scissorActive)
+        if (scissorActive)
             GL.Disable(EnableCap.ScissorTest);
 
         FrameBuffer.Unuse();
@@ -97,6 +100,7 @@ public class UIRenderer : RenderHandler
         Vector2 NDCPos = input.NormalizedMousePosition * 2 - Vector2.One;
         Vector2 NDCDelta = NDCPos - _previousMousePosition;
         _previousMousePosition = NDCPos;
+        Vector2 scrollDelta = input.MouseState.ScrollDelta;
 
         for (int m = 0; m < (int)MouseButton.Last; m++)
         {
@@ -105,7 +109,7 @@ public class UIRenderer : RenderHandler
             {
                 foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
                 {
-                    var e = new MouseEvent(NDCPos, NDCDelta, butt, (MouseButton)(-1), input.MouseState, false);
+                    var e = new MouseEvent(NDCPos, NDCDelta, default, butt, (MouseButton)(-1), input.MouseState, MouseEventType.PressedButton);
                     root.OnMouse(ref e);
                 }
             }
@@ -113,7 +117,7 @@ public class UIRenderer : RenderHandler
             {
                 foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
                 {
-                    var e = new MouseEvent(NDCPos, NDCDelta, (MouseButton)(-1), butt, input.MouseState, false);
+                    var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), butt, input.MouseState, MouseEventType.ReleasedButton);
                     root.OnMouse(ref e);
                 }
             }
@@ -122,7 +126,15 @@ public class UIRenderer : RenderHandler
         {
             foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
             {
-                var e = new MouseEvent(NDCPos, NDCDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, true);
+                var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, MouseEventType.Move);
+                root.OnMouse(ref e);
+            }
+        }
+        if (scrollDelta != default)
+        {
+            foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+            {
+                var e = new MouseEvent(NDCPos, NDCDelta, scrollDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, MouseEventType.Scroll);
                 root.OnMouse(ref e);
             }
         }
@@ -139,7 +151,7 @@ public class UIRenderer : RenderHandler
 
     public override Texture2D GetOutputTexture() => Buffer.ColorAttachments[0];
     public override Vector2i GetScreenSize() => _screenSize;
-    public Vector2 GetPixelScale() => new Vector2(2,2) / _screenSize;
+    public Vector2 GetPixelScale() => new Vector2(2, 2) / _screenSize;
     public override void Resize(Vector2i newSize)
     {
         _screenSize = newSize;
@@ -152,7 +164,7 @@ public class UIRenderer : RenderHandler
         Buffer.DisposeAndTextures();
         globals.Dispose();
     }
-    
+
     public override void AddVertexMain(SyntaxTree scope, IndentedTextWriter writer)
     {
         writer.Write(
@@ -168,11 +180,11 @@ public class UIRenderer : RenderHandler
     {
         bool writesAlbedo = false;
         bool writesAlpha = false;
-        foreach(var v in scope.pixOut)
+        foreach (var v in scope.pixOut)
         {
-            if(v.Name == "Albedo")
+            if (v.Name == "Albedo")
                 writesAlbedo = true;
-            if(v.Name == "Transparency")
+            if (v.Name == "Transparency")
                 writesAlpha = true;
         }
         writer.Write(

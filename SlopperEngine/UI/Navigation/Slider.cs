@@ -73,8 +73,11 @@ public class Slider : UIElement
     /// </summary>
     public event Action? OnScroll;
 
+    public override ChildList<UIElement> UIChildren => _childHolder.UIChildren;
+
     ColorRectangle _background;
     ColorRectangle _bar;
+    UIElement _childHolder;
     bool _barHeld = false;
     float _mouseBarHeldOffsetNDC = 0;
     float _barSize => float.Max(1 / _contentRatio, _minBarSize);
@@ -83,8 +86,9 @@ public class Slider : UIElement
     {
         _background = new(new(0, 0, 1, 1), backgroundColor);
         _bar = new(new(0, 0.3f, 1, 0.9f), barColor);
-        hiddenUIChildren.Add(_background);
-        hiddenUIChildren.Add(_bar);
+        internalUIChildren.Add(_background);
+        internalUIChildren.Add(_bar);
+        internalUIChildren.Add(_childHolder = new());
         _scrollValue = float.Clamp(scrollValue, 0, 1);
         _contentRatio = float.Max(contentRatio, 1);
         _vertical = vertical;

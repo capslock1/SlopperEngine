@@ -8,16 +8,17 @@ namespace SlopperEngine.UI.Base;
 /// </summary>
 /// <param name="position">NDC mouse position.</param>
 /// <param name="delta">NDC mouse delta.</param>
+/// <param name="scrollDelta">The scrollwheel delta.</param>
 /// <param name="pressedButton">A button that was pressed this frame.</param>
 /// <param name="releasedButton">A button that was released this frame.</param>
 /// <param name="state">The mouse state. Should be passed for querying if a button is held.</param>
-/// <param name="moveOrDrag">Whether this event represents the mouse moving or being dragged.</param>
-public ref struct MouseEvent(Vector2 position, Vector2 delta, MouseButton pressedButton, MouseButton releasedButton, MouseState state, bool moveOrDrag)
+/// <param name="type">What type of event this object represents.</param>
+public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelta, MouseButton pressedButton, MouseButton releasedButton, MouseState state, MouseEventType type)
 {
     /// <summary>
-    /// Whether the event represents the mouse moving, or being dragged.
+    /// What type of event this object represents.
     /// </summary>
-    public bool IsMoveOrDrag { get; private set; } = moveOrDrag;
+    public MouseEventType Type { get; private set; } = type;
 
     /// <summary>
     /// The mouse position in UI global space.
@@ -28,6 +29,11 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, MouseButton presse
     /// The mouse delta in UI global space.
     /// </summary>
     public Vector2 NDCDelta { get; private set; } = delta;
+
+    /// <summary>
+    /// How many pixels the mouse has scrolled this frame. Default if this is event does not represent a scroll.
+    /// </summary>
+    public Vector2 ScrollDelta = scrollDelta;
 
     /// <summary>
     /// The button that was pressed in this event. -1 (invalid enum value) if this event does not represent a click.
@@ -52,10 +58,11 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, MouseButton presse
     public void Use()
     {
         Used = true;
+        Type = MouseEventType.Used;
     }
 
     /// <summary>
     /// Gets a bool indicating whether a given button is held.
     /// </summary>
-    public bool IsButtonDown(MouseButton button) => _state.IsButtonDown(button);
+    public readonly bool IsButtonDown(MouseButton button) => _state.IsButtonDown(button);
 }

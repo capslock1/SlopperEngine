@@ -77,7 +77,7 @@ public class TextField : UIElement
     {
         Length = length;
         TextRenderer = new();
-        hiddenUIChildren.Add(TextRenderer);
+        internalUIChildren.Add(TextRenderer);
         _cursor = new(default, Color4.White);
     }
 
@@ -127,7 +127,7 @@ public class TextField : UIElement
         if (_cursor.InScene && !_fieldSelected)
             _cursor.Remove();
         if (!_cursor.InScene && _fieldSelected)
-            hiddenUIChildren.Add(_cursor);
+            internalUIChildren.Add(_cursor);
 
         float cursorCharacterLength = _selectionLength;
         if (_selectionLength == 0)
