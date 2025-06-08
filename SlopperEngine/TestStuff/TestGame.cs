@@ -171,9 +171,9 @@ public class TestGame : SceneObject
         myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
 
-        var bar = new Slider(Color4.AntiqueWhite, Color4.SlateGray, 3, false, 0);
-        bar.LocalShape = new(0, 0, 1, 0.05f);
-        _UIScene.Children.Add(bar);
+        var scrollable = new ScrollableArea(new(0f, 0, 0.3f, 0.3f));
+        scrollable.UIChildren.Add(new MaterialRectangle(new(0, 0, 1, 10), Material.MissingMaterial));
+        _UIScene.Children.Add(scrollable);
 
         _lamps = new PointLight[10];
         var lampShader = SlopperShader.Create("shaders/UnlitColor.sesl");

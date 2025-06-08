@@ -35,6 +35,8 @@ public class Slider : UIElement
         set
         {
             float newRatio = float.Max(value, 1);
+            if (newRatio == _contentRatio || float.IsNaN(newRatio))
+                return;
             _scrollValue *= _contentRatio / newRatio;
             _scrollValue = float.Min(_scrollValue, 1);
             _contentRatio = newRatio;
@@ -80,7 +82,7 @@ public class Slider : UIElement
     UIElement _childHolder;
     bool _barHeld = false;
     float _mouseBarHeldOffsetNDC = 0;
-    float _barSize => float.Max(1 / _contentRatio, _minBarSize);
+    float _barSize => float.Clamp(1 / _contentRatio, _minBarSize, 1);
 
     public Slider(Color4 backgroundColor, Color4 barColor, float contentRatio, bool vertical = true, float scrollValue = 1)
     {
