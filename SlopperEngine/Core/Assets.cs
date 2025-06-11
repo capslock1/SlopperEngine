@@ -13,7 +13,7 @@ public static class Assets
     
     static Assets()
     {
-        string? path = System.IO.Path.GetFullPath("../");
+        string? path = System.IO.Path.GetFullPath("./");
         string[]? AssetPath;
         while(true)
         {
