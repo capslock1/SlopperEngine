@@ -8,8 +8,12 @@ namespace SlopperEngine.UI.Navigation;
 /// </summary>
 public class ScrollableArea : UIElement
 {
-    // TODO: horizontal slider, configure slider colors, configure slider alignment, configure slider size
-    public override ChildList<UIElement> UIChildren => _movingArea.UIChildren;
+    // TODO: horizontal slider, 
+    // configure slider colors, 
+    // configure slider alignment, 
+    // configure slider size, 
+    // make moving area not show below slider
+    public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
 
     readonly MovingArea _movingArea;
     readonly Slider _verticalSlider;

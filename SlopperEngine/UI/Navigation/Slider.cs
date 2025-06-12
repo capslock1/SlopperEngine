@@ -5,10 +5,13 @@ using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Navigation;
 
+/// <summary>
+/// A UIElement that can slide up and down or back and forth in response to mouse input.
+/// </summary>
 public class Slider : UIElement
 {
     /// <summary>
-    /// How far up or down the scrollbar is. 0 for min value (down/left), 1 for max value (up/right). 
+    /// How far up or down the slider is. 0 for min value (down/left), 1 for max value (up/right). 
     /// </summary>
     public float ScrollValue
     {
@@ -27,7 +30,7 @@ public class Slider : UIElement
     float _scrollValue = 0;
 
     /// <summary>
-    /// The ratio between the content and the container. If set below one, the scrollbar will not be able to move.
+    /// The ratio between the content and the container. If set below one, the slider will not be able to move.
     /// </summary>
     public float ContentToContainerRatio
     {
@@ -46,7 +49,7 @@ public class Slider : UIElement
     float _contentRatio;
 
     /// <summary>
-    /// Whether the ScrollBar is vertical. Horizontal if false.
+    /// Whether the slider is vertical. Horizontal if false.
     /// </summary>
     public bool Vertical
     {
@@ -71,11 +74,11 @@ public class Slider : UIElement
     float _minBarSize = 0.1f;
 
     /// <summary>
-    /// Gets called when the ScrollValue gets changed.
+    /// Gets called when the slider gets changed.
     /// </summary>
     public event Action? OnScroll;
 
-    public override ChildList<UIElement> UIChildren => _childHolder.UIChildren;
+    public override ChildList<UIElement, UIChildEvents> UIChildren => _childHolder.UIChildren;
 
     ColorRectangle _background;
     ColorRectangle _bar;
