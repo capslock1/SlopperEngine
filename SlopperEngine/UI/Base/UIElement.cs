@@ -200,10 +200,9 @@ public class UIElement : SceneObject
         if (globalScissor.Size.X <= 0 || globalScissor.Size.Y <= 0)
             return;
 
-        // assumes no mutations
-        for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
+        for (int i = 0; i < internalUIChildren.Count; i++)
         {
-            var ch = internalUIChildren[_safeIterator];
+            var ch = internalUIChildren[i];
             ch.Render(globalScissor, renderer);
         }
     }
