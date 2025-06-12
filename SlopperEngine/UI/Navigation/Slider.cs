@@ -27,7 +27,7 @@ public class Slider : UIElement
     float _scrollValue = 0;
 
     /// <summary>
-    /// The ratio between the content and the container. If below one, the scrollbar will not be able to move.
+    /// The ratio between the content and the container. If set below one, the scrollbar will not be able to move.
     /// </summary>
     public float ContentToContainerRatio
     {

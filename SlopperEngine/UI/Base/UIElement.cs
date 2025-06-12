@@ -50,7 +50,7 @@ public class UIElement : SceneObject
     /// <summary>
     /// The last global bounds that were calculated of the UIElement's children. 
     /// </summary>
-    protected Box2 lastChildrenIncludedBounds { get; private set; }
+    protected Box2 lastChildrenBounds { get; private set; }
 
     SceneDataHandle _UIRootUpdateHandle;
     bool _isUIRoot;
@@ -100,10 +100,7 @@ public class UIElement : SceneObject
 
     private void ReceiveEvent(ref MouseEvent e)
     {
-        if (!lastChildrenIncludedBounds.ContainsInclusive(e.NDCPosition))
-            return;
-
-        if (LastGlobalScissor.ContainsInclusive(e.NDCPosition))
+        if (lastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
         {
             foreach (var ch in internalUIChildren.All)
             {
@@ -135,17 +132,19 @@ public class UIElement : SceneObject
         var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
         globalShape = new(minX, minY, maxX, maxY);
 
-        var childBounds = globalShape;
+        var childBounds = new Box2(globalShape.Center, globalShape.Center);
         LastGlobalShape = globalShape;
 
         foreach (var ch in internalUIChildren.All)
         {
             ch.UpdateShape(globalShape, renderer);
-            childBounds.Extend(ch.lastChildrenIncludedBounds.Min);
-            childBounds.Extend(ch.lastChildrenIncludedBounds.Max);
+            childBounds.Extend(ch.lastChildrenBounds.Min);
+            childBounds.Extend(ch.lastChildrenBounds.Max);
+            childBounds.Extend(ch.LastGlobalShape.Min);
+            childBounds.Extend(ch.LastGlobalShape.Max);
         }
 
-        lastChildrenIncludedBounds = childBounds;
+        lastChildrenBounds = childBounds;
 
         static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {
