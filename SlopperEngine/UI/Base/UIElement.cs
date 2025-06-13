@@ -4,6 +4,7 @@ using SlopperEngine.Core.SceneData;
 using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.SceneObjects;
+using SlopperEngine.SceneObjects.ChildLists;
 
 namespace SlopperEngine.UI.Base;
 
@@ -20,12 +21,12 @@ public class UIElement : SceneObject
     /// <summary>
     /// The children of the UIElement to consider part of the UI.
     /// </summary>
-    public virtual ChildList<UIElement> UIChildren => internalUIChildren;
+    public virtual ChildList<UIElement, UIChildEvents> UIChildren => internalUIChildren;
 
     /// <summary>
     /// The last renderer that used this UIElement.
     /// </summary>
-    public UIRenderer? LastRenderer {get; private set;}
+    public UIRenderer? LastRenderer { get; private set; }
 
     /// <summary>
     /// The last global shape that was calculated of this UIElement, in normalized device coordinates.
@@ -41,72 +42,73 @@ public class UIElement : SceneObject
     /// The last global scissor region that was calculated of this UIElement, in normalized device coordinates.
     /// </summary>
     public Box2 LastGlobalScissor { get; private set; }
-    
+
     /// <summary>
     /// A set of hidden UI elements.
     /// </summary>
-    protected ChildList<UIElement> internalUIChildren { get; private set; }
+    protected ChildList<UIElement, UIChildEvents> internalUIChildren { get; private set; }
 
     /// <summary>
     /// The last global bounds that were calculated of the UIElement's children. 
     /// </summary>
-    protected Box2 lastChildrenIncludedBounds { get; private set; }
+    protected Box2 lastChildrenBounds { get; private set; }
 
     SceneDataHandle _UIRootUpdateHandle;
     bool _isUIRoot;
+    int _safeIterator;
 
     public UIElement() : this(new(0, 0, 1, 1)) { }
     public UIElement(Box2 localShape)
     {
-        internalUIChildren = new(this);
+        internalUIChildren = new(this, new(this));
         LocalShape = localShape;
     }
 
-    [OnRegister] void Register()
+    [OnRegister]
+    void Register()
     {
         // this doesnt really work if you accidentally add a UIElement to another UIElement's "Children" childlist. oh well
-        if(_isUIRoot = Parent is not UIElement)
+        if (_isUIRoot = Parent is not UIElement)
         {
             _UIRootUpdateHandle = Scene!.RegisterSceneData<UIRootUpdate>(new()
             {
                 UpdateShape = UpdateShape,
                 AddRender = Render,
                 OnMouse = ReceiveEvent
-                });
+            });
         }
-    } 
-    [OnUnregister] void Unregister(Scene scene)
+    }
+    [OnUnregister]
+    void Unregister(Scene scene)
     {
-        if(_isUIRoot)
+        if (_isUIRoot)
             scene!.UnregisterSceneData<UIRootUpdate>(_UIRootUpdateHandle, default);
     }
 
     /// <summary>
-    /// Gets the material for this UIElement. Return null to render nothing at all.
+    /// Gets the material for this UIElement. Return null to render nothing at all. This function should be pure (does not change any elements).
     /// </summary>
     protected virtual Material? GetMaterial() => null;
     /// <summary>
-    /// Gets the size constraints for this UIElement.
+    /// Gets the size constraints for this UIElement. 
     /// </summary>
     protected virtual UIElementSize GetSizeConstraints() => new(default, default, 0, 0);
     /// <summary>
-    /// The region of range 0-1 inside this UIElement where children should be cut out of.
+    /// The region of range 0-1 inside this UIElement where children should be cut out of. This function should be pure (does not change any elements).
     /// </summary>
     protected virtual Box2 GetScissorRegion() => new(Vector2.NegativeInfinity, Vector2.PositiveInfinity);
     /// <summary>
-    /// Handles a mouse event. Remember to call e.Use() when using info from the event in any way (or to simply block it);
+    /// Handles a mouse event. Remember to call e.Use() when using info from the event in any way (or to simply block it).
     /// </summary>
     protected virtual void HandleEvent(ref MouseEvent e) { }
 
     private void ReceiveEvent(ref MouseEvent e)
     {
-        if (!lastChildrenIncludedBounds.ContainsInclusive(e.NDCPosition))
-            return;
-
-        if (LastGlobalScissor.ContainsInclusive(e.NDCPosition))
+        if (lastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
         {
-            foreach (var ch in internalUIChildren.All)
+            for (_safeIterator = internalUIChildren.Count-1; _safeIterator >= 0; _safeIterator--)
             {
+                var ch = internalUIChildren[_safeIterator];
                 ch.ReceiveEvent(ref e);
                 if (e.Used)
                     return;
@@ -135,17 +137,20 @@ public class UIElement : SceneObject
         var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
         globalShape = new(minX, minY, maxX, maxY);
 
-        var childBounds = globalShape;
+        var childBounds = new Box2(globalShape.Center, globalShape.Center);
         LastGlobalShape = globalShape;
 
-        foreach (var ch in internalUIChildren.All)
+        for (_safeIterator = internalUIChildren.Count-1; _safeIterator >= 0; _safeIterator--)
         {
+            var ch = internalUIChildren[_safeIterator];
             ch.UpdateShape(globalShape, renderer);
-            childBounds.Extend(ch.lastChildrenIncludedBounds.Min);
-            childBounds.Extend(ch.lastChildrenIncludedBounds.Max);
+            childBounds.Extend(ch.lastChildrenBounds.Min);
+            childBounds.Extend(ch.lastChildrenBounds.Max);
+            childBounds.Extend(ch.LastGlobalShape.Min);
+            childBounds.Extend(ch.LastGlobalShape.Max);
         }
 
-        lastChildrenIncludedBounds = childBounds;
+        lastChildrenBounds = childBounds;
 
         static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {
@@ -195,7 +200,25 @@ public class UIElement : SceneObject
         if (globalScissor.Size.X <= 0 || globalScissor.Size.Y <= 0)
             return;
 
-        foreach (var ch in internalUIChildren.All)
+        for (int i = 0; i < internalUIChildren.Count; i++)
+        {
+            var ch = internalUIChildren[i];
             ch.Render(globalScissor, renderer);
+        }
+    }
+
+    /// <summary>
+    /// Public only out of necessity. Don't use.
+    /// </summary>
+    public struct UIChildEvents(UIElement owner) : IChildListEvents<UIElement>
+    {
+        UIElement _owner = owner;
+
+        public void OnChildAdded(UIElement child, int childIndex) { }
+        public void OnChildRemoved(UIElement child, int previousIndex)
+        {
+            if (previousIndex < _owner._safeIterator)
+                _owner._safeIterator--;
+        }
     }
 }

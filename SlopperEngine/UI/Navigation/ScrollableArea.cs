@@ -8,11 +8,17 @@ namespace SlopperEngine.UI.Navigation;
 /// </summary>
 public class ScrollableArea : UIElement
 {
-    // TODO: horizontal slider, configure slider colors, configure slider alignment, configure slider size
-    public override ChildList<UIElement> UIChildren => _movingArea.UIChildren;
+    // TODO: horizontal slider, 
+    // configure slider colors, 
+    // configure slider alignment, 
+    // configure slider size, 
+    // make moving area not show below slider
+    public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
 
     readonly MovingArea _movingArea;
     readonly Slider _verticalSlider;
+
+    Vector2 _movingAreaOffset;
 
     public ScrollableArea(Box2 shape) : base(shape)
     {
@@ -26,15 +32,17 @@ public class ScrollableArea : UIElement
 
     void OnScroll()
     {
-        _movingArea.LocalShape.Center = new(
-            0.5f,
-            0.5f + _verticalSlider.ContentToContainerRatio * _verticalSlider.ScrollValue);
+        Vector2 center = new Vector2(.5f) - _movingAreaOffset;
+        center.Y += _verticalSlider.ContentToContainerRatio * (1 - _verticalSlider.ScrollValue) * (1 - 1 / _verticalSlider.ContentToContainerRatio);
+        _movingArea.LocalShape.Center = center;
     }
 
     void UpdateContentRatio()
     {
-        float contentRatioVert = _movingArea.ChildrenIncludedBounds.Size.Y / _movingArea.LastGlobalShape.Size.Y;
+        float inverseSize = 1 / _movingArea.LastGlobalShape.Size.Y;
+        float contentRatioVert = _movingArea.ChildrenIncludedBounds.Size.Y * inverseSize;
         _verticalSlider.ContentToContainerRatio = contentRatioVert;
+        _movingAreaOffset.Y = (_movingArea.ChildrenIncludedBounds.Max.Y - _movingArea.LastGlobalShape.Max.Y) * inverseSize;
     }
 
     protected override UIElementSize GetSizeConstraints()
@@ -52,6 +60,6 @@ public class ScrollableArea : UIElement
 
     class MovingArea : UIElement
     {
-        public Box2 ChildrenIncludedBounds => lastChildrenIncludedBounds;
+        public Box2 ChildrenIncludedBounds => lastChildrenBounds;
     }
 }
