@@ -137,20 +137,29 @@ public class UIElement : SceneObject
         var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
         globalShape = new(minX, minY, maxX, maxY);
 
-        var childBounds = new Box2(globalShape.Center, globalShape.Center);
+        Box2 childBounds = default;
+        bool boundsInitted = false;
         LastGlobalShape = globalShape;
 
         for (_safeIterator = internalUIChildren.Count-1; _safeIterator >= 0; _safeIterator--)
         {
             var ch = internalUIChildren[_safeIterator];
             ch.UpdateShape(globalShape, renderer);
+            if (!boundsInitted)
+            {
+                childBounds = ch.lastChildrenBounds;
+                childBounds.Extend(ch.LastGlobalShape.Min);
+                childBounds.Extend(ch.LastGlobalShape.Max);
+                boundsInitted = true;
+                continue;
+            }
             childBounds.Extend(ch.lastChildrenBounds.Min);
             childBounds.Extend(ch.lastChildrenBounds.Max);
             childBounds.Extend(ch.LastGlobalShape.Min);
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
 
-        lastChildrenBounds = childBounds;
+        lastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
 
         static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {
