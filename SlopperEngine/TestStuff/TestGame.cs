@@ -172,7 +172,7 @@ public class TestGame : SceneObject
         _UIScene.Children.Add(myText);
 
         var scrollable = new ScrollableArea(new(0f, 0, 0.3f, 0.3f));
-        scrollable.UIChildren.Add(new MaterialRectangle(new(0, 0, 1, 1.6f), Material.MissingMaterial));
+        scrollable.UIChildren.Add(new MaterialRectangle(new(0, 0, 1.5f, 1.6f), Material.MissingMaterial));
         _UIScene.Children.Add(scrollable);
 
         _lamps = new PointLight[10];

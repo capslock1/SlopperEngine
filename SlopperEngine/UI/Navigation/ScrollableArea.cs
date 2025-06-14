@@ -1,3 +1,4 @@
+using System.Drawing;
 using OpenTK.Mathematics;
 using SlopperEngine.UI.Base;
 
@@ -8,41 +9,93 @@ namespace SlopperEngine.UI.Navigation;
 /// </summary>
 public class ScrollableArea : UIElement
 {
-    // TODO: horizontal slider, 
+    // TODO:  
     // configure slider colors, 
     // configure slider alignment, 
     // configure slider size, 
     // make moving area not show below slider
+    // take scroll input
     public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
 
     readonly MovingArea _movingArea;
+    readonly Slider _horizontalSlider;
     readonly Slider _verticalSlider;
 
+    Vector2 _currentContentRatio;
     Vector2 _movingAreaOffset;
+
+    bool _horizontalSliderVisible
+    {
+        get => _horizontalSlider.InScene;
+        set
+        {
+            if (value)
+            {
+                if (!_horizontalSlider.InScene)
+                    internalUIChildren.Add(_horizontalSlider);
+            }
+            else if (_horizontalSlider.InScene)
+                _horizontalSlider.Remove();
+        }
+    }
+    bool _verticalSliderVisible
+    {
+        get => _verticalSlider.InScene;
+        set
+        {
+            if (value)
+            {
+                if (!_verticalSlider.InScene)
+                    internalUIChildren.Add(_verticalSlider);
+            }
+            else if (_verticalSlider.InScene)
+                _verticalSlider.Remove();
+        }
+    }
 
     public ScrollableArea(Box2 shape) : base(shape)
     {
         internalUIChildren.Add(_movingArea = new());
 
+        _horizontalSlider = new(new(0, 0, 0, 0.5f), Color.White, 1, false, 0);
+        _horizontalSlider.LocalShape = new(0, 0, 1, 0.05f);
+        _horizontalSlider.OnScroll += OnScroll;
+
         _verticalSlider = new(new(0, 0, 0, 0.5f), Color4.White, 1);
         _verticalSlider.LocalShape = new(0, 0, 0.05f, 1);
         _verticalSlider.OnScroll += OnScroll;
-        internalUIChildren.Add(_verticalSlider);
     }
 
     void OnScroll()
     {
         Vector2 center = new Vector2(.5f) - _movingAreaOffset;
-        center.Y += _verticalSlider.ContentToContainerRatio * (1 - _verticalSlider.ScrollValue) * (1 - 1 / _verticalSlider.ContentToContainerRatio);
+        Vector2 contentToContainer = new(_horizontalSlider.ContentToContainerRatio, _verticalSlider.ContentToContainerRatio);
+        center += contentToContainer * new Vector2(1 - _horizontalSlider.ScrollValue, 1 - _verticalSlider.ScrollValue) * (Vector2.One - Vector2.One / contentToContainer);
         _movingArea.LocalShape.Center = center;
     }
 
     void UpdateContentRatio()
     {
-        float inverseSize = 1 / _movingArea.LastGlobalShape.Size.Y;
-        float contentRatioVert = _movingArea.ChildrenIncludedBounds.Size.Y * inverseSize;
-        _verticalSlider.ContentToContainerRatio = contentRatioVert;
-        _movingAreaOffset.Y = (_movingArea.ChildrenIncludedBounds.Max.Y - _movingArea.LastGlobalShape.Max.Y) * inverseSize;
+        Vector2 inverseSize = Vector2.One / _movingArea.LastGlobalShape.Size;
+        Vector2 contentRatio = _movingArea.ChildrenIncludedBounds.Size * inverseSize;
+        if (contentRatio == _currentContentRatio)
+            return;
+
+        _horizontalSlider.ContentToContainerRatio = contentRatio.X;
+        _verticalSlider.ContentToContainerRatio = contentRatio.Y;
+        _currentContentRatio = contentRatio;
+        _movingAreaOffset = (_movingArea.ChildrenIncludedBounds.Max - _movingArea.LastGlobalShape.Max) * inverseSize;
+
+        if (_horizontalSlider.ContentToContainerRatio > 1 && !_horizontalSliderVisible)
+        {
+            _horizontalSlider.ScrollValue = 0;
+            _horizontalSliderVisible = true;
+        }
+        if (_verticalSlider.ContentToContainerRatio > 1 && !_verticalSliderVisible)
+        {
+            _verticalSlider.ScrollValue = 1;
+            _verticalSliderVisible = true;
+        }
     }
 
     protected override UIElementSize GetSizeConstraints()
