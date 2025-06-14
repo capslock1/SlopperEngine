@@ -55,8 +55,9 @@ public class UIRenderer : RenderHandler
         foreach (var (shape, mat, scissor) in _UIElementRenderQueue)
         {
             Box2 screenScaleScissor = new((scissor.Min + Vector2.One) * 0.5f, (scissor.Max + Vector2.One) * 0.5f);
-            screenScaleScissor.Min *= _screenSize;
-            screenScaleScissor.Max *= _screenSize;
+            var sssMin = screenScaleScissor.Min * _screenSize;
+            var sssMax = screenScaleScissor.Max * _screenSize;
+            screenScaleScissor = new(sssMin, sssMax);
             if (screenScaleScissor.Min.X <= viewport.Min.X &&
                 screenScaleScissor.Max.X >= viewport.Max.X &&
                 screenScaleScissor.Min.Y <= viewport.Min.Y &&

@@ -55,6 +55,7 @@ public class TestGame : SceneObject
         Console.WriteLine($"Using OpenGL version: {GLInfo.VersionString}, as int: {GLInfo.Version}");
         
         MainContext.ThrowIfSevereGLError = true;
+        MainContext.Instance.UpdateFrequency = 100;
 
         _main = Scene.CreateDefault();
         _main.RenderHandler!.ClearColor = new(0,0,0,1);
@@ -171,7 +172,7 @@ public class TestGame : SceneObject
         myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
 
-        var scrollable = new ScrollableArea(new(0f, 0, 0.3f, 0.3f));
+        var scrollable = new ScrollableArea(new(0.1f, 0.1f, 0.4f, 0.4f));
         scrollable.UIChildren.Add(new MaterialRectangle(new(0, 0, 1.5f, 1.6f), Material.MissingMaterial));
         _UIScene.Children.Add(scrollable);
 

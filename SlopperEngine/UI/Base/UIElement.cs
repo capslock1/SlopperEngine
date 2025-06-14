@@ -180,12 +180,12 @@ public class UIElement : SceneObject
     {
         var mat = GetMaterial();
         var scissor = GetScissorRegion();
-        Box2 globalScissor = new(
-            Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Min),
-            Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Max));
-        globalScissor.Min = Vector2.ComponentMax(globalScissor.Min, parentScissorRegion.Min);
-        globalScissor.Max = Vector2.ComponentMin(globalScissor.Max, parentScissorRegion.Max);
-        LastGlobalScissor = globalScissor;
+        var globalScissorMin = Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Min);
+        var globalScissorMax = Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Max);
+        globalScissorMin = Vector2.ComponentMax(globalScissorMin, parentScissorRegion.Min);
+        globalScissorMax = Vector2.ComponentMin(globalScissorMax, parentScissorRegion.Max);
+        bool validScissor = globalScissorMax.X > globalScissorMin.X && globalScissorMax.Y > globalScissorMin.Y;
+        LastGlobalScissor = validScissor ? new(globalScissorMin, globalScissorMax) : new(globalScissorMin, globalScissorMin);
 
         Box2 NDC = new(-1, -1, 1, 1);
         Box2 global = LastGlobalShape;
@@ -197,13 +197,13 @@ public class UIElement : SceneObject
             )
             renderer.AddRenderToQueue(LastGlobalShape, mat, parentScissorRegion);
 
-        if (globalScissor.Size.X <= 0 || globalScissor.Size.Y <= 0)
+        if (!validScissor)
             return;
 
         for (int i = 0; i < internalUIChildren.Count; i++)
         {
             var ch = internalUIChildren[i];
-            ch.Render(globalScissor, renderer);
+            ch.Render(LastGlobalScissor, renderer);
         }
     }
 
