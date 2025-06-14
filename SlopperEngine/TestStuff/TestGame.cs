@@ -258,7 +258,7 @@ public class TestGame : SceneObject
             _framesThisSecond = 0;
         }
 
-        _myScrollableRectangle.LocalShape = new(0, 0, 1+MathF.Sin((float)_secsSinceStart*0.124f), 1+MathF.Sin((float)_secsSinceStart*.097f));
+        _myScrollableRectangle.LocalShape = new(0, 0, 1 + MathF.Sin((float)_secsSinceStart * 0.224f), 1 + MathF.Sin((float)_secsSinceStart * .197f));
 
         _rb.AddImpulse(45 * args.DeltaTime * Vector3.UnitY * (MathF.Sin((float)_secsSinceStart)+1));
         Random rand = new(203958);
