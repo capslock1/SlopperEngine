@@ -1,3 +1,4 @@
+using System.Collections;
 using OpenTK.Mathematics;
 using SlopperEngine.UI.Base;
 
@@ -13,8 +14,10 @@ public class ScrollableArea : UIElement
     // configure slider alignment, 
     // configure slider size, 
     // take scroll input
+    // fix the moving area slightly extending (may be a fundamental issue)
     public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
 
+    readonly ContentArea _contentArea;
     readonly MovingArea _movingArea;
     readonly Slider _horizontalSlider;
     readonly Slider _verticalSlider;
@@ -22,7 +25,18 @@ public class ScrollableArea : UIElement
 
     Vector2 _currentContentRatio;
     Vector2 _movingAreaOffset;
+    Vector2 _scrollValues
+    {
+        get
+        {
+            Vector2 res = new(_horizontalSlider.ScrollValue, _verticalSlider.ScrollValue);
+            if (!_horizontalSliderVisible) res.X = 0;
+            if (!_verticalSliderVisible) res.Y = 1;
+            return res;
+        }
+    }
     Vector2 _scrollbarSize = new(0.05f,0.05f);
+    Vector2 _preferredScrollbarSize = new(0.05f,0.05f);
 
     bool _horizontalSliderVisible
     {
@@ -32,10 +46,17 @@ public class ScrollableArea : UIElement
             if (value)
             {
                 if (!_horizontalSlider.InScene)
+                {
                     internalUIChildren.Add(_horizontalSlider);
+                    _scrollbarSize.Y = _preferredScrollbarSize.Y;
+                }
             }
             else if (_horizontalSlider.InScene)
+            {
                 _horizontalSlider.Remove();
+                _scrollbarSize.Y = 0;
+            }
+            UpdateSliderShapes();
         }
     }
     bool _verticalSliderVisible
@@ -46,17 +67,25 @@ public class ScrollableArea : UIElement
             if (value)
             {
                 if (!_verticalSlider.InScene)
+                {
                     internalUIChildren.Add(_verticalSlider);
+                    _scrollbarSize.X = _preferredScrollbarSize.X;
+                }
             }
             else if (_verticalSlider.InScene)
+            {
                 _verticalSlider.Remove();
+                _scrollbarSize.X = 0;
+            }
+            UpdateSliderShapes();
         }
     }
 
     public ScrollableArea(Box2 shape) : base(shape)
     {
-        internalUIChildren.Add(_movingArea = new(this));
-        _movingArea.LocalShape = new(_scrollbarSize, Vector2.One);
+        internalUIChildren.Add(_contentArea = new());
+        _contentArea.LocalShape = new(_scrollbarSize, Vector2.One);
+        _contentArea.UIChildren.Add(_movingArea = new());
 
         _horizontalSlider = new(new(0, 0, 0, 0.5f), Color4.White, 1, false, 0);
         _horizontalSlider.LocalShape = new(_scrollbarSize.X, 0, 1, _scrollbarSize.Y);
@@ -66,26 +95,37 @@ public class ScrollableArea : UIElement
         _verticalSlider.LocalShape = new(0, _scrollbarSize.Y, _scrollbarSize.X, 1);
         _verticalSlider.OnScroll += OnScroll;
 
-        _sliderCorner = new(new(Vector2.Zero, _scrollbarSize), new(0, 0, 0, 0.5f));
+        _sliderCorner = new(new(Vector2.Zero, _scrollbarSize), new(0, 0, 0, 0.35f));
         internalUIChildren.Add(_sliderCorner);
     }
 
     void OnScroll()
     {
-        Vector2 scrollBarRatio = Vector2.One - _scrollbarSize;
-        Vector2 center = new Vector2(.5f) + 0.5f*_scrollbarSize - _movingAreaOffset;
+        Vector2 center = new Vector2(.5f) - _movingAreaOffset;
         Vector2 contentToContainer = new(_horizontalSlider.ContentToContainerRatio, _verticalSlider.ContentToContainerRatio);
         center +=
             contentToContainer *
-            new Vector2(1 - _horizontalSlider.ScrollValue * scrollBarRatio.X, 1 - _verticalSlider.ScrollValue * scrollBarRatio.Y) *
+            (Vector2.One - _scrollValues) *
             (Vector2.One - Vector2.One / contentToContainer); 
+            
+        if (float.IsNaN(center.X) || float.IsNaN(center.Y))
+            return;
         _movingArea.LocalShape.Center = center;
+    }
+
+    void UpdateSliderShapes()
+    {
+        _horizontalSlider.LocalShape = new(_scrollbarSize.X, 0, 1, _scrollbarSize.Y);
+        _verticalSlider.LocalShape = new(0, _scrollbarSize.Y, _scrollbarSize.X, 1);
+        _sliderCorner.LocalShape = new(Vector2.Zero, _scrollbarSize);
+        _contentArea.LocalShape = new(_scrollbarSize, Vector2.One);
+        OnScroll();
     }
 
     void UpdateContentRatio()
     {
         Vector2 inverseSize = Vector2.One / _movingArea.LastGlobalShape.Size;
-        Vector2 contentRatio = Vector2.Abs(_movingArea.ChildrenIncludedBounds.Size * inverseSize);
+        Vector2 contentRatio = _movingArea.ChildrenIncludedBounds.Size * inverseSize;
         if (contentRatio == _currentContentRatio)
             return;
 
@@ -99,16 +139,23 @@ public class ScrollableArea : UIElement
             _horizontalSlider.ScrollValue = 0;
             _horizontalSliderVisible = true;
         }
-        if(_horizontalSlider.ContentToContainerRatio == 1)
+        if (_horizontalSlider.ContentToContainerRatio == 1 && _horizontalSliderVisible)
+        {
+            _horizontalSlider.ScrollValue = 0;
             _horizontalSliderVisible = false;
+        }
 
         if (_verticalSlider.ContentToContainerRatio > 1 && !_verticalSliderVisible)
         {
             _verticalSlider.ScrollValue = 1;
             _verticalSliderVisible = true;
         }
-        if(_verticalSlider.ContentToContainerRatio == 1)
+        if (_verticalSlider.ContentToContainerRatio == 1 && _verticalSliderVisible)
+        {
+            _verticalSlider.ScrollValue = 1;
             _verticalSliderVisible = false;
+        }
+        OnScroll();
     }
 
     protected override UIElementSize GetSizeConstraints()
@@ -133,16 +180,12 @@ public class ScrollableArea : UIElement
         }
     }
 
-    class MovingArea(ScrollableArea owner) : UIElement
+    class ContentArea : UIElement
     {
-        public ScrollableArea Owner = owner;
+        protected override Box2 GetScissorRegion() => new(0, 0, 1, 1);
+    }
+    class MovingArea : UIElement
+    {
         public Box2 ChildrenIncludedBounds => lastChildrenBounds;
-
-        protected override Box2 GetScissorRegion()
-        {
-            Vector2 min = (Owner._scrollbarSize - LocalShape.Min) / (Vector2.One - Owner._scrollbarSize);
-            Box2 res = new(min, Vector2.One + min);
-            return res;
-        }
     }
 }

@@ -41,7 +41,7 @@ public class Slider : UIElement
             if (newRatio == _contentRatio || float.IsNaN(newRatio))
                 return;
             _scrollValue *= _contentRatio / newRatio;
-            _scrollValue = float.Min(_scrollValue, 1);
+            _scrollValue = float.Clamp(_scrollValue, 0, 1);
             _contentRatio = newRatio;
             UpdateBar();
         }
@@ -100,6 +100,7 @@ public class Slider : UIElement
         UpdateBar();
     }
 
+    [OnRegister]
     void UpdateBar()
     {
         float barSize = _barSize;
