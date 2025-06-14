@@ -1,6 +1,7 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
+using System.Threading;
 using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources;
@@ -12,11 +13,12 @@ namespace SlopperEngine.Windowing;
 /// <summary>
 /// Handles the main events loop of SlopperEngine.
 /// </summary>
+
 public class MainContext : GameWindow, ISerializableFromKey<byte>
 {
     /// <summary>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
-    /// </summary>
+    /// </summary
     public static bool ThrowIfSevereGLError;
 
     static MainContext? _instance;
@@ -24,6 +26,46 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     public static MainContext Instance{
         get => _instance == null || !_instance.Exists ? new() : _instance;
     }
+
+	private void SceneThread(Scene[] Scenes, FrameEventArgs args)
+    {
+		foreach(var sc in Scenes)
+			sc.FrameUpdate(new((float)args.Time));
+	}
+	
+	public void CalcThread(Scene[] active, FrameEventArgs args)
+    {
+		//How many threads our CPU has
+		var MaxThreads = 12;
+		//How many groups of MaxThreads have been assigned a scene
+		var ThreadsUsed = 0;
+		//How many scenes we need to update
+		Scene[] ToUpdate = new Scene[active.Length];
+		var UpIndex = 0;
+		foreach(var sc in active)
+           if(!sc.Destroyed)
+                ToUpdate[UpIndex] = sc;
+                UpIndex++;
+		Scene[,] ThreadAlloc = new Scene[MaxThreads, active.Length];
+        while(UpIndex != 0){
+			for(int i = 0; i < MaxThreads; i++){
+				ThreadAlloc[i, ThreadsUsed] = ToUpdate[i];
+				UpIndex--;
+				if(UpIndex == 0){
+					break;
+				}
+			}
+			ThreadsUsed++;
+		}
+		for(int i = 0; i < ThreadAlloc.Length; i++){
+			Scene[] Ret = new Scene[active.Length];
+			for(int k = 0; k < active.Length; k++){
+				Ret[k] = ThreadAlloc[i,k];
+			}
+			Thread SceneUp = new Thread(new ThreadStart(() => {SceneThread(Ret, args);}));
+			SceneUp.Start();
+		}
+	}
 
     MainContext() : base(
         new(){
@@ -72,13 +114,13 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             return;
         }
         
-        Scene[] activeScenes = Scene.ActiveScenes.ToArray();
-
         //then, update every scene once
+        Scene[] activeScenes = Scene.ActiveScenes.ToArray();
         foreach(var sc in activeScenes)
-            if(!sc.Destroyed)
-                sc.FrameUpdate(new((float)args.Time));
-
+			if(!sc.Destroyed)
+				sc.FrameUpdate(new((float)args.Time));
+		//CalcThread(activeScenes, args);
+		
         //then, render every scene once
         Context?.MakeCurrent();
         foreach(var sc in activeScenes)
