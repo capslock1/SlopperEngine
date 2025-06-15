@@ -12,7 +12,6 @@ public class ScrollableArea : UIElement
 {
     // TODO:  
     // configure slider colors, 
-    // configure slider alignment, 
     // configure slider size, 
     // take scroll input
     public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
@@ -30,6 +29,34 @@ public class ScrollableArea : UIElement
     /// The background of this scrollable area. Scrollbars and the content will show over this.
     /// </summary>
     public readonly UIElement Background;
+
+    /// <summary>
+    /// How to display the horizontal slider.
+    /// </summary>
+    public ScrollBarDisplayMode HorizontalDisplay
+    {
+        get => _horizontalDisplay;
+        set
+        {
+            _horizontalDisplay = value;
+            UpdateSliderShapes();
+        }
+    }
+    ScrollBarDisplayMode _horizontalDisplay = ScrollBarDisplayMode.Min;
+
+    /// <summary>
+    /// How to display the vertical slider.
+    /// </summary>
+    public ScrollBarDisplayMode VerticalDisplay
+    {
+        get => _verticalDisplay;
+        set
+        {
+            _verticalDisplay = value;
+            UpdateSliderShapes();
+        }
+    }
+    ScrollBarDisplayMode _verticalDisplay = ScrollBarDisplayMode.Min;
 
     readonly ContentArea _contentArea;
     readonly MovingArea _movingArea;
@@ -98,7 +125,6 @@ public class ScrollableArea : UIElement
     public ScrollableArea(Box2 shape) : base(shape)
     {
         internalUIChildren.Add(Background = new());
-        Background.UIChildren.Add(new ColorRectangle(new(0, 0, 1, 1), new(1, 0, 0, 0.1f)));
 
         internalUIChildren.Add(_contentArea = new());
         _contentArea.LocalShape = new(_scrollbarSize, Vector2.One);
@@ -114,7 +140,7 @@ public class ScrollableArea : UIElement
 
         _sliderCorner = new(new(Vector2.Zero, _scrollbarSize), new(0, 0, 0, 0.35f));
         internalUIChildren.Add(_sliderCorner);
-
+        UpdateSliderShapes();
     }
 
     void UpdatePosition()
@@ -174,10 +200,38 @@ public class ScrollableArea : UIElement
 
     void UpdateSliderShapes()
     {
-        _horizontalSlider.LocalShape = new(_scrollbarSize.X, 0, 1, _scrollbarSize.Y);
-        _verticalSlider.LocalShape = new(0, _scrollbarSize.Y, _scrollbarSize.X, 1);
-        _sliderCorner.LocalShape = new(Vector2.Zero, _scrollbarSize);
-        _contentArea.LocalShape = new(_scrollbarSize, Vector2.One);
+        Vector2 contentStart = default;
+        Vector2 contentEnd = default;
+        Vector2 sliderStart = default;
+        Vector2 sliderEnd = default;
+        SetShapeBounds(_verticalDisplay, ref contentStart.X, ref contentEnd.X, ref sliderStart.X, ref sliderEnd.X, _scrollbarSize.X);
+        SetShapeBounds(_horizontalDisplay, ref contentStart.Y, ref contentEnd.Y, ref sliderStart.Y, ref sliderEnd.Y, _scrollbarSize.Y);
+        void SetShapeBounds(ScrollBarDisplayMode mode, ref float cStart, ref float cEnd, ref float sStart, ref float sEnd, float scrollbarSize)
+        {
+            switch (mode)
+            {
+                default:
+                    cStart = 0;
+                    cEnd = 1;
+                    break;
+                case ScrollBarDisplayMode.Max:
+                    cStart = 0;
+                    cEnd = 1 - scrollbarSize;
+                    sStart = cEnd;
+                    sEnd = 1;
+                    break;
+                case ScrollBarDisplayMode.Min:
+                    sStart = 0;
+                    sEnd = scrollbarSize;
+                    cStart = scrollbarSize;
+                    cEnd = 1;
+                    break;
+            }
+        }
+        _horizontalSlider.LocalShape = new(contentStart.X, sliderStart.Y, contentEnd.X, sliderEnd.Y);
+        _verticalSlider.LocalShape = new(sliderStart.X, contentStart.Y, sliderEnd.X, contentEnd.Y);
+        _sliderCorner.LocalShape = new(sliderStart, sliderEnd);
+        _contentArea.LocalShape = new(contentStart, contentEnd);
         UpdatePosition();
     }
 
@@ -237,6 +291,16 @@ public class ScrollableArea : UIElement
         {
             // release the gizmo
         }
+    }
+
+    /// <summary>
+    /// How the scrollbar should display.
+    /// </summary>
+    public enum ScrollBarDisplayMode
+    {
+        DontShow,
+        Max,
+        Min
     }
 
     class ContentArea : UIElement
