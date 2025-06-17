@@ -45,21 +45,26 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     
     //waits for previous threads if any are still running, and cleans them up
     private void CheckExec(){
-        for(int i = 0; i < toDo.Count(); i++)
-        {
-            if(toDo[i] == null)
-                continue;
-            if(!toDo[i].IsCompleted)
-            {
-                toDo[i].Wait();
-            }else{
-                toDo.Remove(toDo[i]);
-            }
-        }
+		while(toDo.Count > 0)
+		{
+			for(int i = 0; i < toDo.Count; i++)
+			{
+				if(toDo[i] == null){
+					continue;
+				}
+				if(!toDo[i].IsCompleted)
+				{
+					toDo[i].Wait();
+				}else{
+					toDo.RemoveAt(i);
+				}
+			}
+		}
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+		CheckExec();
         base.OnUpdateFrame(args);
         Context?.MakeCurrent();
         
@@ -92,7 +97,6 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         }
         
         //spawns a new parallel task for every scene that needs an update, once previous frame is finished
-        CheckExec();
         FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
         List<Scene> alive = new List<Scene>();
         foreach(var sc in Scene.ActiveScenes.ToArray())
@@ -103,9 +107,9 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             toDo.Add(new Task(() => {
                 sc.FrameUpdate(time);
             }));
-            toDo[toDo.Count()-1].Start();
+            toDo[toDo.Count-1].Start();
         }
-        
+        //Console.WriteLine(toDo.Count);
         //then, render every scene once
         Context?.MakeCurrent();
         foreach(var sc in alive)
