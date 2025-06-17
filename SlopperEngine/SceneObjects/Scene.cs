@@ -17,6 +17,7 @@ public sealed class Scene : SceneObject
 {
     public static ReadOnlyCollection<Scene> ActiveScenes => _activeScenes.AsReadOnly();
     public readonly ChildList<SceneComponent> Components;
+    public readonly ChildList<SceneRenderer> Renderers;
     public UpdateHandler? UpdateHandler {get; private set;}
     public RenderHandler? RenderHandler {get; private set;}
     public PhysicsHandler? PhysicsHandler {get; private set;}
@@ -30,6 +31,7 @@ public sealed class Scene : SceneObject
         _activeScenes.Add(this);
         _register = new(this);
         Components = new(this);
+        Renderers = new(this);
     }
     [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
     {
@@ -49,7 +51,7 @@ public sealed class Scene : SceneObject
     public static Scene CreateDefault()
     {
         Scene res = new();
-        res.Components.Add(new DebugRenderer());
+        res.Renderers.Add(new DebugRenderer());
         res.Components.Add(new UpdateHandler()); //should the updatehandler even be optional?
         res.Components.Add(new PhysicsHandler());
         res._register.Resolve();
@@ -73,7 +75,9 @@ public sealed class Scene : SceneObject
         UpdateRegister();
         FinalizeQueues();
         foreach(var comp in Components.All)
+        {
             comp.FrameUpdate(update);
+		}
         UpdateRegister();
         FinalizeQueues();
     }
@@ -95,12 +99,12 @@ public sealed class Scene : SceneObject
     /// <summary>
     /// Renders the scene.
     /// </summary>
-    public void Render()
+    public void Render(FrameUpdateArgs args)
     {
         UpdateRegister();
         FinalizeQueues();
-        foreach(var rend in Components.AllOfType<RenderHandler>())
-            rend.Render();
+        foreach(var rend in Renderers.AllOfType<RenderHandler>())
+            rend.Render(args);
         UpdateRegister();
         FinalizeQueues();
     }
@@ -194,7 +198,7 @@ public sealed class Scene : SceneObject
     /// </summary>
     public void CheckCachedComponents()
     {
-        RenderHandler = Components.FirstOfType<RenderHandler>();
+        RenderHandler = Renderers.FirstOfType<RenderHandler>();
         UpdateHandler = Components.FirstOfType<UpdateHandler>();
         PhysicsHandler = Components.FirstOfType<PhysicsHandler>();
     }

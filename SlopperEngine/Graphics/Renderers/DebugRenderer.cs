@@ -46,15 +46,12 @@ public class DebugRenderer : RenderHandler
     protected override void RenderInternal()
     {
         if (Scene == null) return;
-
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
         _lights.ClearBuffer();
         foreach (PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
             _lights.AddLight(dat);
         _lights.UseBuffer();
-
         foreach (Camera cam in cameras)
         {
             globals.Use();
@@ -69,7 +66,6 @@ public class DebugRenderer : RenderHandler
                 call.Model.Draw();
             }
         }
-
         FrameBuffer.Unuse();
         _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
     }

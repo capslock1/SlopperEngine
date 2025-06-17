@@ -37,6 +37,9 @@ public class UIRenderer : RenderHandler
     protected override void RenderInternal()
     {
         if (Scene == null) return;
+        //_time += args.DeltaTime;
+        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+            uiRoot.UpdateShape(new(-1, -1, 1, 1), this);
         Buffer.Use();
         globals.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -139,13 +142,6 @@ public class UIRenderer : RenderHandler
                 root.OnMouse(ref e);
             }
         }
-    }
-
-    public override void FrameUpdate(FrameUpdateArgs args)
-    {
-        base.FrameUpdate(args);
-        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            uiRoot.UpdateShape(new(-1, -1, 1, 1), this);
     }
 
     public void AddRenderToQueue(Box2 shape, Material material, Box2 scissor) => _UIElementRenderQueue.Add((shape, material, scissor));

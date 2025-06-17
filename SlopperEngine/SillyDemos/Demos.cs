@@ -36,7 +36,7 @@ public class Demos : ImageRectangle
         // simple scene with just the logo in there
         var mainScene = Scene.CreateEmpty();
         mainScene.Children.Add(this);
-        mainScene.Components.Add(new UIRenderer());
+        mainScene.Renderers.Add(new UIRenderer());
         mainScene.Components.Add(new UpdateHandler());
 
         StbImage.stbi_set_flip_vertically_on_load(0);
@@ -53,7 +53,7 @@ public class Demos : ImageRectangle
     {
         var window = Window.Create(new(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: new(_image)));
         window.Scene = scene;
-        window.WindowTexture = scene.Components.FirstOfType<TRenderer>()!.GetOutputTexture();
+        window.WindowTexture = scene.Renderers.FirstOfType<TRenderer>()!.GetOutputTexture();
         window.CenterWindow();
         window.IsVisible = true;
         window.KeepProgramAlive = keepalive;
@@ -101,7 +101,7 @@ public class Demos : ImageRectangle
                 //create an empty scene, and give it a uirenderer
                 Scene sc = Scene.CreateEmpty();
                 var rend = new UIRenderer();
-                sc.Components.Add(rend);
+                sc.Renderers.Add(rend);
                 rend.Resize(_maxWindowSize);
 
                 // add the fractal. the shader/material system is awaiting a rework, so it looks "like this" for now.
@@ -138,7 +138,7 @@ public class Demos : ImageRectangle
             // create the dvd logo scene.
             {
                 Scene sc = Scene.CreateEmpty();
-                sc.Components.Add(new UIRenderer());
+                sc.Renderers.Add(new UIRenderer());
                 sc.Components.Add(new UpdateHandler());
                 sc.CheckCachedComponents();
                 sc.RenderHandler!.ClearColor = new(0,0,0,1);

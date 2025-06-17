@@ -56,7 +56,7 @@ public class TestGame : SceneObject
         Console.WriteLine($"Using OpenGL version: {GLInfo.VersionString}, as int: {GLInfo.Version}");
 
         MainContext.ThrowIfSevereGLError = true;
-        MainContext.Instance.UpdateFrequency = 100;
+        MainContext.Instance.UpdateFrequency = 10000;
 
         _main = Scene.CreateDefault();
         _main.RenderHandler!.ClearColor = new(0, 0, 0, 1);
@@ -130,7 +130,7 @@ public class TestGame : SceneObject
         _UIScene.Components.Add(new UpdateHandler());
         _UIScene.Children.Add(new MaterialRectangle(_background));
         var rend = new UIRenderer();
-        _UIScene.Components.Add(rend);
+        _UIScene.Renderers.Add(rend);
         rend.Resize((width, height));
 
         _fpsCounter = new();
@@ -210,7 +210,7 @@ public class TestGame : SceneObject
             );
 
         _testWindow.Scene = _main;
-        _testWindow.WindowTexture = _UIScene.Components.FirstOfType<UIRenderer>()?.GetOutputTexture();
+        _testWindow.WindowTexture = _UIScene.Renderers.FirstOfType<UIRenderer>()?.GetOutputTexture();
         _background.Uniforms[_backgroundTexIndex].Value = _main.RenderHandler!.GetOutputTexture();
         _testWindow.FramebufferResize += OnFramebufferResize;
     }
@@ -225,7 +225,7 @@ public class TestGame : SceneObject
         _UIScene.Components.Add(new UpdateHandler());
         _UIScene.Children.Add(new MaterialRectangle(_background));
         var rend = new UIRenderer();
-        _UIScene.Components.Add(rend);
+        _UIScene.Renderers.Add(rend);
         rend.Resize(_testWindow.ClientSize);
 
         _fpsCounter = new();
@@ -281,12 +281,12 @@ public class TestGame : SceneObject
     {
         _camera.Projection = Matrix4.CreatePerspectiveFieldOfView(.6f, e.Width/(float)e.Height, .1f, 1000f);
 
-        foreach(var rend in _main!.Components.AllOfType<RenderHandler>())
+        foreach(var rend in _main!.Renderers.AllOfType<RenderHandler>())
             rend.Resize(e.Size);
-        foreach(var rend in _UIScene!.Components.AllOfType<RenderHandler>())
+        foreach(var rend in _UIScene!.Renderers.AllOfType<RenderHandler>())
             rend.Resize(e.Size);
 
         _background!.Uniforms[_backgroundTexIndex].Value = _main.RenderHandler?.GetOutputTexture();
-        _testWindow.WindowTexture = _UIScene.Components.FirstOfType<UIRenderer>()?.GetOutputTexture();
+        _testWindow.WindowTexture = _UIScene.Renderers.FirstOfType<UIRenderer>()?.GetOutputTexture();
     }
 }

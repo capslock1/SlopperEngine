@@ -1,10 +1,12 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.Core;
 using OpenTK.Mathematics;
 
 namespace SlopperEngine.Windowing;
@@ -73,17 +75,25 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         }
         
         Scene[] activeScenes = Scene.ActiveScenes.ToArray();
-
-        //then, update every scene once
+		FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
+		List<Scene> alive = new List<Scene>();
         foreach(var sc in activeScenes)
             if(!sc.Destroyed)
-                sc.FrameUpdate(new((float)args.Time));
+                alive.Add(sc);
+        //then, update every scene once
+		foreach(var sc in alive)
+		{
+			Task updateThread = new Task(() => {
+				sc.FrameUpdate(time);
+			});
+			updateThread.Start();
+		}
+		Task.WaitAll();
 
         //then, render every scene once
         Context?.MakeCurrent();
-        foreach(var sc in activeScenes)
-            if(!sc.Destroyed)
-                sc.Render();
+        foreach(var sc in alive)
+                sc.Render(time);
 
         //finally render every window once (which is a different thing!)
         for(int i = Window.AllWindows.Count-1; i>=0; i--)

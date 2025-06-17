@@ -11,12 +11,13 @@ namespace SlopperEngine.Core.SceneComponents;
 /// <summary>
 /// Abstract base class for all renderers.
 /// </summary>
-public abstract class RenderHandler : SceneComponent
+public abstract class RenderHandler : SceneRenderer
 {
     /// <summary>
     /// The background color of the rendered frame, if used by inheriting classes.
     /// </summary>
     public Color4 ClearColor = new(.1f,.2f,.35f,1);
+    float _time;
 
     protected List<Camera> cameras = new();
     protected ShaderGlobals globals;
@@ -36,13 +37,11 @@ public abstract class RenderHandler : SceneComponent
     }
 
     public override void InputUpdate(InputUpdateArgs input){}
-    public override void FrameUpdate(FrameUpdateArgs args)
-    {
-        globals.Time += args.DeltaTime;
-    }
 
-    public void Render()
+    public override void Render(FrameUpdateArgs args)
     {
+		_time += args.DeltaTime;
+		globals.Time = _time;
         GL.ClearColor(ClearColor.R, ClearColor.G, ClearColor.B, ClearColor.A);
         RenderInternal();
     }
