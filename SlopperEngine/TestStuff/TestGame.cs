@@ -55,7 +55,7 @@ public class TestGame : SceneObject
         Console.WriteLine($"Using OpenGL version: {GLInfo.VersionString}, as int: {GLInfo.Version}");
 
         MainContext.ThrowIfSevereGLError = true;
-        MainContext.Instance.UpdateFrequency = 10000;
+        //MainContext.Instance.UpdateFrequency = 10000;
 
         _main = Scene.CreateDefault();
         _main.SceneRenderer!.ClearColor = new(0, 0, 0, 1);
