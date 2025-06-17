@@ -43,28 +43,32 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         else throw new Exception("Attempted to make a second MainContext.");
     }
     
-    //waits for previous threads if any are still running, and cleans them up
-    private void CheckExec(){
-		while(toDo.Count > 0)
-		{
-			for(int i = 0; i < toDo.Count; i++)
-			{
-				if(toDo[i] == null){
-					continue;
-				}
-				if(!toDo[i].IsCompleted)
-				{
-					toDo[i].Wait();
-				}else{
-					toDo.RemoveAt(i);
-				}
-			}
-		}
+    // waits for previous threads if any are still running, and cleans them up
+    private void CheckExec()
+    {
+        while (toDo.Count > 0)
+        {
+            for (int i = 0; i < toDo.Count; i++)
+            {
+                if (toDo[i] == null)
+                    continue;
+
+                if (!toDo[i].IsCompleted)
+                {
+                    toDo[i].Wait();
+                }
+                else
+                {
+                    toDo.RemoveAt(i);
+                    i--;
+                }
+            }
+        }
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
-		CheckExec();
+        CheckExec();
         base.OnUpdateFrame(args);
         Context?.MakeCurrent();
         

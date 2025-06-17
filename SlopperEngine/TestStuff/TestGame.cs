@@ -97,15 +97,7 @@ public class TestGame : SceneObject
         _rb.Colliders.Add(new SphereCollider(10, 1));
         _rb.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
         _main.Children.Add(_rb);
-        for(int x = 0; x < 100; x++){
-            for(int y = 0; y < 100; y++){
-            	var rb3 = new Rigidbody();
-            	rb3.Position = (x, y, 0.1f);
-            	rb3.Colliders.Add(new SphereCollider(10, 1));
-            	rb3.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
-            	_main.Children.Add(rb3);
-            }
-        }
+        
         var rb2 = new Rigidbody();
         rb2.Position = (2, 3, 0.1f);
         var ball = new SphereCollider(10, 1);

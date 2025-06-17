@@ -62,9 +62,10 @@ public sealed class SparseSemiorderedSceneDataContainer<T> : SceneDataContainer<
     
     public override void FinalizeQueue()
     {
-        foreach(var (index, toAdd, removes) in _addRemoveQueue)
+        for( int i = 0; i<_addRemoveQueue.Count; i++)
         {
-            if(removes)
+            var (index, toAdd, removes) = _addRemoveQueue[i];
+            if (removes)
                 Remove(index);
             else Set(index, toAdd);
         }
