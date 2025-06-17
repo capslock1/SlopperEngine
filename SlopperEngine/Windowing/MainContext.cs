@@ -45,26 +45,27 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     
     //waits for previous threads if any are still running, and cleans them up
     private void CheckExec(){
-		while(toDo.Count > 0)
-		{
-			for(int i = 0; i < toDo.Count; i++)
-			{
-				if(toDo[i] == null){
-					continue;
-				}
-				if(!toDo[i].IsCompleted)
-				{
-					toDo[i].Wait();
-				}else{
-					toDo.RemoveAt(i);
-				}
-			}
-		}
+        while(toDo.Count() > 0)
+        {
+            for(int i = toDo.Count-1; i >= 0; i--)
+            {
+                if(toDo[i] == null)
+                    continue;
+                if(!toDo[i].IsCompleted)
+                {
+                    toDo[i].Wait();
+                }
+                else
+                {
+                    toDo.RemoveAt(i);
+                }
+            }
+        }
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
-		CheckExec();
+        CheckExec();
         base.OnUpdateFrame(args);
         Context?.MakeCurrent();
         
@@ -107,9 +108,9 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             toDo.Add(new Task(() => {
                 sc.FrameUpdate(time);
             }));
-            toDo[toDo.Count-1].Start();
+            toDo[toDo.Count()-1].Start();
         }
-        //Console.WriteLine(toDo.Count);
+        Console.WriteLine(toDo.Count());
         //then, render every scene once
         Context?.MakeCurrent();
         foreach(var sc in alive)
