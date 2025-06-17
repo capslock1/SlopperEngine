@@ -20,11 +20,10 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
     /// </summary>
     public static bool ThrowIfSevereGLError;
-
-    private List<Task> toDo = new List<Task>();
-
     static MainContext? _instance;
-    
+
+    private List<Task> _frameUpdateQueue = new List<Task>();
+
     public static MainContext Instance{
         get => _instance == null || !_instance.Exists ? new() : _instance;
     }
@@ -42,28 +41,18 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         if(_instance == null) _instance = this;
         else throw new Exception("Attempted to make a second MainContext.");
     }
-    
+
     // waits for previous threads if any are still running, and cleans them up
     private void FinishPreviousFrameExecution()
     {
-        while (toDo.Count > 0)
+        for (int i = 0; i < _frameUpdateQueue.Count; i++)
         {
-            for (int i = 0; i < toDo.Count; i++)
-            {
-                if (toDo[i] == null)
-                    continue;
+            if (_frameUpdateQueue[i].IsCompleted)
+                continue;
 
-                if (!toDo[i].IsCompleted)
-                {
-                    toDo[i].Wait();
-                }
-                else
-                {
-                    toDo.RemoveAt(i);
-                    i--;
-                }
-            }
+            _frameUpdateQueue[i].Wait();
         }
+        _frameUpdateQueue.Clear();
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)
@@ -113,7 +102,7 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             {
                 sc.FrameUpdate(time);
             });
-            toDo.Add(task);
+            _frameUpdateQueue.Add(task);
             task.Start();
         }
 

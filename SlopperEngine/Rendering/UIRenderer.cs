@@ -1,6 +1,5 @@
 using System.CodeDom.Compiler;
 using OpenTK.Mathematics;
-using SlopperEngine.Core.SceneComponents;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.Core;
@@ -110,7 +109,7 @@ public class UIRenderer : SceneRenderer
             {
                 foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
                 {
-                    var e = new MouseEvent(NDCPos, NDCDelta, default, butt, (MouseButton)(-1), input.MouseState, MouseEventType.PressedButton);
+                    var e = new MouseEvent(NDCPos, NDCDelta, default, butt, (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.PressedButton);
                     root.OnMouse(ref e);
                 }
             }
@@ -118,7 +117,7 @@ public class UIRenderer : SceneRenderer
             {
                 foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
                 {
-                    var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), butt, input.MouseState, MouseEventType.ReleasedButton);
+                    var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), butt, input.MouseState, input.KeyboardState, MouseEventType.ReleasedButton);
                     root.OnMouse(ref e);
                 }
             }
@@ -127,7 +126,7 @@ public class UIRenderer : SceneRenderer
         {
             foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
             {
-                var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, MouseEventType.Move);
+                var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Move);
                 root.OnMouse(ref e);
             }
         }
@@ -135,7 +134,7 @@ public class UIRenderer : SceneRenderer
         {
             foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
             {
-                var e = new MouseEvent(NDCPos, NDCDelta, scrollDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, MouseEventType.Scroll);
+                var e = new MouseEvent(NDCPos, NDCDelta, scrollDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Scroll);
                 root.OnMouse(ref e);
             }
         }

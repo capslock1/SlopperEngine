@@ -75,9 +75,7 @@ public sealed class Scene : SceneObject
         UpdateRegister();
         FinalizeQueues();
         foreach(var comp in Components.All)
-        {
             comp.FrameUpdate(update);
-        }
         UpdateRegister();
         FinalizeQueues();
     }
@@ -92,6 +90,8 @@ public sealed class Scene : SceneObject
         FinalizeQueues();
         foreach(var comp in Components.All)
             comp.InputUpdate(update);
+        foreach (var rend in Renderers.All)
+            rend.InputUpdate(update);
         UpdateRegister();
         FinalizeQueues();
     }
