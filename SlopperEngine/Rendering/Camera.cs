@@ -1,7 +1,8 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
+using SlopperEngine.SceneObjects;
 
-namespace SlopperEngine.SceneObjects.Rendering;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
 /// Renders the scene.
@@ -19,12 +20,12 @@ public class Camera : SceneObject3D
     [OnRegister]
     void OnAdd()
     {
-        Scene?.RenderHandler?.AddCamera(this);
+        Scene?.SceneRenderer?.AddCamera(this);
     }
 
     [OnUnregister]
     void OnRemove(Scene? scene)
     {
-        scene?.RenderHandler?.RemoveCamera(this);
+        scene?.SceneRenderer?.RemoveCamera(this);
     }
 }

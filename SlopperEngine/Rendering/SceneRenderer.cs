@@ -1,27 +1,29 @@
 using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.ShadingLanguage;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.SceneObjects;
 using System.CodeDom.Compiler;
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using OpenTK.Graphics.OpenGL4;
+using SlopperEngine.Core;
 
-namespace SlopperEngine.Core.SceneComponents;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
-/// Abstract base class for all renderers.
+/// Special SceneObject for renderers - this allows for multithreading by handling them seperately
 /// </summary>
-public abstract class RenderHandler : SceneComponent
+public abstract class SceneRenderer : SceneObject
 {
     /// <summary>
     /// The background color of the rendered frame, if used by inheriting classes.
     /// </summary>
     public Color4 ClearColor = new(.1f,.2f,.35f,1);
+    float _time;
 
     protected List<Camera> cameras = new();
     protected ShaderGlobals globals;
 
-    public RenderHandler()
+    public SceneRenderer()
     {
         globals = new();
     }
@@ -35,14 +37,18 @@ public abstract class RenderHandler : SceneComponent
         cameras.Remove(cam);
     }
 
-    public override void InputUpdate(InputUpdateArgs input){}
-    public override void FrameUpdate(FrameUpdateArgs args)
-    {
-        globals.Time += args.DeltaTime;
-    }
+	/// <summary>
+    /// Updates user input, if applicable
+    /// </summary>
+    public abstract void InputUpdate(InputUpdateArgs input);
 
-    public void Render()
+	/// <summary>
+    /// Renders the scene
+    /// </summary>
+    public void Render(FrameUpdateArgs args)
     {
+		_time += args.DeltaTime;
+		globals.Time = _time;
         GL.ClearColor(ClearColor.R, ClearColor.G, ClearColor.B, ClearColor.A);
         RenderInternal();
     }
@@ -53,4 +59,7 @@ public abstract class RenderHandler : SceneComponent
 
     public abstract void AddVertexMain(SyntaxTree scope, IndentedTextWriter writer);
     public abstract void AddFragmentMain(SyntaxTree scope, IndentedTextWriter writer);
+    
+    [OnRegister] void Register() => Scene!.CheckCachedComponents();
+    [OnUnregister] void Unregister(Scene scene) => scene.CheckCachedComponents();
 }

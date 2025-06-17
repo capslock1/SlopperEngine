@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Graphics;
-using SlopperEngine.Graphics.Renderers;
+using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.SceneObjects.ChildLists;
 

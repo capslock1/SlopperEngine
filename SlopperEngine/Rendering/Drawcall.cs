@@ -1,8 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources.Meshes;
+using SlopperEngine.Graphics;
 
-namespace SlopperEngine.Graphics;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
 /// Contains basic information about a drawcall.

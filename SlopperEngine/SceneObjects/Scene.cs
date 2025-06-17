@@ -5,7 +5,7 @@ using SlopperEngine.Core.Collections;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
-using SlopperEngine.Graphics.Renderers;
+using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects.Serialization;
 
 namespace SlopperEngine.SceneObjects;
@@ -17,8 +17,9 @@ public sealed class Scene : SceneObject
 {
     public static ReadOnlyCollection<Scene> ActiveScenes => _activeScenes.AsReadOnly();
     public readonly ChildList<SceneComponent> Components;
+    public readonly ChildList<SceneRenderer> Renderers;
     public UpdateHandler? UpdateHandler {get; private set;}
-    public RenderHandler? RenderHandler {get; private set;}
+    public SceneRenderer? SceneRenderer {get; private set;}
     public PhysicsHandler? PhysicsHandler {get; private set;}
 
     [DontSerialize] FridgeDictionary<Type, ISceneDataContainer> _dataContainers = new();
@@ -30,6 +31,7 @@ public sealed class Scene : SceneObject
         _activeScenes.Add(this);
         _register = new(this);
         Components = new(this);
+        Renderers = new(this);
     }
     [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
     {
@@ -49,7 +51,7 @@ public sealed class Scene : SceneObject
     public static Scene CreateDefault()
     {
         Scene res = new();
-        res.Components.Add(new DebugRenderer());
+        res.Renderers.Add(new DebugRenderer());
         res.Components.Add(new UpdateHandler()); //should the updatehandler even be optional?
         res.Components.Add(new PhysicsHandler());
         res._register.Resolve();
@@ -73,7 +75,9 @@ public sealed class Scene : SceneObject
         UpdateRegister();
         FinalizeQueues();
         foreach(var comp in Components.All)
+        {
             comp.FrameUpdate(update);
+        }
         UpdateRegister();
         FinalizeQueues();
     }
@@ -95,12 +99,12 @@ public sealed class Scene : SceneObject
     /// <summary>
     /// Renders the scene.
     /// </summary>
-    public void Render()
+    public void Render(FrameUpdateArgs args)
     {
         UpdateRegister();
         FinalizeQueues();
-        foreach(var rend in Components.AllOfType<RenderHandler>())
-            rend.Render();
+        foreach(var rend in Renderers.AllOfType<SceneRenderer>())
+            rend.Render(args);
         UpdateRegister();
         FinalizeQueues();
     }
@@ -190,11 +194,11 @@ public sealed class Scene : SceneObject
     }
 
     /// <summary>
-    /// Sets the cached components (Scene.RenderHandler, Scene.UpdateHandler, etc).
+    /// Sets the cached components (Scene.SceneRenderer, Scene.UpdateHandler, etc).
     /// </summary>
     public void CheckCachedComponents()
     {
-        RenderHandler = Components.FirstOfType<RenderHandler>();
+        SceneRenderer = Renderers.FirstOfType<SceneRenderer>();
         UpdateHandler = Components.FirstOfType<UpdateHandler>();
         PhysicsHandler = Components.FirstOfType<PhysicsHandler>();
     }

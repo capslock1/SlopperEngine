@@ -1,5 +1,5 @@
 using OpenTK.Mathematics;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 
 namespace SlopperEngine.Graphics.Lighting;
 

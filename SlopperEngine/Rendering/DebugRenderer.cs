@@ -3,21 +3,21 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Graphics.PostProcessing;
-using SlopperEngine.SceneObjects.Rendering;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.Lighting;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.Core;
 using SlopperEngine.SceneObjects.Serialization;
 
-namespace SlopperEngine.Graphics.Renderers;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
 /// The simplest renderer possible - renders the scene with no regard for lighting, transparency, or other effects.
 /// </summary>
-public class DebugRenderer : RenderHandler
+public class DebugRenderer : SceneRenderer
 {
     [field:DontSerialize] public FrameBuffer Buffer {get; private set;}
     [DontSerialize] LightBuffer _lights;
@@ -42,19 +42,19 @@ public class DebugRenderer : RenderHandler
             _lights = new();
         }
     }
+    
+    //this is kind of lame but it works
+    public override void InputUpdate(InputUpdateArgs args){}
 
     protected override void RenderInternal()
     {
         if (Scene == null) return;
-
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
         _lights.ClearBuffer();
         foreach (PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
             _lights.AddLight(dat);
         _lights.UseBuffer();
-
         foreach (Camera cam in cameras)
         {
             globals.Use();
@@ -69,7 +69,6 @@ public class DebugRenderer : RenderHandler
                 call.Model.Draw();
             }
         }
-
         FrameBuffer.Unuse();
         _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
     }

@@ -7,6 +7,7 @@ using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.Graphics.GPUResources.Shaders;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.Rendering;
 
 namespace SlopperEngine.Graphics;
 
@@ -56,7 +57,7 @@ public class SlopperShader : ISerializableFromKey<string>
         return res;
     }
 
-    public DrawShader GetDrawShader(MeshInfo modelFormat, RenderHandler renderer) 
+    public DrawShader GetDrawShader(MeshInfo modelFormat, SceneRenderer renderer) 
     {
         if(Scope == null) 
             throw new NullReferenceException("Sloppershader had no syntaxtree associated.");

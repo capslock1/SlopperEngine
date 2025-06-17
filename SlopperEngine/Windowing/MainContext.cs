@@ -1,10 +1,12 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.Core;
 using OpenTK.Mathematics;
 
 namespace SlopperEngine.Windowing;
@@ -18,6 +20,8 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
     /// </summary>
     public static bool ThrowIfSevereGLError;
+
+    private List<Task> toDo = new List<Task>();
 
     static MainContext? _instance;
     
@@ -38,9 +42,33 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         if(_instance == null) _instance = this;
         else throw new Exception("Attempted to make a second MainContext.");
     }
+    
+    // waits for previous threads if any are still running, and cleans them up
+    private void FinishPreviousFrameExecution()
+    {
+        while (toDo.Count > 0)
+        {
+            for (int i = 0; i < toDo.Count; i++)
+            {
+                if (toDo[i] == null)
+                    continue;
 
+                if (!toDo[i].IsCompleted)
+                {
+                    toDo[i].Wait();
+                }
+                else
+                {
+                    toDo.RemoveAt(i);
+                    i--;
+                }
+            }
+        }
+    }
+    
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+        FinishPreviousFrameExecution();
         base.OnUpdateFrame(args);
         Context?.MakeCurrent();
         
@@ -72,18 +100,27 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             return;
         }
         
-        Scene[] activeScenes = Scene.ActiveScenes.ToArray();
-
-        //then, update every scene once
-        foreach(var sc in activeScenes)
+        //spawns a new parallel task for every scene that needs an update, once previous frame is finished
+        FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
+        List<Scene> alive = new List<Scene>();
+        foreach(var sc in Scene.ActiveScenes.ToArray())
             if(!sc.Destroyed)
-                sc.FrameUpdate(new((float)args.Time));
+                alive.Add(sc);
+                
+        foreach (var sc in alive)
+        {
+            var task = new Task(() =>
+            {
+                sc.FrameUpdate(time);
+            });
+            toDo.Add(task);
+            task.Start();
+        }
 
         //then, render every scene once
         Context?.MakeCurrent();
-        foreach(var sc in activeScenes)
-            if(!sc.Destroyed)
-                sc.Render();
+        foreach(var sc in alive)
+            sc.Render(time);
 
         //finally render every window once (which is a different thing!)
         for(int i = Window.AllWindows.Count-1; i>=0; i--)

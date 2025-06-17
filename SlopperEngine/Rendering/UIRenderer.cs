@@ -1,4 +1,3 @@
-
 using System.CodeDom.Compiler;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.SceneComponents;
@@ -8,16 +7,16 @@ using SlopperEngine.Core;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.Graphics;
 using SlopperEngine.UI.Base;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-
-namespace SlopperEngine.Graphics.Renderers;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
 /// Renders and updates UIElements.
 /// </summary>
-public class UIRenderer : RenderHandler
+public class UIRenderer : SceneRenderer
 {
     public FrameBuffer Buffer { get; private set; } = new(400, 300);
 
@@ -37,6 +36,8 @@ public class UIRenderer : RenderHandler
     protected override void RenderInternal()
     {
         if (Scene == null) return;
+        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
+            uiRoot.UpdateShape(new(-1, -1, 1, 1), this);
         Buffer.Use();
         globals.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -97,7 +98,6 @@ public class UIRenderer : RenderHandler
 
     public override void InputUpdate(InputUpdateArgs input)
     {
-        base.InputUpdate(input);
         Vector2 NDCPos = input.NormalizedMousePosition * 2 - Vector2.One;
         Vector2 NDCDelta = NDCPos - _previousMousePosition;
         _previousMousePosition = NDCPos;
@@ -139,13 +139,6 @@ public class UIRenderer : RenderHandler
                 root.OnMouse(ref e);
             }
         }
-    }
-
-    public override void FrameUpdate(FrameUpdateArgs args)
-    {
-        base.FrameUpdate(args);
-        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            uiRoot.UpdateShape(new(-1, -1, 1, 1), this);
     }
 
     public void AddRenderToQueue(Box2 shape, Material material, Box2 scissor) => _UIElementRenderQueue.Add((shape, material, scissor));

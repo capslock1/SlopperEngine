@@ -1,11 +1,11 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.SceneComponents;
-using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Graphics.GPUResources.Shaders;
+using SlopperEngine.Rendering;
 
 namespace SlopperEngine.Graphics;
 
@@ -14,7 +14,7 @@ namespace SlopperEngine.Graphics;
 /// </summary>
 public class Material
 {
-    static RenderHandler? _grossDisgustingFix;
+    static SceneRenderer? _grossDisgustingFix;
 
     /// <summary>
     /// The shader the material uses.
@@ -81,7 +81,7 @@ public class Material
     /// <summary>
     /// Uses the shader and sets the uniforms, preparing for a DrawShader call.
     /// </summary>
-    public void Use(MeshInfo info, RenderHandler renderer)
+    public void Use(MeshInfo info, SceneRenderer renderer)
     {
         if(Shader.Scope == null)
         {

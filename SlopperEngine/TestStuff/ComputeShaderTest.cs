@@ -1,7 +1,7 @@
 using SlopperEngine.Core;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.GPUResources.Shaders;

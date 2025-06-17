@@ -4,8 +4,9 @@ using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.DefaultResources;
+using SlopperEngine.SceneObjects;
 
-namespace SlopperEngine.SceneObjects.Rendering;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
 /// Renders a mesh using a material.

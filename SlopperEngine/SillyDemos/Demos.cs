@@ -3,8 +3,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.Graphics.Renderers;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 using OpenTK.Windowing.Common;
 using SlopperEngine.Core.SceneComponents;
 using StbImageSharp;
@@ -36,7 +35,7 @@ public class Demos : ImageRectangle
         // simple scene with just the logo in there
         var mainScene = Scene.CreateEmpty();
         mainScene.Children.Add(this);
-        mainScene.Components.Add(new UIRenderer());
+        mainScene.Renderers.Add(new UIRenderer());
         mainScene.Components.Add(new UpdateHandler());
 
         StbImage.stbi_set_flip_vertically_on_load(0);
@@ -49,11 +48,11 @@ public class Demos : ImageRectangle
     }
 
     // creates a simple undecorated window and attaches the scene's renderer's texture.
-    Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : RenderHandler
+    Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : SceneRenderer
     {
         var window = Window.Create(new(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: new(_image)));
         window.Scene = scene;
-        window.WindowTexture = scene.Components.FirstOfType<TRenderer>()!.GetOutputTexture();
+        window.WindowTexture = scene.Renderers.FirstOfType<TRenderer>()!.GetOutputTexture();
         window.CenterWindow();
         window.IsVisible = true;
         window.KeepProgramAlive = keepalive;
@@ -101,7 +100,7 @@ public class Demos : ImageRectangle
                 //create an empty scene, and give it a uirenderer
                 Scene sc = Scene.CreateEmpty();
                 var rend = new UIRenderer();
-                sc.Components.Add(rend);
+                sc.Renderers.Add(rend);
                 rend.Resize(_maxWindowSize);
 
                 // add the fractal. the shader/material system is awaiting a rework, so it looks "like this" for now.
@@ -116,7 +115,7 @@ public class Demos : ImageRectangle
             {
                 // create a default scene for ease.
                 Scene sc = Scene.CreateDefault();
-                sc.RenderHandler!.Resize(_maxWindowSize);
+                sc.SceneRenderer!.Resize(_maxWindowSize);
 
                 // documentation is really just in this class. try not to check it out cuz its gross
                 var sub = new Subway();
@@ -138,16 +137,16 @@ public class Demos : ImageRectangle
             // create the dvd logo scene.
             {
                 Scene sc = Scene.CreateEmpty();
-                sc.Components.Add(new UIRenderer());
+                sc.Renderers.Add(new UIRenderer());
                 sc.Components.Add(new UpdateHandler());
                 sc.CheckCachedComponents();
-                sc.RenderHandler!.ClearColor = new(0,0,0,1);
+                sc.SceneRenderer!.ClearColor = new(0,0,0,1);
                 var logo = new DVDLogo(new(.2f,.26667f));
                 
                 // this one is interesting, because it contains a nested scene.
                 // the nested scene is properly updated by the main context, despite only being related by a lambda function and a texture.
                 Scene plimboSpinScene = Scene.CreateDefault();
-                plimboSpinScene.RenderHandler?.Resize(new(187,187));
+                plimboSpinScene.SceneRenderer?.Resize(new(187,187));
                 plimboSpinScene.Children.Add(new Plimbo());
                 var camPivot = new SceneObject3D();
                 camPivot.Children.Add(new Camera(){
@@ -161,7 +160,7 @@ public class Demos : ImageRectangle
                     colorSel++;
                     colorSel %= 3;
                     // BRG color? who do i think i am
-                    plimboSpinScene.RenderHandler!.ClearColor = colorSel switch{
+                    plimboSpinScene.SceneRenderer!.ClearColor = colorSel switch{
                         0 => new(.1f,.2f,.35f, 1f), 
                         1 => new(.35f,.05f,.2f, 1f),
                         _ => new(.05f,.45f,.05f, 1f)}; 
@@ -169,7 +168,7 @@ public class Demos : ImageRectangle
                     plimboSpinScene.FrameUpdate(new(5));
                     };
 
-                logo.Texture = plimboSpinScene.RenderHandler?.GetOutputTexture();
+                logo.Texture = plimboSpinScene.SceneRenderer?.GetOutputTexture();
                 sc.Children.Add(logo);
                 _additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1,1)), (1,1), (0,0), .4f));
             }
