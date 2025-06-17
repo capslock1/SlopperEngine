@@ -7,10 +7,9 @@ using SlopperEngine.SceneObjects;
 using StbImageSharp;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core;
-using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Physics;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 using SlopperEngine.Physics.Colliders;
 using SlopperEngine.UI;
 using SlopperEngine.UI.Base;
@@ -59,7 +58,7 @@ public class TestGame : SceneObject
         MainContext.Instance.UpdateFrequency = 10000;
 
         _main = Scene.CreateDefault();
-        _main.RenderHandler!.ClearColor = new(0, 0, 0, 1);
+        _main.SceneRenderer!.ClearColor = new(0, 0, 0, 1);
 
         Matrix4 cameraProjection = Matrix4.CreatePerspectiveFieldOfView(.9f, width / (float)height, .1f, 1000f);
         _camera.Projection = cameraProjection;
@@ -98,15 +97,15 @@ public class TestGame : SceneObject
         _rb.Colliders.Add(new SphereCollider(10, 1));
         _rb.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
         _main.Children.Add(_rb);
-		for(int x = 0; x < 100; x++){
-			for(int y = 0; y < 100; y++){
-				var rb3 = new Rigidbody();
-				rb3.Position = (x, y, 0.1f);
-				rb3.Colliders.Add(new SphereCollider(10, 1));
-				rb3.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
-				_main.Children.Add(rb3);
-			}
-		}
+        for(int x = 0; x < 100; x++){
+            for(int y = 0; y < 100; y++){
+            	var rb3 = new Rigidbody();
+            	rb3.Position = (x, y, 0.1f);
+            	rb3.Colliders.Add(new SphereCollider(10, 1));
+            	rb3.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
+            	_main.Children.Add(rb3);
+            }
+        }
         var rb2 = new Rigidbody();
         rb2.Position = (2, 3, 0.1f);
         var ball = new SphereCollider(10, 1);
@@ -219,7 +218,7 @@ public class TestGame : SceneObject
 
         _testWindow.Scene = _main;
         _testWindow.WindowTexture = _UIScene.Renderers.FirstOfType<UIRenderer>()?.GetOutputTexture();
-        _background.Uniforms[_backgroundTexIndex].Value = _main.RenderHandler!.GetOutputTexture();
+        _background.Uniforms[_backgroundTexIndex].Value = _main.SceneRenderer!.GetOutputTexture();
         _testWindow.FramebufferResize += OnFramebufferResize;
     }
 
@@ -249,7 +248,7 @@ public class TestGame : SceneObject
         {
             _testWindow.Scene = _main!;
             _testWindow.WindowTexture = rend.GetOutputTexture();
-            _background.Uniforms[_backgroundTexIndex].Value = _main!.RenderHandler!.GetOutputTexture();
+            _background.Uniforms[_backgroundTexIndex].Value = _main!.SceneRenderer!.GetOutputTexture();
             _testWindow.FramebufferResize += OnFramebufferResize;
         });
     }
@@ -289,12 +288,12 @@ public class TestGame : SceneObject
     {
         _camera.Projection = Matrix4.CreatePerspectiveFieldOfView(.6f, e.Width/(float)e.Height, .1f, 1000f);
 
-        foreach(var rend in _main!.Renderers.AllOfType<RenderHandler>())
+        foreach(var rend in _main!.Renderers.AllOfType<SceneRenderer>())
             rend.Resize(e.Size);
-        foreach(var rend in _UIScene!.Renderers.AllOfType<RenderHandler>())
+        foreach(var rend in _UIScene!.Renderers.AllOfType<SceneRenderer>())
             rend.Resize(e.Size);
 
-        _background!.Uniforms[_backgroundTexIndex].Value = _main.RenderHandler?.GetOutputTexture();
+        _background!.Uniforms[_backgroundTexIndex].Value = _main.SceneRenderer?.GetOutputTexture();
         _testWindow.WindowTexture = _UIScene.Renderers.FirstOfType<UIRenderer>()?.GetOutputTexture();
     }
 }

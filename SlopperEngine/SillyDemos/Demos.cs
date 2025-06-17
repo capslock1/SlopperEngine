@@ -3,8 +3,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.UI;
 using SlopperEngine.Windowing;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.Graphics.Renderers;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 using OpenTK.Windowing.Common;
 using SlopperEngine.Core.SceneComponents;
 using StbImageSharp;
@@ -41,15 +40,15 @@ public class Demos : ImageRectangle
 
         StbImage.stbi_set_flip_vertically_on_load(0);
         _image = new OpenTK.Windowing.Common.Input.Image(32,32, 
-                ImageResult.FromStream(
-                    File.OpenRead(Assets.GetPath("defaultTextures/logo.png")),
-                    ColorComponents.RedGreenBlueAlpha).Data);
+            	ImageResult.FromStream(
+            		File.OpenRead(Assets.GetPath("defaultTextures/logo.png")),
+            		ColorComponents.RedGreenBlueAlpha).Data);
 
         _mainWindow = CreateWindow<UIRenderer>(mainScene, (256,256), true);
     }
 
     // creates a simple undecorated window and attaches the scene's renderer's texture.
-    Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : RenderHandler
+    Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : SceneRenderer
     {
         var window = Window.Create(new(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: new(_image)));
         window.Scene = scene;
@@ -70,15 +69,15 @@ public class Demos : ImageRectangle
             win.delay -= args.DeltaTime;
             if(win.delay > 0)
             {
-                // cant ref a list so i keep having to set it back...
-                _additionalWindows[w] = win;
-                continue;
+            	// cant ref a list so i keep having to set it back...
+            	_additionalWindows[w] = win;
+            	continue;
             }
 
             win.size += (_maxWindowSize - win.size) * (1-MathF.Exp(-1*args.DeltaTime));
             Vector2i realSize = (Vector2i)win.size;
             if(realSize != win.window.ClientSize)
-                win.window.ClientSize = realSize;
+            	win.window.ClientSize = realSize;
             
             // magic values are cool because casting spells is awesome
             float rad = -w*MathF.Tau/_additionalWindows.Count + Scene?.UpdateHandler?.TimeMilliseconds*.0001f ?? 0;
@@ -98,80 +97,80 @@ public class Demos : ImageRectangle
         {
             // plimbo fractal scene. simply renders a shader to the window.
             {
-                //create an empty scene, and give it a uirenderer
-                Scene sc = Scene.CreateEmpty();
-                var rend = new UIRenderer();
-                sc.Renderers.Add(rend);
-                rend.Resize(_maxWindowSize);
+            	//create an empty scene, and give it a uirenderer
+            	Scene sc = Scene.CreateEmpty();
+            	var rend = new UIRenderer();
+            	sc.Renderers.Add(rend);
+            	rend.Resize(_maxWindowSize);
 
-                // add the fractal. the shader/material system is awaiting a rework, so it looks "like this" for now.
-                // most interesting part about this scene is the shader itself tbh
-                Material fractal = Material.Create(SlopperShader.Create(Assets.GetPath("shaders/PlimbobrotSet.sesl")));
-                fractal.Uniforms[fractal.GetUniformIndexFromName("mainTexture")].Value = TextureLoader.FromFilepath(Assets.GetPath("textures/croAA.png"));
-                sc.Children.Add(new MaterialRectangle(fractal));
-                _additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1,1)), (1,1), (0,0), .2f));
+            	// add the fractal. the shader/material system is awaiting a rework, so it looks "like this" for now.
+            	// most interesting part about this scene is the shader itself tbh
+            	Material fractal = Material.Create(SlopperShader.Create(Assets.GetPath("shaders/PlimbobrotSet.sesl")));
+            	fractal.Uniforms[fractal.GetUniformIndexFromName("mainTexture")].Value = TextureLoader.FromFilepath(Assets.GetPath("textures/croAA.png"));
+            	sc.Children.Add(new MaterialRectangle(fractal));
+            	_additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1,1)), (1,1), (0,0), .2f));
             }
 
             // create the subway surfers scene.
             {
-                // create a default scene for ease.
-                Scene sc = Scene.CreateDefault();
-                sc.RenderHandler!.Resize(_maxWindowSize);
+            	// create a default scene for ease.
+            	Scene sc = Scene.CreateDefault();
+            	sc.SceneRenderer!.Resize(_maxWindowSize);
 
-                // documentation is really just in this class. try not to check it out cuz its gross
-                var sub = new Subway();
-                sc.Children.Add(sub);
+            	// documentation is really just in this class. try not to check it out cuz its gross
+            	var sub = new Subway();
+            	sc.Children.Add(sub);
 
-                var plimboModel = new Plimbo();
-                plimboModel.Rotation = Quaternion.FromAxisAngle(Vector3.UnitY, 3.1415f);
-                sc.Children.Add(plimboModel);
-                sub.Player = plimboModel;
-                
-                sc.Children.Add(new Camera(){
-                    LocalPosition = new(0, 6, 8),
-                    LocalRotation = Quaternion.FromEulerAngles(-1,0,0),
-                    Projection = Matrix4.CreatePerspectiveFieldOfView(1.2f,1,0.1f,100f),
-                });
-                _additionalWindows.Add((CreateWindow<DebugRenderer>(sc, (1,1)), (1,1), (0,0), .6f));
+            	var plimboModel = new Plimbo();
+            	plimboModel.Rotation = Quaternion.FromAxisAngle(Vector3.UnitY, 3.1415f);
+            	sc.Children.Add(plimboModel);
+            	sub.Player = plimboModel;
+            	
+            	sc.Children.Add(new Camera(){
+            		LocalPosition = new(0, 6, 8),
+            		LocalRotation = Quaternion.FromEulerAngles(-1,0,0),
+            		Projection = Matrix4.CreatePerspectiveFieldOfView(1.2f,1,0.1f,100f),
+            	});
+            	_additionalWindows.Add((CreateWindow<DebugRenderer>(sc, (1,1)), (1,1), (0,0), .6f));
             }
 
             // create the dvd logo scene.
             {
-                Scene sc = Scene.CreateEmpty();
-                sc.Renderers.Add(new UIRenderer());
-                sc.Components.Add(new UpdateHandler());
-                sc.CheckCachedComponents();
-                sc.RenderHandler!.ClearColor = new(0,0,0,1);
-                var logo = new DVDLogo(new(.2f,.26667f));
-                
-                // this one is interesting, because it contains a nested scene.
-                // the nested scene is properly updated by the main context, despite only being related by a lambda function and a texture.
-                Scene plimboSpinScene = Scene.CreateDefault();
-                plimboSpinScene.RenderHandler?.Resize(new(187,187));
-                plimboSpinScene.Children.Add(new Plimbo());
-                var camPivot = new SceneObject3D();
-                camPivot.Children.Add(new Camera(){
-                    LocalPosition = (0,0,4), 
-                    Projection = Matrix4.CreatePerspectiveFieldOfView(.4f,1,0.1f,10f)});
-                plimboSpinScene.Children.Add(camPivot);
-                
-                Random rand = new();
-                int colorSel = 0;
-                logo.OnBounce += () => { 
-                    colorSel++;
-                    colorSel %= 3;
-                    // BRG color? who do i think i am
-                    plimboSpinScene.RenderHandler!.ClearColor = colorSel switch{
-                        0 => new(.1f,.2f,.35f, 1f), 
-                        1 => new(.35f,.05f,.2f, 1f),
-                        _ => new(.05f,.45f,.05f, 1f)}; 
-                    camPivot.LocalRotation = Quaternion.FromEulerAngles(0, rand.NextSingle()*6.28f, 0); 
-                    plimboSpinScene.FrameUpdate(new(5));
-                    };
+            	Scene sc = Scene.CreateEmpty();
+            	sc.Renderers.Add(new UIRenderer());
+            	sc.Components.Add(new UpdateHandler());
+            	sc.CheckCachedComponents();
+            	sc.SceneRenderer!.ClearColor = new(0,0,0,1);
+            	var logo = new DVDLogo(new(.2f,.26667f));
+            	
+            	// this one is interesting, because it contains a nested scene.
+            	// the nested scene is properly updated by the main context, despite only being related by a lambda function and a texture.
+            	Scene plimboSpinScene = Scene.CreateDefault();
+            	plimboSpinScene.SceneRenderer?.Resize(new(187,187));
+            	plimboSpinScene.Children.Add(new Plimbo());
+            	var camPivot = new SceneObject3D();
+            	camPivot.Children.Add(new Camera(){
+            		LocalPosition = (0,0,4), 
+            		Projection = Matrix4.CreatePerspectiveFieldOfView(.4f,1,0.1f,10f)});
+            	plimboSpinScene.Children.Add(camPivot);
+            	
+            	Random rand = new();
+            	int colorSel = 0;
+            	logo.OnBounce += () => { 
+            		colorSel++;
+            		colorSel %= 3;
+            		// BRG color? who do i think i am
+            		plimboSpinScene.SceneRenderer!.ClearColor = colorSel switch{
+            			0 => new(.1f,.2f,.35f, 1f), 
+            			1 => new(.35f,.05f,.2f, 1f),
+            			_ => new(.05f,.45f,.05f, 1f)}; 
+            		camPivot.LocalRotation = Quaternion.FromEulerAngles(0, rand.NextSingle()*6.28f, 0); 
+            		plimboSpinScene.FrameUpdate(new(5));
+            		};
 
-                logo.Texture = plimboSpinScene.RenderHandler?.GetOutputTexture();
-                sc.Children.Add(logo);
-                _additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1,1)), (1,1), (0,0), .4f));
+            	logo.Texture = plimboSpinScene.SceneRenderer?.GetOutputTexture();
+            	sc.Children.Add(logo);
+            	_additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1,1)), (1,1), (0,0), .4f));
             }
 
             _mainWindow.Focus();

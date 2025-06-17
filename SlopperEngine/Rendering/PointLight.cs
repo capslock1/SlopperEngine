@@ -3,8 +3,9 @@ using SlopperEngine.Core.SceneData;
 using SlopperEngine.Graphics.Lighting;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.SceneObjects;
 
-namespace SlopperEngine.SceneObjects.Rendering;
+namespace SlopperEngine.Rendering;
 
 /// <summary>
 /// A light which radiates a spherical area around it, and casts no shadow.

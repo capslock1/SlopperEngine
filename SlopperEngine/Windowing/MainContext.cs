@@ -9,8 +9,6 @@ using SlopperEngine.Core.Serialization;
 using SlopperEngine.Core;
 using OpenTK.Mathematics;
 
-using System.Diagnostics;
-
 namespace SlopperEngine.Windowing;
 
 /// <summary>
@@ -23,7 +21,7 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// </summary>
     public static bool ThrowIfSevereGLError;
 
-	private List<Task> toDo = new List<Task>();
+    private List<Task> toDo = new List<Task>();
 
     static MainContext? _instance;
     
@@ -45,20 +43,21 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         else throw new Exception("Attempted to make a second MainContext.");
     }
     
-	private void CheckExec(){
-		for(int i = 0; i < toDo.Count(); i++)
-		{
-			if(toDo[i] == null)
-				continue;
-			if(!toDo[i].IsCompleted)
-			{
-				toDo[i].Wait();
-			}else{
-				toDo.Remove(toDo[i]);
-			}
-		}
-	}
-	
+    //waits for previous threads if any are still running, and cleans them up
+    private void CheckExec(){
+        for(int i = 0; i < toDo.Count(); i++)
+        {
+            if(toDo[i] == null)
+                continue;
+            if(!toDo[i].IsCompleted)
+            {
+                toDo[i].Wait();
+            }else{
+                toDo.Remove(toDo[i]);
+            }
+        }
+    }
+    
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
         base.OnUpdateFrame(args);
@@ -91,31 +90,27 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             Close();
             return;
         }
-        //then, update every scene once
+        
+        //spawns a new parallel task for every scene that needs an update, once previous frame is finished
         CheckExec();
-		FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
-		List<Scene> alive = new List<Scene>();
+        FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
+        List<Scene> alive = new List<Scene>();
         foreach(var sc in Scene.ActiveScenes.ToArray())
             if(!sc.Destroyed)
                 alive.Add(sc);
-		foreach(var sc in alive)
-		{
-			toDo.Add(new Task(() => {
-				//Stopwatch compMS = Stopwatch.StartNew();
-				sc.FrameUpdate(time);
-				//compMS.Stop();
-				//Console.WriteLine("Component tick: " + compMS.ElapsedMilliseconds);
-			}));
-			toDo[toDo.Count()-1].Start();
-		}
-		
+        foreach(var sc in alive)
+        {
+            toDo.Add(new Task(() => {
+                sc.FrameUpdate(time);
+            }));
+            toDo[toDo.Count()-1].Start();
+        }
+        
         //then, render every scene once
-        //Stopwatch renderMS = Stopwatch.StartNew();
         Context?.MakeCurrent();
         foreach(var sc in alive)
-                sc.Render(time);
+            sc.Render(time);
         //renderMS.Stop();
-        //Console.WriteLine("Render tick: " + renderMS.ElapsedMilliseconds);
 
         //finally render every window once (which is a different thing!)
         for(int i = Window.AllWindows.Count-1; i>=0; i--)
@@ -127,8 +122,8 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         GL.Enable(EnableCap.DebugOutput);
         GL.DebugMessageCallback(DebugMessageDelegate, IntPtr.Zero);
         base.OnLoad();
-        //if(ThrowIfSevereGLError)
-        //    GL.Enable(EnableCap.DebugOutputSynchronous); //lower performance but better debugging.
+        if(ThrowIfSevereGLError)
+            GL.Enable(EnableCap.DebugOutputSynchronous); //lower performance but better debugging.
     }
 
     private static DebugProc? DebugMessageDelegate = OnDebugMessage;

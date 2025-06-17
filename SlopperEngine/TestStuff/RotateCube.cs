@@ -1,6 +1,6 @@
 using SlopperEngine.Graphics;
 using SlopperEngine.Core;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.DefaultResources;
 using OpenTK.Mathematics;
@@ -82,8 +82,8 @@ public class RotateCube : MeshRenderer
     {
         _allOfThem.Remove(this);
     }
-	public override string ToString()
-	{
-		return "rotateCube "+_myNumber.ToString()+" got "+_updateCount+" update calls";
-	}
+    public override string ToString()
+    {
+        return "rotateCube "+_myNumber.ToString()+" got "+_updateCount+" update calls";
+    }
 }

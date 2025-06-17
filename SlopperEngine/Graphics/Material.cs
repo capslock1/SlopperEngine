@@ -1,11 +1,11 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.SceneComponents;
-using SlopperEngine.Graphics.Renderers;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Graphics.GPUResources.Shaders;
+using SlopperEngine.Rendering;
 
 namespace SlopperEngine.Graphics;
 
@@ -14,7 +14,7 @@ namespace SlopperEngine.Graphics;
 /// </summary>
 public class Material
 {
-    static RenderHandler? _grossDisgustingFix;
+    static SceneRenderer? _grossDisgustingFix;
 
     /// <summary>
     /// The shader the material uses.
@@ -81,7 +81,7 @@ public class Material
     /// <summary>
     /// Uses the shader and sets the uniforms, preparing for a DrawShader call.
     /// </summary>
-    public void Use(MeshInfo info, RenderHandler renderer)
+    public void Use(MeshInfo info, SceneRenderer renderer)
     {
         if(Shader.Scope == null)
         {
@@ -98,43 +98,43 @@ public class Material
             try{
             switch(u.Type)
             {
-                default:
-                Console.WriteLine($"im so sorry but i did not implement {u.Type}");
-                break;
+            	default:
+            	Console.WriteLine($"im so sorry but i did not implement {u.Type}");
+            	break;
 
-                case ActiveUniformType.UnsignedInt: shader.SetUniform(u.Location, n?0:(uint)u.Value!); break;
+            	case ActiveUniformType.UnsignedInt: shader.SetUniform(u.Location, n?0:(uint)u.Value!); break;
 
-                case ActiveUniformType.Int: shader.SetUniform(u.Location, n?default:(int)u.Value!); break;
-                case ActiveUniformType.IntVec2: shader.SetUniform(u.Location, n?default:(Vector2i)u.Value!); break;
-                case ActiveUniformType.IntVec3: shader.SetUniform(u.Location, n?default:(Vector3i)u.Value!); break;
-                case ActiveUniformType.IntVec4: shader.SetUniform(u.Location, n?default:(Vector4i)u.Value!); break;
-                
-                case ActiveUniformType.Float: shader.SetUniform(u.Location, n?default:(float)u.Value!); break;
-                case ActiveUniformType.FloatVec2: shader.SetUniform(u.Location, n?default:(Vector2)u.Value!); break;
-                case ActiveUniformType.FloatVec3: shader.SetUniform(u.Location, n?default:(Vector3)u.Value!); break;
-                case ActiveUniformType.FloatVec4: shader.SetUniform(u.Location, n?default:(Vector4)u.Value!); break;
-                
-                case ActiveUniformType.FloatMat2: shader.SetUniform(u.Location, n?default:(Matrix2)u.Value!); break;
-                case ActiveUniformType.FloatMat3: shader.SetUniform(u.Location, n?default:(Matrix3)u.Value!); break;
-                case ActiveUniformType.FloatMat4: shader.SetUniform(u.Location, n?default:(Matrix4)u.Value!); break;
+            	case ActiveUniformType.Int: shader.SetUniform(u.Location, n?default:(int)u.Value!); break;
+            	case ActiveUniformType.IntVec2: shader.SetUniform(u.Location, n?default:(Vector2i)u.Value!); break;
+            	case ActiveUniformType.IntVec3: shader.SetUniform(u.Location, n?default:(Vector3i)u.Value!); break;
+            	case ActiveUniformType.IntVec4: shader.SetUniform(u.Location, n?default:(Vector4i)u.Value!); break;
+            	
+            	case ActiveUniformType.Float: shader.SetUniform(u.Location, n?default:(float)u.Value!); break;
+            	case ActiveUniformType.FloatVec2: shader.SetUniform(u.Location, n?default:(Vector2)u.Value!); break;
+            	case ActiveUniformType.FloatVec3: shader.SetUniform(u.Location, n?default:(Vector3)u.Value!); break;
+            	case ActiveUniformType.FloatVec4: shader.SetUniform(u.Location, n?default:(Vector4)u.Value!); break;
+            	
+            	case ActiveUniformType.FloatMat2: shader.SetUniform(u.Location, n?default:(Matrix2)u.Value!); break;
+            	case ActiveUniformType.FloatMat3: shader.SetUniform(u.Location, n?default:(Matrix3)u.Value!); break;
+            	case ActiveUniformType.FloatMat4: shader.SetUniform(u.Location, n?default:(Matrix4)u.Value!); break;
 
-                case ActiveUniformType.Sampler2D:
-                shader.SetUniform(u.Location, texcount);
-                if(n)DefaultTextures.Error.Use(TextureUnit.Texture0+texcount);
-                ((Texture2D)u.Value!)?.Use(TextureUnit.Texture0 + texcount);
-                texcount++;
-                break;
+            	case ActiveUniformType.Sampler2D:
+            	shader.SetUniform(u.Location, texcount);
+            	if(n)DefaultTextures.Error.Use(TextureUnit.Texture0+texcount);
+            	((Texture2D)u.Value!)?.Use(TextureUnit.Texture0 + texcount);
+            	texcount++;
+            	break;
 
-                case ActiveUniformType.Image2D:
-                shader.SetUniform(u.Location, imgcount);
-                if(n) DefaultTextures.Error.UseAsImage(imgcount);
-                ((Texture2D)u.Value!)?.UseAsImage(imgcount);
-                imgcount++;
-                break;
+            	case ActiveUniformType.Image2D:
+            	shader.SetUniform(u.Location, imgcount);
+            	if(n) DefaultTextures.Error.UseAsImage(imgcount);
+            	((Texture2D)u.Value!)?.UseAsImage(imgcount);
+            	imgcount++;
+            	break;
             }
             }catch
             {
-                Console.WriteLine($"hey please put the right type into the uniforms. you gave me {u.Value!.GetType()} but i want {u.Type}");
+            	Console.WriteLine($"hey please put the right type into the uniforms. you gave me {u.Value!.GetType()} but i want {u.Type}");
             }
         }
     }

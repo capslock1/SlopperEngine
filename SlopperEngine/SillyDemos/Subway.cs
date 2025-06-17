@@ -4,7 +4,7 @@ using SlopperEngine.Physics;
 using SlopperEngine.Graphics;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.DefaultResources;
-using SlopperEngine.SceneObjects.Rendering;
+using SlopperEngine.Rendering;
 using SlopperEngine.TestStuff;
 
 namespace SlopperEngine.SillyDemos;
