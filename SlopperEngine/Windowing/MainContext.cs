@@ -20,11 +20,10 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
     /// </summary>
     public static bool ThrowIfSevereGLError;
-
-    private List<Task> toDo = new List<Task>();
-
     static MainContext? _instance;
-    
+
+    private List<Task> _frameUpdateQueue = new List<Task>();
+
     public static MainContext Instance{
         get => _instance == null || !_instance.Exists ? new() : _instance;
     }
@@ -44,28 +43,49 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     }
     
     //waits for previous threads if any are still running, and cleans them up
-    private void CheckExec(){
-        while(toDo.Count() > 0)
+    private void FinishPreviousFrameExecution()
+    {
+        while (toDo.Count > 0)
         {
-            for(int i = toDo.Count-1; i >= 0; i--)
+            for (int i = 0; i < toDo.Count; i++)
             {
-                if(toDo[i] == null)
+                if (toDo[i] == null)
                     continue;
-                if(!toDo[i].IsCompleted)
+
+                if (!toDo[i].IsCompleted)
                 {
                     toDo[i].Wait();
                 }
                 else
                 {
                     toDo.RemoveAt(i);
+                    i--;
                 }
             }
         }
     }
+
+    // waits for previous threads if any are still running, and cleans them up
+    private void FinishPreviousFrameExecution()
+    {
+        for (int i = 0; i < _frameUpdateQueue.Count; i++)
+        {
+            if (_frameUpdateQueue[i].IsCompleted)
+                continue;
+
+            _frameUpdateQueue[i].Wait();
+        }
+        _frameUpdateQueue.Clear();
+>>>>>>> d7a946bfe4cb7439578145ac263c46f7dcae4485
+    }
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+<<<<<<< HEAD
         CheckExec();
+=======
+        FinishPreviousFrameExecution();
+>>>>>>> d7a946bfe4cb7439578145ac263c46f7dcae4485
         base.OnUpdateFrame(args);
         Context?.MakeCurrent();
         
@@ -103,19 +123,28 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         foreach(var sc in Scene.ActiveScenes.ToArray())
             if(!sc.Destroyed)
                 alive.Add(sc);
-        foreach(var sc in alive)
+                
+        foreach (var sc in alive)
         {
-            toDo.Add(new Task(() => {
+            var task = new Task(() =>
+            {
                 sc.FrameUpdate(time);
+<<<<<<< HEAD
             }));
             toDo[toDo.Count()-1].Start();
         }
         Console.WriteLine(toDo.Count());
+=======
+            });
+            _frameUpdateQueue.Add(task);
+            task.Start();
+        }
+
+>>>>>>> d7a946bfe4cb7439578145ac263c46f7dcae4485
         //then, render every scene once
         Context?.MakeCurrent();
         foreach(var sc in alive)
             sc.Render(time);
-        //renderMS.Stop();
 
         //finally render every window once (which is a different thing!)
         for(int i = Window.AllWindows.Count-1; i>=0; i--)

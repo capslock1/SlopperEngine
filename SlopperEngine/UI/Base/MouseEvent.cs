@@ -13,7 +13,7 @@ namespace SlopperEngine.UI.Base;
 /// <param name="releasedButton">A button that was released this frame.</param>
 /// <param name="state">The mouse state. Should be passed for querying if a button is held.</param>
 /// <param name="type">What type of event this object represents.</param>
-public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelta, MouseButton pressedButton, MouseButton releasedButton, MouseState state, MouseEventType type)
+public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelta, MouseButton pressedButton, MouseButton releasedButton, MouseState state, KeyboardState keyboardState, MouseEventType type)
 {
     /// <summary>
     /// What type of event this object represents.
@@ -33,7 +33,7 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelt
     /// <summary>
     /// How many pixels the mouse has scrolled this frame. Default if this is event does not represent a scroll.
     /// </summary>
-    public Vector2 ScrollDelta = scrollDelta;
+    public Vector2 ScrollDelta { get; private set; } = scrollDelta;
 
     /// <summary>
     /// The button that was pressed in this event. -1 (invalid enum value) if this event does not represent a click.
@@ -45,19 +45,14 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelt
     /// </summary>
     public MouseButton ReleasedButton { get; private set; } = releasedButton;
 
-    /// <summary>
-    /// Whether or not the event has been used by a UIElement down the tree. No need to check - UIElement does this on its own.
-    /// </summary>
-    public bool Used { get; private set; } = false;
-
     private MouseState _state = state;
+    private KeyboardState _keyboard = keyboardState;
 
     /// <summary>
     /// Uses the event, ensuring no other UIElement receives it.
     /// </summary>
     public void Use()
     {
-        Used = true;
         Type = MouseEventType.Used;
     }
 
@@ -65,4 +60,9 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelt
     /// Gets a bool indicating whether a given button is held.
     /// </summary>
     public readonly bool IsButtonDown(MouseButton button) => _state.IsButtonDown(button);
+
+    /// <summary>
+    /// Gets a bool indicating whether the given key is held.
+    /// </summary>
+    public readonly bool IsKeyDown(Keys key) => _keyboard.IsKeyDown(key);
 }

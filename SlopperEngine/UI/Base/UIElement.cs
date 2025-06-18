@@ -110,7 +110,7 @@ public class UIElement : SceneObject
             {
                 var ch = internalUIChildren[_safeIterator];
                 ch.ReceiveEvent(ref e);
-                if (e.Used)
+                if (e.Type == MouseEventType.Used)
                     return;
             }
         }
