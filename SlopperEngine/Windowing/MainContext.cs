@@ -41,29 +41,6 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         if(_instance == null) _instance = this;
         else throw new Exception("Attempted to make a second MainContext.");
     }
-    
-    //waits for previous threads if any are still running, and cleans them up
-    private void FinishPreviousFrameExecution()
-    {
-        while (toDo.Count > 0)
-        {
-            for (int i = 0; i < toDo.Count; i++)
-            {
-                if (toDo[i] == null)
-                    continue;
-
-                if (!toDo[i].IsCompleted)
-                {
-                    toDo[i].Wait();
-                }
-                else
-                {
-                    toDo.RemoveAt(i);
-                    i--;
-                }
-            }
-        }
-    }
 
     // waits for previous threads if any are still running, and cleans them up
     private void FinishPreviousFrameExecution()
@@ -76,16 +53,11 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             _frameUpdateQueue[i].Wait();
         }
         _frameUpdateQueue.Clear();
->>>>>>> d7a946bfe4cb7439578145ac263c46f7dcae4485
     }
     
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
-<<<<<<< HEAD
-        CheckExec();
-=======
         FinishPreviousFrameExecution();
->>>>>>> d7a946bfe4cb7439578145ac263c46f7dcae4485
         base.OnUpdateFrame(args);
         Context?.MakeCurrent();
         
@@ -123,24 +95,16 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         foreach(var sc in Scene.ActiveScenes.ToArray())
             if(!sc.Destroyed)
                 alive.Add(sc);
-                
         foreach (var sc in alive)
         {
             var task = new Task(() =>
             {
                 sc.FrameUpdate(time);
-<<<<<<< HEAD
-            }));
-            toDo[toDo.Count()-1].Start();
-        }
-        Console.WriteLine(toDo.Count());
-=======
             });
             _frameUpdateQueue.Add(task);
             task.Start();
         }
 
->>>>>>> d7a946bfe4cb7439578145ac263c46f7dcae4485
         //then, render every scene once
         Context?.MakeCurrent();
         foreach(var sc in alive)
