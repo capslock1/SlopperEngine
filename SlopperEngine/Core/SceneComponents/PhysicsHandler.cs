@@ -15,8 +15,9 @@ public class PhysicsHandler : SceneComponent
     public readonly float PhysicsDeltaTime = .02f;
     public float NormalizedPhysicsFrameTime {get; private set;} = 0; 
     public readonly bool SlowDownAtLowFPS = false;
-    private ThreadDispatcher physThreadDispatcher;
     [DontSerialize] public Simulation Simulator;
+
+    private ThreadDispatcher _physThreadDispatcher;
 
     float _timeSinceLastUpdate;
     bool _lateStart = true;
@@ -53,7 +54,7 @@ public class PhysicsHandler : SceneComponent
             System.Console.WriteLine("There can only be one PhysicsHandler in the scene.");
             return;
         }
-        physThreadDispatcher = new ThreadDispatcher(Environment.ProcessorCount-2);
+        _physThreadDispatcher = new ThreadDispatcher(int.Max(1,Environment.ProcessorCount-2));
         Scene.CheckCachedComponents();
         _lateStart = true;
     }
@@ -97,7 +98,7 @@ public class PhysicsHandler : SceneComponent
 
     void PhysicsUpdate(PhysicsUpdateArgs args)
     {
-        Simulator.Timestep(PhysicsDeltaTime, physThreadDispatcher);
+        Simulator.Timestep(PhysicsDeltaTime, _physThreadDispatcher);
         foreach(var u in Scene!.GetDataContainerEnumerable<OnPhysicsUpdate>())
         {
             u.Invoke(args);
