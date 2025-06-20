@@ -3,7 +3,7 @@ using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics;
 using SlopperEngine.UI.Base;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Display;
 
 /// <summary>
 /// Shows a texture on the screen.

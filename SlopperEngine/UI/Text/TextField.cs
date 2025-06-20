@@ -3,6 +3,7 @@ using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using SlopperEngine.Windowing;
 using SlopperEngine.UI.Base;
+using SlopperEngine.UI.Display;
 
 namespace SlopperEngine.UI.Text;
 

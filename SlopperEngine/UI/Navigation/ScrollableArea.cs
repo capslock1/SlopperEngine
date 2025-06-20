@@ -1,7 +1,6 @@
-using System.Collections;
-using OpenTK.Audio.OpenAL;
 using OpenTK.Mathematics;
 using SlopperEngine.UI.Base;
+using SlopperEngine.UI.Display;
 
 namespace SlopperEngine.UI.Navigation;
 
@@ -29,6 +28,11 @@ public class ScrollableArea : UIElement
     /// The background of this scrollable area. Scrollbars and the content will show over this.
     /// </summary>
     public readonly UIElement Background;
+
+    /// <summary>
+    /// How many pixels per scroll bump the area should move.
+    /// </summary>
+    public float ScrollSensitivity = 10;
 
     /// <summary>
     /// How to display the horizontal slider.
@@ -281,7 +285,15 @@ public class ScrollableArea : UIElement
     {
         if (e.Type == MouseEventType.Scroll)
         {
-            // obvious code, but how do we detect if its a ctrl+scroll (for horizontal scrolling)?
+            Vector2 direction = e.ScrollDelta;
+            if (e.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.LeftControl))
+                direction = direction.Yx;
+
+            Vector2 screenSize = LastRenderer?.GetScreenSize() ?? new(100);
+            direction *= ScrollSensitivity;
+            direction /= _movingArea.ChildrenIncludedBounds.Size * screenSize;
+            _horizontalSlider.ScrollValue -= float.IsNaN(direction.X) ? 0 : direction.X;
+            _verticalSlider.ScrollValue += float.IsNaN(direction.Y) ? 0 : direction.Y;
         }
         if (e.Type == MouseEventType.PressedButton && e.PressedButton == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Middle)
         {

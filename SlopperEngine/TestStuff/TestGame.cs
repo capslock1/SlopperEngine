@@ -11,7 +11,7 @@ using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Physics;
 using SlopperEngine.Rendering;
 using SlopperEngine.Physics.Colliders;
-using SlopperEngine.UI;
+using SlopperEngine.UI.Display;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Text;
 using SlopperEngine.Windowing;

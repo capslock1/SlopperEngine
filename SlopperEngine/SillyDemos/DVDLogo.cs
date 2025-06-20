@@ -1,6 +1,6 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
-using SlopperEngine.UI;
+using SlopperEngine.UI.Display;
 
 namespace SlopperEngine.SillyDemos;
 

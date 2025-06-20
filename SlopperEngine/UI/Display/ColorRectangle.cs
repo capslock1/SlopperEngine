@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 using SlopperEngine.Graphics;
 using SlopperEngine.UI.Base;
 
-namespace SlopperEngine.UI;
+namespace SlopperEngine.UI.Display;
 
 /// <summary>
 /// Shows a color on the screen.

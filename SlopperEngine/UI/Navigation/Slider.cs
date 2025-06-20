@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using SlopperEngine.Core;
 using SlopperEngine.UI.Base;
+using SlopperEngine.UI.Display;
 
 namespace SlopperEngine.UI.Navigation;
 

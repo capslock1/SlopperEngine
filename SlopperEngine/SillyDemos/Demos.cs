@@ -1,6 +1,5 @@
 using SlopperEngine.Core;
 using SlopperEngine.Graphics;
-using SlopperEngine.UI;
 using SlopperEngine.Windowing;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Rendering;
@@ -10,6 +9,7 @@ using StbImageSharp;
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.Loaders;
 using SlopperEngine.TestStuff;
+using SlopperEngine.UI.Display;
 
 namespace SlopperEngine.SillyDemos;
 
