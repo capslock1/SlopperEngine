@@ -95,7 +95,6 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         foreach(var sc in Scene.ActiveScenes.ToArray())
             if(!sc.Destroyed)
                 alive.Add(sc);
-                
         foreach (var sc in alive)
         {
             var task = new Task(() =>

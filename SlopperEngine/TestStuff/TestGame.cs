@@ -107,7 +107,29 @@ public class TestGame : SceneObject
         ball.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
         cube.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Cube, LocalScale = new(.5f) });
         _main.Children.Add(rb2);
-
+        
+        bool superBallBlast = false;
+        if(superBallBlast)
+        {
+            int distMult = 2;
+            int numSphere = 16;
+            numSphere /= 2;
+            for(int x = numSphere*distMult*-1; x < numSphere*distMult; x+=distMult)
+            {
+                for(int y = numSphere*distMult*-1; y < numSphere*distMult; y+=distMult)
+                {
+                    for(int z = numSphere*distMult*-1; z < numSphere*distMult; z+=distMult)
+                    {
+                        var sball = new Rigidbody();
+                        sball.Position = (x, y, z);
+                        sball.Colliders.Add(new SphereCollider(10, 1));
+                        sball.Children.Add(new MeshRenderer() { Mesh = DefaultMeshes.Sphere });
+                        _main.Children.Add(sball);
+                    }
+                }
+            }
+        }
+        
         _rb.AngularVelocity = (0, 6f, 0);
         rb2.Velocity = (0, 4, 0);
 

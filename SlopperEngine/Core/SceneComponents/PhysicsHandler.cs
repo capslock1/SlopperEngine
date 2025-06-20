@@ -1,4 +1,5 @@
 using BepuPhysics;
+using BepuUtilities;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.Physics;
 using SlopperEngine.SceneObjects.Serialization;
@@ -15,6 +16,8 @@ public class PhysicsHandler : SceneComponent
     public float NormalizedPhysicsFrameTime {get; private set;} = 0; 
     public readonly bool SlowDownAtLowFPS = false;
     [DontSerialize] public Simulation Simulator;
+
+    private ThreadDispatcher _physThreadDispatcher;
 
     float _timeSinceLastUpdate;
     bool _lateStart = true;
@@ -51,6 +54,7 @@ public class PhysicsHandler : SceneComponent
             System.Console.WriteLine("There can only be one PhysicsHandler in the scene.");
             return;
         }
+        _physThreadDispatcher = new ThreadDispatcher(int.Max(1,Environment.ProcessorCount-2));
         Scene.CheckCachedComponents();
         _lateStart = true;
     }
@@ -61,6 +65,7 @@ public class PhysicsHandler : SceneComponent
     /// <param name="input">The input parameter to the EngineMethod.</param>
     public override void FrameUpdate(FrameUpdateArgs input)
     {
+        
         if(_lateStart)
         {
             Scene!.CheckCachedComponents();
@@ -93,7 +98,7 @@ public class PhysicsHandler : SceneComponent
 
     void PhysicsUpdate(PhysicsUpdateArgs args)
     {
-        Simulator.Timestep(PhysicsDeltaTime);
+        Simulator.Timestep(PhysicsDeltaTime, _physThreadDispatcher);
         foreach(var u in Scene!.GetDataContainerEnumerable<OnPhysicsUpdate>())
         {
             u.Invoke(args);
