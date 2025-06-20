@@ -11,8 +11,7 @@ public class ScrollableArea : UIElement
 {
     // TODO:  
     // configure slider colors, 
-    // configure slider size, 
-    // take scroll input
+    // middle click scroll gizmo. low priority
     public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
 
     /// <summary>
@@ -30,7 +29,7 @@ public class ScrollableArea : UIElement
     public readonly UIElement Background;
 
     /// <summary>
-    /// How many pixels per scroll bump the area should move.
+    /// How many pixels per scroll bump the area should move. I don't think this is a remotely accurate description but it works well enough.
     /// </summary>
     public float ScrollSensitivity = 10;
 
@@ -62,6 +61,36 @@ public class ScrollableArea : UIElement
     }
     ScrollBarDisplayMode _verticalDisplay = ScrollBarDisplayMode.Min;
 
+    /// <summary>
+    /// The height of the horizontal scroll bar.
+    /// </summary>
+    public float HorizontalScrollbarHeight
+    {
+        get => _preferredScrollbarSize.Y;
+        set
+        {
+            _preferredScrollbarSize.Y = value;
+            if (_horizontalSliderVisible)
+                _scrollbarSize.Y = value;
+            UpdateSliderShapes();
+        }
+    }
+    /// <summary>
+    /// The width of the vertical scroll bar.
+    /// </summary>
+    public float VerticalScrollbarWidth
+    {
+        get => _preferredScrollbarSize.X;
+        set
+        {
+            _preferredScrollbarSize.X = value;
+            if (_verticalSliderVisible)
+                _scrollbarSize.X = value;
+            UpdateSliderShapes();
+        }
+    }
+    Vector2 _preferredScrollbarSize = new(0.05f,0.05f);
+
     readonly ContentArea _contentArea;
     readonly MovingArea _movingArea;
     readonly Slider _horizontalSlider;
@@ -70,6 +99,7 @@ public class ScrollableArea : UIElement
 
     Vector2 _currentContentRatio;
     Vector2 _movingAreaOffset;
+    Vector2 _scrollbarSize = new(0.05f,0.05f);
     Vector2 _scrollValues
     {
         get
@@ -80,8 +110,6 @@ public class ScrollableArea : UIElement
             return res;
         }
     }
-    Vector2 _scrollbarSize = new(0.05f,0.05f);
-    Vector2 _preferredScrollbarSize = new(0.05f,0.05f);
 
     bool _horizontalSliderVisible
     {
