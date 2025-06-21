@@ -43,7 +43,7 @@ public class BasicStyle
     /// <summary>
     /// The style objects use by default.
     /// </summary>
-    public static readonly BasicStyle DefaultStyle = new(new(), new());
+    public static readonly BasicStyle DefaultStyle = new(new(0.1f,0.1f,0.1f,0.5f), new(0.5f,0.5f,0.5f,0.5f));
 
     /// <summary>
     /// Creates a style using two colors. The strong variants may clip.
@@ -53,12 +53,12 @@ public class BasicStyle
         BackgroundWeak = (Color4)((Vector4)background * 0.8f);
         BackgroundWeak.A = background.A;
         Background = background;
-        BackgroundStrong = (Color4)((Vector4)background * 1.1f);
+        BackgroundStrong = (Color4)((Vector4)background * 1.2f);
         BackgroundStrong.A = background.A;
         ForegroundWeak = (Color4)((Vector4)foreground * 0.8f);
         ForegroundWeak.A = foreground.A;
         Foreground = foreground;
-        ForegroundStrong = (Color4)((Vector4)foreground * 1.1f);
+        ForegroundStrong = (Color4)((Vector4)foreground * 1.2f);
         ForegroundStrong.A = foreground.A;
     }
 

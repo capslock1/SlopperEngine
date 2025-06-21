@@ -7,4 +7,5 @@ public enum MouseEventType
     PressedButton,
     ReleasedButton,
     Used,
+    Blocked,
 }

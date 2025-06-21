@@ -1,13 +1,12 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics;
-using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Display;
 
 /// <summary>
 /// Shows a custom material on screen.
 /// </summary>
-public class MaterialRectangle : UIElement
+public class MaterialRectangle : DisplayElement
 {
     /// <summary>
     /// The material to display.

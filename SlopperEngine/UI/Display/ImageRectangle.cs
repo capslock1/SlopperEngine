@@ -1,14 +1,13 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics;
-using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Display;
 
 /// <summary>
 /// Shows a texture on the screen.
 /// </summary>
-public class ImageRectangle : UIElement
+public class ImageRectangle : DisplayElement
 {
     /// <summary>
     /// The texture to show.

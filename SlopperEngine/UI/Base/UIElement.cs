@@ -5,6 +5,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.SceneObjects.ChildLists;
+using SlopperEngine.UI.Style;
 
 namespace SlopperEngine.UI.Base;
 
@@ -42,6 +43,20 @@ public class UIElement : SceneObject
     /// The last global scissor region that was calculated of this UIElement, in normalized device coordinates.
     /// </summary>
     public Box2 LastGlobalScissor { get; private set; }
+
+    /// <summary>
+    /// The style of the element.
+    /// </summary>
+    public BasicStyle Style
+    {
+        get => _style;
+        set
+        {
+            _style = value;
+            OnStyleChanged();
+        }
+    }
+    BasicStyle _style = BasicStyle.DefaultStyle;
 
     /// <summary>
     /// A set of hidden UI elements.
@@ -90,6 +105,10 @@ public class UIElement : SceneObject
     /// </summary>
     protected virtual Material? GetMaterial() => null;
     /// <summary>
+    /// Gets called after the style of the UIElement gets changed.
+    /// </summary>
+    protected virtual void OnStyleChanged() { }
+    /// <summary>
     /// Gets the size constraints for this UIElement. 
     /// </summary>
     protected virtual UIElementSize GetSizeConstraints() => new(default, default, 0, 0);
@@ -104,16 +123,23 @@ public class UIElement : SceneObject
 
     private void ReceiveEvent(ref MouseEvent e)
     {
+        MouseEvent childEvent = e; 
         if (lastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
         {
-            for (_safeIterator = internalUIChildren.Count-1; _safeIterator >= 0; _safeIterator--)
+            for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
             {
                 var ch = internalUIChildren[_safeIterator];
-                ch.ReceiveEvent(ref e);
-                if (e.Type == MouseEventType.Used)
+                ch.ReceiveEvent(ref childEvent);
+                if (childEvent.Type == MouseEventType.Used)
+                {
+                    e.Use();
                     return;
+                }
+                if (childEvent.Type == MouseEventType.Blocked)
+                    break;
             }
         }
+
         if (LastGlobalShape.ContainsInclusive(e.NDCPosition))
             HandleEvent(ref e);
     }

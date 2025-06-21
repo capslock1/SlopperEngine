@@ -1,13 +1,12 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics;
-using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Display;
 
 /// <summary>
 /// Shows a color on the screen.
 /// </summary>
-public class ColorRectangle : UIElement
+public sealed class ColorRectangle : DisplayElement
 {
     /// <summary>
     /// The color of this element.
