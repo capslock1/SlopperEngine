@@ -18,6 +18,11 @@ public abstract class SceneRenderer : SceneObject
     /// The background color of the rendered frame, if used by inheriting classes.
     /// </summary>
     public Color4 ClearColor = new(.1f,.2f,.35f,1);
+    /// <summary>
+    /// Gets called ONCE on the render thread.
+    /// </summary>
+    public event Action? OnPreRender;
+
     float _time;
 
     protected List<Camera> cameras = new();
@@ -49,6 +54,8 @@ public abstract class SceneRenderer : SceneObject
     {
 		_time += args.DeltaTime;
 		globals.Time = _time;
+        OnPreRender?.Invoke();
+        OnPreRender = null;
         GL.ClearColor(ClearColor.R, ClearColor.G, ClearColor.B, ClearColor.A);
         RenderInternal();
     }

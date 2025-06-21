@@ -6,7 +6,7 @@ namespace SlopperEngine.UI.Display;
 /// <summary>
 /// Shows a custom material on screen.
 /// </summary>
-public class MaterialRectangle : DisplayElement
+public sealed class MaterialRectangle : DisplayElement
 {
     /// <summary>
     /// The material to display.

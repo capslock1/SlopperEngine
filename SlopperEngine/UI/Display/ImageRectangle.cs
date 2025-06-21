@@ -7,7 +7,7 @@ namespace SlopperEngine.UI.Display;
 /// <summary>
 /// Shows a texture on the screen.
 /// </summary>
-public class ImageRectangle : DisplayElement
+public sealed class ImageRectangle : DisplayElement
 {
     /// <summary>
     /// The texture to show.
@@ -30,7 +30,7 @@ public class ImageRectangle : DisplayElement
             _matTextureIndex = _material.GetUniformIndexFromName("mainTexture");
     }
     public ImageRectangle() : this(new(0,0,1,1)){}
-    public ImageRectangle(Box2 shape, Texture texture) : this(shape)
+    public ImageRectangle(Box2 shape, Texture? texture) : this(shape)
     {
         Texture = texture;
     }

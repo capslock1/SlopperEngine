@@ -91,8 +91,8 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         
         //spawns a new parallel task for every scene that needs an update, once previous frame is finished
         FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
-        List<Scene> alive = new List<Scene>();
-        foreach(var sc in Scene.ActiveScenes.ToArray())
+        List<Scene> alive = new();
+        foreach(var sc in Scene.ActiveScenes)
             if(!sc.Destroyed)
                 alive.Add(sc);
         foreach (var sc in alive)

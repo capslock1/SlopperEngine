@@ -1,13 +1,13 @@
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
-using SlopperEngine.UI.Display;
+using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.SillyDemos;
 
 /// <summary>
 /// Bounces around in the container its in.
 /// </summary>
-public class DVDLogo : ImageRectangle
+public class DVDLogo : UIElement
 {
     public event Action? OnBounce;
 

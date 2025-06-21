@@ -171,8 +171,8 @@ public class Rigidbody : PhysicsObject
         {
             _lastKnownAngularVelocity = AngularVelocity;
             _lastKnownVelocity = Velocity;
+            _current.Simulator.Bodies.Remove(_bodyHandle);
         }
-        _current?.Simulator.Bodies.Remove(_bodyHandle);
         scene?.UnregisterSceneData<RigidBodyData>(_sceneHandle, default);
         _current = null;
     }
@@ -189,7 +189,7 @@ public class Rigidbody : PhysicsObject
     //naturally, stolen right from https://github.com/bepu/bepuphysics2/blob/master/Demos/Demos/CompoundDemo.cs
     void AddBody(PhysicsHandler handler)
     {
-        if(_currentlyAddingBody) return;
+        if (_currentlyAddingBody) return;
         //remove existing body
         _current?.Simulator.Bodies.Remove(_bodyHandle);
         _current = handler;
