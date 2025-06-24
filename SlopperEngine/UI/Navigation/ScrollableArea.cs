@@ -162,15 +162,15 @@ public class ScrollableArea : UIElement
         _contentArea.LocalShape = new(_scrollbarSize, Vector2.One);
         _contentArea.UIChildren.Add(_movingArea = new());
 
-        _horizontalSlider = new(new(0, 0, 0, 0.5f), Color4.White, 1, false, 0);
+        _horizontalSlider = new(1, false, 0);
         _horizontalSlider.LocalShape = new(_scrollbarSize.X, 0, 1, _scrollbarSize.Y);
         _horizontalSlider.OnScroll += UpdatePosition;
 
-        _verticalSlider = new(new(0, 0, 0, 0.5f), Color4.White, 1);
+        _verticalSlider = new(1);
         _verticalSlider.LocalShape = new(0, _scrollbarSize.Y, _scrollbarSize.X, 1);
         _verticalSlider.OnScroll += UpdatePosition;
 
-        _sliderCorner = new(new(Vector2.Zero, _scrollbarSize), new(0, 0, 0, 0.35f));
+        _sliderCorner = new(new(Vector2.Zero, _scrollbarSize), Style.BackgroundStrong);
         internalUIChildren.Add(_sliderCorner);
         UpdateSliderShapes();
     }
@@ -331,6 +331,13 @@ public class ScrollableArea : UIElement
         {
             // release the gizmo
         }
+    }
+
+    protected override void OnStyleChanged()
+    {
+        _horizontalSlider.Style = Style;
+        _verticalSlider.Style = Style;
+        _sliderCorner.Color = Style.BackgroundStrong;
     }
 
     /// <summary>

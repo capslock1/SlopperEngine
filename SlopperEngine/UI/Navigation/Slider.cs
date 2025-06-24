@@ -85,13 +85,14 @@ public class Slider : UIElement
     ColorRectangle _bar;
     UIElement _childHolder;
     bool _barHeld = false;
+    bool _hovered = false;
     float _mouseBarHeldOffsetNDC = 0;
     float _barSize => float.Clamp(1 / _contentRatio, _minBarSize, 1);
 
-    public Slider(Color4 backgroundColor, Color4 barColor, float contentRatio, bool vertical = true, float scrollValue = 1)
+    public Slider(float contentRatio, bool vertical = true, float scrollValue = 1)
     {
-        _background = new(new(0, 0, 1, 1), backgroundColor);
-        _bar = new(new(0, 0.3f, 1, 0.9f), barColor);
+        _background = new(new(0, 0, 1, 1), Style.BackgroundWeak);
+        _bar = new(new(0, 0.3f, 1, 0.9f), Style.ForegroundWeak);
         internalUIChildren.Add(_background);
         internalUIChildren.Add(_bar);
         internalUIChildren.Add(_childHolder = new());
@@ -115,11 +116,21 @@ public class Slider : UIElement
     void OnInput(InputUpdateArgs args)
     {
         if (!_barHeld)
+        {
+            if (_hovered && _bar.LastGlobalShape.ContainsInclusive(args.NormalizedMousePosition * 2 - Vector2.One))
+                _bar.Color = Style.ForegroundStrong;
+            else
+            {
+                _bar.Color = Style.ForegroundWeak;
+                _hovered = false;
+            }
             return;
+        }
 
         if (args.MouseState.IsButtonReleased(MouseButton.Left))
         {
             _barHeld = false;
+            _bar.Color = Style.ForegroundWeak;
             return;
         }
 
@@ -146,14 +157,22 @@ public class Slider : UIElement
         return mousePos;
     }
 
+    protected override void OnStyleChanged()
+    {
+        _background.Color = Style.BackgroundWeak;
+        _bar.Color = _barHeld ? Style.Tint : _hovered ? Style.ForegroundStrong : Style.ForegroundWeak;
+    }
+
     protected override void HandleEvent(ref MouseEvent e)
     {
+        _hovered = true;
         if (e.PressedButton != MouseButton.Left)
             return;
 
         _mouseBarHeldOffsetNDC = Vertical ? _bar.LastGlobalShape.Center.Y : _bar.LastGlobalShape.Center.X;
         _mouseBarHeldOffsetNDC -= Vertical ? e.NDCPosition.Y : e.NDCPosition.X;
         _barHeld = true;
+        _bar.Color = Style.Tint;
         if (!_bar.LastGlobalShape.ContainsInclusive(e.NDCPosition))
         {
             ScrollValue = MousePosToScrollValue(e.NDCPosition);
