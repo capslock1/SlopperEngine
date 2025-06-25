@@ -189,8 +189,14 @@ public class TestGame : SceneObject
 
         var myText = new TextField(30);
         myText.LocalShape = new(0.5f, 0.5f, 0.5f, 0.5f);
-        myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
+
+        var myButton = new TextButton();
+        myButton.LocalShape = new(0.5f, 0.4f, 0.5f, 0.4f);
+        myButton.Text = "Cool Button :D";
+        myButton.OnButtonPressed += (MouseButton butt) => {System.Console.WriteLine($"pressed {butt}"); };
+        myButton.OnButtonReleased += (MouseButton butt) => {System.Console.WriteLine($"released {butt}"); };
+        _UIScene.Children.Add(myButton);
 
         var scrollable = new ScrollableArea(new(0.1f, 0.1f, 0.4f, 0.4f));
         _myScrollableRectangle = new MaterialRectangle(new(0, 0, 1.5f, 1.6f), Material.MissingMaterial);

@@ -76,14 +76,6 @@ public class TextField : UIElement
         OnStyleChanged();
     }
 
-    /// <summary>
-    /// Call this after making any changes to the text renderer.
-    /// </summary>
-    public void UpdateTextRenderer()
-    {
-        _invalidateRenderer = true;
-    }
-
     void ForceUpdateRenderer()
     {
         _invalidateRenderer = false;
