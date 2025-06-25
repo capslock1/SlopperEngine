@@ -321,15 +321,22 @@ public class ScrollableArea : UIElement
             direction /= _movingArea.ChildrenIncludedBounds.Size * screenSize;
             _horizontalSlider.ScrollValue -= float.IsNaN(direction.X) ? 0 : direction.X;
             _verticalSlider.ScrollValue += float.IsNaN(direction.Y) ? 0 : direction.Y;
+            e.Use();
+            return;
         }
         if (e.Type == MouseEventType.PressedButton && e.PressedButton == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Middle)
         {
             // the cool gizmo (we using a texture for this?)
+            e.Use();
+            return;
         }
         if (e.Type == MouseEventType.ReleasedButton && e.ReleasedButton == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Middle)
         {
             // release the gizmo
+            e.Use();
+            return;
         }
+        e.Block();
     }
 
     protected override void OnStyleChanged()

@@ -167,7 +167,10 @@ public class Slider : UIElement
     {
         _hovered = true;
         if (e.PressedButton != MouseButton.Left)
+        {
+            e.Block();
             return;
+        }
 
         _mouseBarHeldOffsetNDC = Vertical ? _bar.LastGlobalShape.Center.Y : _bar.LastGlobalShape.Center.X;
         _mouseBarHeldOffsetNDC -= Vertical ? e.NDCPosition.Y : e.NDCPosition.X;

@@ -10,7 +10,7 @@ namespace SlopperEngine.UI.Interaction;
 /// <summary>
 /// A button with text on it.
 /// </summary>
-public class TextButton : UIElement
+public class TextButton : BaseButton
 {
     /// <summary>
     /// Gets called when the text button gets pressed.
@@ -35,8 +35,6 @@ public class TextButton : UIElement
     readonly TextBox _textRenderer;
     readonly ColorRectangle _background;
     readonly UIElement _childHolder;
-    bool _hovered;
-    int _mouseButtonsHeld;
 
     public TextButton()
     {
@@ -46,61 +44,45 @@ public class TextButton : UIElement
         OnStyleChanged();
     }
 
-    [OnInputUpdate]
-    void InputUpdate(InputUpdateArgs args)
-    {
-        if (_hovered)
-        {
-            if (LastGlobalShape.ContainsInclusive(args.NormalizedMousePosition * 2 - Vector2.One))
-                _background.Color = Style.ForegroundStrong;
-            else
-            {
-                _hovered = false;
-                _background.Color = Style.ForegroundWeak;
-                _mouseButtonsHeld = 0;
-                _textRenderer.TextColor = Style.Tint;
-            }
-        }
-
-        if (_mouseButtonsHeld > 0)
-        {
-            _background.Color = Style.Tint;
-            _textRenderer.TextColor = Style.ForegroundStrong;
-        }
-    }
-
     protected override void OnStyleChanged()
     {
-        _background.Color = _mouseButtonsHeld > 0 ? Style.Tint : _hovered ? Style.ForegroundStrong : Style.ForegroundWeak;
-        _textRenderer.TextColor = _mouseButtonsHeld > 0 ? Style.ForegroundStrong : Style.Tint;
+        _background.Color = mouseButtonsHeld > 0 ? Style.Tint : hovered ? Style.ForegroundStrong : Style.ForegroundWeak;
+        _textRenderer.TextColor = mouseButtonsHeld > 0 ? Style.ForegroundStrong : Style.Tint;
         _textRenderer.Font = Style.Font;
         _textRenderer.Scale = Style.FontScale;
-    }
-
-    protected override void HandleEvent(ref MouseEvent e)
-    {
-        _hovered = true;
-        if (e.Type == MouseEventType.PressedButton)
-        {
-            _mouseButtonsHeld++;
-            OnButtonPressed?.Invoke(e.PressedButton);
-            _background.Color = Style.Tint;
-            _textRenderer.TextColor = Style.ForegroundStrong;
-        }
-        if (e.Type == MouseEventType.ReleasedButton && _mouseButtonsHeld>0)
-        {
-            _mouseButtonsHeld--;
-            OnButtonReleased?.Invoke(e.ReleasedButton);
-            if (_mouseButtonsHeld == 0)
-            {
-                _background.Color = Style.ForegroundStrong;
-                _textRenderer.TextColor = Style.Tint;
-            }
-        }
     }
     
     protected override UIElementSize GetSizeConstraints()
     {
         return _textRenderer.LastSizeConstraints;
+    }
+
+    protected override void OnPressed(MouseButton button)
+    {
+        _background.Color = Style.Tint;
+        _textRenderer.TextColor = Style.ForegroundStrong;
+        OnButtonPressed?.Invoke(button);
+    }
+
+    protected override void OnAnyRelease(MouseButton button)
+    {
+        OnButtonReleased?.Invoke(button);
+    }
+
+    protected override void OnAllButtonsReleased()
+    {
+        _background.Color = Style.ForegroundStrong;
+        _textRenderer.TextColor = Style.Tint;
+    }
+
+    protected override void OnMouseEntry()
+    {
+        OnAllButtonsReleased();
+    }
+
+    protected override void OnMouseExit()
+    {
+        _background.Color = Style.ForegroundWeak;
+        _textRenderer.TextColor = Style.Tint;
     }
 }

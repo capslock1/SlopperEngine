@@ -152,6 +152,7 @@ public class TextField : UIElement
             e.Use();
             return;
         }
+        e.Block();
     }
 
     [OnInputUpdate]
