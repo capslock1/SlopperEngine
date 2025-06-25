@@ -1,3 +1,4 @@
+using System.Drawing;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics;
@@ -38,24 +39,37 @@ public class TextBox : UIElement
         }
     }
 
-    public Vector4 TextColor{
-        get => _textColor;
+    /// <summary>
+    /// The color of the text.
+    /// </summary>
+    public Color4 TextColor
+    {
+        get => (Color4)_textColor;
         set
         {
-            if(_textColor == value) return;
-            _textColor = value;
-            _material.Uniforms[_matTextColIndex].Value = value;
+            var val = (Vector4)value;
+            if (_textColor == val) return;
+            _textColor = val;
+            _material.Uniforms[_matTextColIndex].Value = val;
         }
     }
-    public Vector4 BackgroundColor{
-        get => _backgroundColor;
+    Vector4 _textColor;
+    
+    /// <summary>
+    /// The color of the background.
+    /// </summary>
+    public Color4 BackgroundColor
+    {
+        get => (Color4)_backgroundColor;
         set
         {
-            if(_backgroundColor == value) return;
-            _backgroundColor = value;
-            _material.Uniforms[_matBackgroundColIndex].Value = value;
+            var val = (Vector4)value;
+            if (_backgroundColor == val) return;
+            _backgroundColor = val;
+            _material.Uniforms[_matBackgroundColIndex].Value = val;
         }
     }
+    Vector4 _backgroundColor;
 
     /// <summary>
     /// The scale of the text box. 
@@ -76,8 +90,6 @@ public class TextBox : UIElement
     RasterFont _currentFont = RasterFont.EightXSixteen;
     [DontSerialize] Texture2D? _texture;
     [DontSerialize] Material _material;
-    Vector4 _textColor;
-    Vector4 _backgroundColor;
     bool _invalidateTexture = true;
     
     static SlopperShader? _shader;
@@ -86,19 +98,19 @@ public class TextBox : UIElement
     static int _matTextColIndex = -1; 
 
 #pragma warning disable CS8618
-    public TextBox(Vector4 textColor, Vector4 backgroundColor = default) : base()
+    public TextBox(Color4 textColor, Color4 backgroundColor = default) : base()
 #pragma warning restore CS8618
     {
         Init();
         TextColor = textColor;
         BackgroundColor = backgroundColor;
     }
-    public TextBox() : this(new(1,1,1,1), default){}
+    public TextBox() : this(Color.White, default){}
     public TextBox(string text) : this()
     {
         Text = text;
     }
-    public TextBox(string text, Vector4 textColor, Vector4 backgroundColor = default) : this(textColor, backgroundColor)
+    public TextBox(string text, Color4 textColor, Color4 backgroundColor = default) : this(textColor, backgroundColor)
     {
         Text = text;
     }
@@ -110,8 +122,8 @@ public class TextBox : UIElement
             Init();
             Text = _currentText;
             Font = _currentFont;
-            BackgroundColor = _backgroundColor;
-            TextColor = _textColor;
+            BackgroundColor = (Color4)_backgroundColor;
+            TextColor = (Color4)_textColor;
         }
     }
 

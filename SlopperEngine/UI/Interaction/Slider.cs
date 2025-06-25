@@ -4,7 +4,7 @@ using SlopperEngine.Core;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Display;
 
-namespace SlopperEngine.UI.Navigation;
+namespace SlopperEngine.UI.Interaction;
 
 /// <summary>
 /// A UIElement that can slide up and down or back and forth in response to mouse input.

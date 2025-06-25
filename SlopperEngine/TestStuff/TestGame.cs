@@ -17,7 +17,7 @@ using SlopperEngine.UI.Text;
 using SlopperEngine.Windowing;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
-using SlopperEngine.UI.Navigation;
+using SlopperEngine.UI.Interaction;
 
 namespace SlopperEngine.TestStuff;
 
@@ -184,13 +184,11 @@ public class TestGame : SceneObject
     ";
         fonttest.Font = RasterFont.EightXSixteen;
         fonttest.Scale = 1;
-        fonttest.BackgroundColor = new(0, 0, 0, .4f);
+        fonttest.BackgroundColor = new(0, 0, 0, 0.4f);
         _UIScene.Children.Add(fonttest);
 
         var myText = new TextField(30);
-        myText.TextRenderer.Scale = 1;
-        myText.LocalShape = new(.5f, .5f, .5f, .5f);
-        myText.TextRenderer.BackgroundColor = new(0, 0, 0, .3f);
+        myText.LocalShape = new(0.5f, 0.5f, 0.5f, 0.5f);
         myText.UpdateTextRenderer();
         _UIScene.Children.Add(myText);
 

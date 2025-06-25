@@ -4,8 +4,9 @@ using SlopperEngine.Core;
 using SlopperEngine.Windowing;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Display;
+using SlopperEngine.UI.Text;
 
-namespace SlopperEngine.UI.Text;
+namespace SlopperEngine.UI.Interaction;
 
 /// <summary>
 /// An editable line of text.
@@ -28,11 +29,6 @@ public class TextField : UIElement
     }
 
     /// <summary>
-    /// The actual renderer of the text. After making any changes, call "UpdateTextRenderer()". Setting the Text string of the TextRenderer does not work.
-    /// </summary>
-    public TextBox TextRenderer { get; private set; }
-
-    /// <summary>
     /// The maximum amount of characters shown in the text field.
     /// </summary>
     public int Length
@@ -46,11 +42,6 @@ public class TextField : UIElement
     }
 
     /// <summary>
-    /// The color of the overlay on selected text.
-    /// </summary>
-    public Color4 SelectionColor = new(0, 1, 1, 0.4f);
-
-    /// <summary>
     /// Gets called when the text of the text field gets changed in any way.
     /// </summary>
     public event Action? OnTextChanged;
@@ -60,26 +51,29 @@ public class TextField : UIElement
     /// </summary>
     public event Action? OnEntered;
 
+    readonly TextBox _textRenderer;
     string _fullText = "";
     int _fieldLength;
 
     bool _fieldSelected;
+    bool _hovered;
     int _shownTextOffset = 0;
     bool _invalidateRenderer;
 
-    ColorRectangle _cursor;
+    readonly ColorRectangle _cursor;
     int _cursorPosition = -1;
     int _selectionLength = 0;
 
-    int _selectionMax => int.Min(_fullText.Length+1, int.Max(_cursorPosition, _cursorPosition + _selectionLength));
+    int _selectionMax => int.Min(_fullText.Length + 1, int.Max(_cursorPosition, _cursorPosition + _selectionLength));
     int _selectionMin => int.Max(0, int.Min(_cursorPosition, _cursorPosition + _selectionLength));
 
     public TextField(int length)
     {
         Length = length;
-        TextRenderer = new();
-        internalUIChildren.Add(TextRenderer);
+        _textRenderer = new();
+        internalUIChildren.Add(_textRenderer);
         _cursor = new(default, Color4.White);
+        OnStyleChanged();
     }
 
     /// <summary>
@@ -109,7 +103,7 @@ public class TextField : UIElement
             pos++;
         }
 
-        TextRenderer.Text = builder.ToString();
+        _textRenderer.Text = builder.ToString();
     }
 
     void UpdateCursor()
@@ -134,10 +128,10 @@ public class TextField : UIElement
         if (_selectionLength == 0)
         {
             cursorCharacterLength = .2f;
-            _cursor.Color = (Color4)TextRenderer.TextColor;
+            _cursor.Color = Style.Tint;
         }
         else
-            _cursor.Color = SelectionColor;
+            _cursor.Color = Style.Highlight;
 
         float invFieldLength = 1f / _fieldLength;
         cursorCharacterLength *= invFieldLength;
@@ -151,6 +145,7 @@ public class TextField : UIElement
 
     protected override void HandleEvent(ref MouseEvent e)
     {
+        _hovered = true;
         if (e.PressedButton == OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left)
         {
             _cursorPosition = GetCharOffsetFromMousePos(e.NDCPosition.X);
@@ -170,8 +165,19 @@ public class TextField : UIElement
     [OnInputUpdate]
     void Input(InputUpdateArgs args)
     {
+        if (_hovered)
+        {
+            if (LastGlobalShape.ContainsInclusive(args.NormalizedMousePosition * 2 - Vector2.One))
+                _textRenderer.BackgroundColor = Style.BackgroundWeak;
+            else
+            {
+                _textRenderer.BackgroundColor = Style.BackgroundStrong;
+                _hovered = false;
+            }
+        }
+
         if (!_fieldSelected)
-            return;
+                return;
 
         if (!LastGlobalShape.ContainsInclusive(args.NormalizedMousePosition * 2 - Vector2.One) && args.MouseState.IsButtonPressed(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
         {
@@ -202,7 +208,7 @@ public class TextField : UIElement
 
                         _invalidateRenderer = true;
                         Text = _fullText.Substring(0, _cursorPosition - 1) + _fullText.Substring(_cursorPosition);
-                        if(_cursorPosition != _fullText.Length)
+                        if (_cursorPosition != _fullText.Length)
                             _cursorPosition--;
                         break;
 
@@ -394,7 +400,7 @@ public class TextField : UIElement
 
         int start = _selectionMin;
         int end = _selectionMax;
-        _cursorPosition = int.Max(0,start);
+        _cursorPosition = int.Max(0, start);
         _selectionLength = 0;
         _invalidateRenderer = true;
         Text = _fullText.Substring(0, start) + _fullText.Substring(end);
@@ -422,6 +428,14 @@ public class TextField : UIElement
         return int.Clamp((int)mouseX + _shownTextOffset, 0, _fullText.Length);
     }
 
+    protected override void OnStyleChanged()
+    {
+        _cursor.Color = _selectionLength == 0 ? Style.Tint : Style.Highlight;
+        _textRenderer.TextColor = Style.Tint;
+        _textRenderer.BackgroundColor = _hovered ? Style.BackgroundWeak : Style.BackgroundStrong;
+        _textRenderer.Scale = Style.FontScale;
+    } 
+
     protected override UIElementSize GetSizeConstraints()
     {
         UpdateCursor();
@@ -429,6 +443,6 @@ public class TextField : UIElement
         if (_invalidateRenderer)
             ForceUpdateRenderer();
 
-        return TextRenderer.LastSizeConstraints;
+        return _textRenderer.LastSizeConstraints;
     }
 }

@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Display;
 
-namespace SlopperEngine.UI.Navigation;
+namespace SlopperEngine.UI.Interaction;
 
 /// <summary>
 /// A UIElement that automatically adds a scrollbar when its children exceed its bounds.
@@ -10,7 +10,6 @@ namespace SlopperEngine.UI.Navigation;
 public class ScrollableArea : UIElement
 {
     // TODO:  
-    // configure slider colors, 
     // middle click scroll gizmo. low priority
     public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
 
