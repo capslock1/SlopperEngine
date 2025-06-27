@@ -50,6 +50,16 @@ public class TextField : UIElement
     /// Gets called when the textbox is clicked off, or if the Enter key gets hit.
     /// </summary>
     public event Action? OnEntered;
+    
+    /// <summary>
+    /// How to horizontally align the box. Max (rightward) on default.
+    /// </summary>
+    public Alignment Horizontal = Alignment.Max;
+
+    /// <summary>
+    /// How to vertically align the box. Min (downward) on default.
+    /// </summary>
+    public Alignment Vertical = Alignment.Min;
 
     readonly TextBox _textRenderer;
     string _fullText = "";
@@ -71,6 +81,9 @@ public class TextField : UIElement
     {
         Length = length;
         _textRenderer = new();
+        _textRenderer.Horizontal = Alignment.Middle;
+        _textRenderer.Vertical = Alignment.Middle;
+        _textRenderer.LocalShape = new(0.5f,0.5f,0.5f,0.5f);
         internalUIChildren.Add(_textRenderer);
         _cursor = new(default, Color4.White);
         OnStyleChanged();
@@ -436,6 +449,9 @@ public class TextField : UIElement
         if (_invalidateRenderer)
             ForceUpdateRenderer();
 
-        return _textRenderer.LastSizeConstraints;
+        var constraints = _textRenderer.LastSizeConstraints;
+        constraints.GrowX = Horizontal;
+        constraints.GrowY = Vertical;
+        return constraints;
     }
 }
