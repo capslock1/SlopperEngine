@@ -126,6 +126,12 @@ public class Demos : UIElement
                 var sub = new Subway();
                 sc.Children.Add(sub);
 
+                var light = new PointLight();
+                light.LocalPosition = new(100, 100, 100);
+                light.Color = new(2);
+                light.Radius = 1000;
+                sc.Children.Add(light);
+
                 var plimboModel = new Plimbo();
                 plimboModel.Rotation = Quaternion.FromAxisAngle(Vector3.UnitY, 3.1415f);
                 sc.Children.Add(plimboModel);

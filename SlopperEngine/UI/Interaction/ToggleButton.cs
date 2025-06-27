@@ -81,10 +81,7 @@ public class ToggleButton : BaseButton
         _background.Color = Style.ForegroundStrong;
     }
 
-    protected override void OnAnyRelease(MouseButton button)
-    {
-        _background.Color = Style.ForegroundStrong;
-    }
+    protected override void OnAnyRelease(MouseButton button){}
 
     protected override void OnMouseEntry()
     {

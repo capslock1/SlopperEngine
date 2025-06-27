@@ -46,7 +46,7 @@ public sealed class ImageRectangle : DisplayElement
 
     public ImageRectangle() : this(new(0, 0, 1, 1)) { }
     public ImageRectangle(Box2 shape) : this(shape, null) { }
-    public ImageRectangle(Box2 shape, Texture? texture) : this(shape, texture, new(1,1,1,1)) { }
+    public ImageRectangle(Box2 shape, Texture? texture) : this(shape, texture, Color4.White) { }
 #pragma warning disable CS8618
     public ImageRectangle(Box2 shape, Texture? texture, Color4 color) : base(shape)
 #pragma warning restore CS8618

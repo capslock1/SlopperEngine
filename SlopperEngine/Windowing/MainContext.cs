@@ -20,6 +20,7 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
     /// </summary>
     public static bool ThrowIfSevereGLError;
+    public static bool MultithreadedFrameUpdate = true;
     static MainContext? _instance;
 
     private List<Task> _frameUpdateQueue = new List<Task>();
@@ -95,23 +96,41 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         foreach(var sc in Scene.ActiveScenes)
             if(!sc.Destroyed)
                 alive.Add(sc);
-        foreach (var sc in alive)
+
+        if (MultithreadedFrameUpdate)
         {
-            var task = new Task(() =>
+            foreach (var sc in alive)
             {
-                sc.FrameUpdate(time);
-            });
-            _frameUpdateQueue.Add(task);
-            task.Start();
+                var task = new Task(() =>
+                {
+                    sc.FrameUpdate(time);
+                });
+                _frameUpdateQueue.Add(task);
+                task.Start();
+            }
         }
+        else foreach (var sc in alive)
+            sc.FrameUpdate(time);
 
         //then, render every scene once
         Context?.MakeCurrent();
-        foreach(var sc in alive)
-            sc.Render(time);
+        for (int i = 0; i < alive.Count; i++)
+        {
+            const string Message = "SlopperEngine Scene render";
+            GL.PushDebugGroup(DebugSourceExternal.DebugSourceApplication, i, Message.Length, Message);
+            try
+            {
+                alive[i].Render(time);
+            }
+            catch (Exception e)
+            {
+                System.Console.WriteLine($"Exception while rendering: {e}");
+            }
+            GL.PopDebugGroup();
+        }
 
         //finally render every window once (which is a different thing!)
-        for(int i = Window.AllWindows.Count-1; i>=0; i--)
+        for (int i = Window.AllWindows.Count - 1; i >= 0; i--)
             Window.AllWindows[i].Render();
     }
 
@@ -136,6 +155,10 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     {
         if(type == DebugType.DebugTypeOther)
         return;
+
+        if ((type == DebugType.DebugTypePushGroup || type == DebugType.DebugTypePopGroup) && source == DebugSource.DebugSourceApplication)
+            return;
+
         string message = Marshal.PtrToStringAnsi(pMessage, length);
 
         Console.WriteLine(
