@@ -53,7 +53,7 @@ public partial class SceneObject
     /// </summary>
     #pragma warning disable CS8618 // yes it does
     public SceneObject()
-    #pragma warning restore 
+    #pragma warning restore CS8618
     {
         Initialize();
     }

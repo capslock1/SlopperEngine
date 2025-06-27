@@ -12,9 +12,14 @@ void vertex()
 }
 
 pixOut vec3 Albedo;
+pixOut float Transparency;
+
 uniform sampler2D mainTexture;
+uniform vec4 mainColor; 
 
 void pixel()
 {
-    pixOut.Albedo = texture(mainTexture, vertToPix.uvCoords).xyz;
+    vec4 col = texture(mainTexture, vertToPix.uvCoords) * mainColor;
+    pixOut.Albedo = col.xyz;
+    pixOut.Transparency = col.w;
 }

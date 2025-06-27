@@ -5,6 +5,9 @@ using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Interaction;
 
+/// <summary>
+/// Base class for buttons. Handles most events.
+/// </summary>
 public abstract class BaseButton : UIElement
 {
     protected bool hovered { get; private set; }
