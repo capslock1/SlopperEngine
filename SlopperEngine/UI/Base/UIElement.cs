@@ -25,6 +25,20 @@ public class UIElement : SceneObject
     public virtual ChildList<UIElement, UIChildEvents> UIChildren => internalUIChildren;
 
     /// <summary>
+    /// The style of the element.
+    /// </summary>
+    public BasicStyle Style
+    {
+        get => _style;
+        set
+        {
+            _style = value;
+            OnStyleChanged();
+        }
+    }
+    BasicStyle _style = BasicStyle.DefaultStyle;
+
+    /// <summary>
     /// The last renderer that used this UIElement.
     /// </summary>
     public UIRenderer? LastRenderer { get; private set; }
@@ -45,28 +59,15 @@ public class UIElement : SceneObject
     public Box2 LastGlobalScissor { get; private set; }
 
     /// <summary>
-    /// The style of the element.
+    /// The last global bounds that were calculated of the UIElement's children. 
     /// </summary>
-    public BasicStyle Style
-    {
-        get => _style;
-        set
-        {
-            _style = value;
-            OnStyleChanged();
-        }
-    }
-    BasicStyle _style = BasicStyle.DefaultStyle;
+    public Box2 LastChildrenBounds { get; private set; }
+
 
     /// <summary>
     /// A set of hidden UI elements.
     /// </summary>
     protected ChildList<UIElement, UIChildEvents> internalUIChildren { get; private set; }
-
-    /// <summary>
-    /// The last global bounds that were calculated of the UIElement's children. 
-    /// </summary>
-    protected Box2 lastChildrenBounds { get; private set; }
 
     SceneDataHandle _UIRootUpdateHandle;
     bool _isUIRoot;
@@ -124,7 +125,7 @@ public class UIElement : SceneObject
     private void ReceiveEvent(ref MouseEvent e)
     {
         MouseEvent childEvent = e; 
-        if (lastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
+        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
         {
             for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
             {
@@ -173,19 +174,19 @@ public class UIElement : SceneObject
             ch.UpdateShape(globalShape, renderer);
             if (!boundsInitted)
             {
-                childBounds = ch.lastChildrenBounds;
+                childBounds = ch.LastChildrenBounds;
                 childBounds.Extend(ch.LastGlobalShape.Min);
                 childBounds.Extend(ch.LastGlobalShape.Max);
                 boundsInitted = true;
                 continue;
             }
-            childBounds.Extend(ch.lastChildrenBounds.Min);
-            childBounds.Extend(ch.lastChildrenBounds.Max);
+            childBounds.Extend(ch.LastChildrenBounds.Min);
+            childBounds.Extend(ch.LastChildrenBounds.Max);
             childBounds.Extend(ch.LastGlobalShape.Min);
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
 
-        lastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
+        LastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
 
         static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {

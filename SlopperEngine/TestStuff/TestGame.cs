@@ -203,7 +203,6 @@ public class TestGame : SceneObject
 
         var myToggle = new ToggleButton();
         myToggle.LocalShape = new(0.2f,0.8f,0.2f,0.8f);
-        myToggle.OnToggle += (bool tog) => { System.Console.WriteLine($"i just got toggled to {tog} broski"); };
         _UIScene.Children.Add(myToggle);
 
         _lamps = new PointLight[10];

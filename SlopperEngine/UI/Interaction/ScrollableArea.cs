@@ -91,7 +91,7 @@ public class ScrollableArea : UIElement
     Vector2 _preferredScrollbarSize = new(0.05f,0.05f);
 
     readonly ContentArea _contentArea;
-    readonly MovingArea _movingArea;
+    readonly UIElement _movingArea;
     readonly Slider _horizontalSlider;
     readonly Slider _verticalSlider;
     readonly ColorRectangle _sliderCorner;
@@ -185,7 +185,7 @@ public class ScrollableArea : UIElement
 
         if (!_horizontalSliderVisible)
         {
-            var chBounds = _movingArea.ChildrenIncludedBounds;
+            var chBounds = _movingArea.LastChildrenBounds;
             var conBounds = _contentArea.LastGlobalShape;
             float offset;
             switch (HorizontalContentAlignment)
@@ -205,7 +205,7 @@ public class ScrollableArea : UIElement
         }
         if (!_verticalSliderVisible)
         {
-            var chBounds = _movingArea.ChildrenIncludedBounds;
+            var chBounds = _movingArea.LastChildrenBounds;
             var conBounds = _contentArea.LastGlobalShape;
             float offset;
             switch (VerticalContentAlignment)
@@ -269,14 +269,14 @@ public class ScrollableArea : UIElement
     void UpdateContentRatio()
     {
         Vector2 inverseSize = Vector2.One / _movingArea.LastGlobalShape.Size;
-        Vector2 contentRatio = _movingArea.ChildrenIncludedBounds.Size * inverseSize;
+        Vector2 contentRatio = _movingArea.LastChildrenBounds.Size * inverseSize;
         if (contentRatio == _currentContentRatio)
             return;
 
         _horizontalSlider.ContentToContainerRatio = contentRatio.X;
         _verticalSlider.ContentToContainerRatio = contentRatio.Y;
         _currentContentRatio = contentRatio;
-        _movingAreaOffset = (_movingArea.ChildrenIncludedBounds.Max - _movingArea.LastGlobalShape.Max) * inverseSize;
+        _movingAreaOffset = (_movingArea.LastChildrenBounds.Max - _movingArea.LastGlobalShape.Max) * inverseSize;
 
         if (_horizontalSlider.ContentToContainerRatio > 1 && !_horizontalSliderVisible)
         {
@@ -318,7 +318,7 @@ public class ScrollableArea : UIElement
 
             Vector2 screenSize = LastRenderer?.GetScreenSize() ?? new(100);
             direction *= ScrollSensitivity;
-            direction /= _movingArea.ChildrenIncludedBounds.Size * screenSize;
+            direction /= _movingArea.LastChildrenBounds.Size * screenSize;
             _horizontalSlider.ScrollValue -= float.IsNaN(direction.X) ? 0 : direction.X;
             _verticalSlider.ScrollValue += float.IsNaN(direction.Y) ? 0 : direction.Y;
             e.Use();
@@ -359,9 +359,5 @@ public class ScrollableArea : UIElement
     class ContentArea : UIElement
     {
         protected override Box2 GetScissorRegion() => new(0, 0, 1, 1);
-    }
-    class MovingArea : UIElement
-    {
-        public Box2 ChildrenIncludedBounds => lastChildrenBounds;
     }
 }
