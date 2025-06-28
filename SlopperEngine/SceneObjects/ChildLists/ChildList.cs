@@ -6,16 +6,9 @@ namespace SlopperEngine.SceneObjects;
 
 public partial class SceneObject
 {
-    public class ChildList<TSceneObject> : ChildList<TSceneObject, NoEvents<TSceneObject>, SceneObject> where TSceneObject : SceneObject
+    public class ChildList<TSceneObject> : ChildList<TSceneObject, NoEvents<TSceneObject>> where TSceneObject : SceneObject
     {
         public ChildList(SceneObject owner) : base(owner, default){}
-    }
-
-    public class ChildList<TSceneObject, TEvents> : ChildList<TSceneObject, TEvents, TSceneObject>
-        where TSceneObject : SceneObject
-        where TEvents : IChildListEvents<TSceneObject>
-    {
-        public ChildList(SceneObject owner, TEvents events) : base(owner, events){}
     }
 
     /// <summary>
@@ -23,8 +16,8 @@ public partial class SceneObject
     /// </summary>
     /// <typeparam name="TSceneObject"></typeparam>
     /// <param name="owner"></param>
-    public class ChildList<TSceneObject, TEvents, TSceneObjectInterface> : IChildList
-        where TSceneObject : SceneObject, TSceneObjectInterface
+    public class ChildList<TSceneObject, TEvents> : IChildList
+        where TSceneObject : SceneObject
         where TEvents : IChildListEvents<TSceneObject>
     {
         public SceneObject Owner { get; private set; }

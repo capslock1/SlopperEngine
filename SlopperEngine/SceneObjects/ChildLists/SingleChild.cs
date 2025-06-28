@@ -6,25 +6,18 @@ namespace SlopperEngine.SceneObjects;
 
 public partial class SceneObject
 {
-    public class SingleChild<TSceneObject> : SingleChild<TSceneObject, NoEvents<TSceneObject>, TSceneObject>
+    public class SingleChild<TSceneObject> : SingleChild<TSceneObject, NoEvents<TSceneObject>>
         where TSceneObject : SceneObject
     {
         public SingleChild(SceneObject owner) : base(owner, default) {}
-    }
-
-    public class SingleChild<TSceneObject, TEvents> : SingleChild<TSceneObject, TEvents, TSceneObject>
-        where TSceneObject : SceneObject
-        where TEvents : IChildListEvents<TSceneObject>
-    {
-        public SingleChild(SceneObject owner, TEvents events) : base(owner, events) { }
     }
 
     /// <summary>
     /// Stores a single child of a SceneObject.
     /// </summary>
     /// <typeparam name="TSceneObject">The type of SceneObject to store.</typeparam>
-    public class SingleChild<TSceneObject, TEvents, TSceneObjectInterface> : IChildList
-        where TSceneObject : SceneObject, TSceneObjectInterface
+    public class SingleChild<TSceneObject, TEvents> : IChildList
+        where TSceneObject : SceneObject
         where TEvents : IChildListEvents<TSceneObject>
     {
         public SceneObject Owner { get; private set; }
