@@ -18,6 +18,8 @@ using SlopperEngine.Windowing;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.UI.Interaction;
+using SlopperEngine.UI.Style;
+using SlopperEngine.UI.Layout;
 
 namespace SlopperEngine.TestStuff;
 
@@ -201,9 +203,40 @@ public class TestGame : SceneObject
         scrollable.UIChildren.Add(_myScrollableRectangle);
         _UIScene.Children.Add(scrollable);
 
+        var layoutTest = new ColorRectangle(new(0, 0.6f, 0.2f, 0.8f), BasicStyle.DefaultStyle.BackgroundStrong);
+        _UIScene.Children.Add(layoutTest);
+        var layout = new LinearArrangedLayout();
+        layoutTest.Layout.Value = layout;
+        for (int i = 0; i < 5; i++)
+        {
+            layoutTest.UIChildren.Add(new ImageRectangle(new(0, 0, rand.NextSingle()*0.3f + 0.1f, rand.NextSingle()*0.3f + 0.1f), DefaultTextures.Error, new(0, 1f, 1f, 1f)));
+        }
+
         var myToggle = new ToggleButton();
         myToggle.LocalShape = new(0.2f,0.8f,0.2f,0.8f);
         _UIScene.Children.Add(myToggle);
+        myToggle.OnToggle += (bool t) => { layout.StartAtMax = t; };
+
+        var myToggle2 = new ToggleButton();
+        myToggle2.LocalShape = new(0.2f,0.75f,0.2f,0.75f);
+        _UIScene.Children.Add(myToggle2);
+        myToggle2.OnToggle += (bool t) => { layout.IsLayoutHorizontal = t; };
+
+        myButton.OnButtonPressed += (MouseButton _) =>
+        {
+            switch (layout.ChildAlignment)
+            {
+                default:
+                    layout.ChildAlignment = Alignment.Min;
+                    break;
+                case Alignment.Min:
+                    layout.ChildAlignment = Alignment.Max;
+                    break;
+                case Alignment.Max:
+                    layout.ChildAlignment = Alignment.Middle;
+                    break;
+            }
+        };
 
         _lamps = new PointLight[10];
         var lampShader = SlopperShader.Create("shaders/UnlitColor.sesl");

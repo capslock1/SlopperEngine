@@ -98,5 +98,7 @@ public partial class SceneObject
             _events.OnChildRemoved(_child, index);
             _child = null;
         }
+
+        public static implicit operator TSceneObject?(SingleChild<TSceneObject, TEvents> child) => child.Value;
     }
 }

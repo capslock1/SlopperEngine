@@ -5,6 +5,7 @@ using SlopperEngine.Graphics;
 using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.SceneObjects.ChildLists;
+using SlopperEngine.UI.Layout;
 using SlopperEngine.UI.Style;
 
 namespace SlopperEngine.UI.Base;
@@ -23,6 +24,11 @@ public class UIElement : SceneObject
     /// The children of the UIElement to consider part of the UI.
     /// </summary>
     public virtual ChildList<UIElement, UIChildEvents> UIChildren => internalUIChildren;
+
+    /// <summary>
+    /// The layout of the UI element. By default, children do not get automatically laid out.
+    /// </summary>
+    public SingleChild<LayoutHandler> Layout { get; private set; }
 
     /// <summary>
     /// The style of the element.
@@ -77,6 +83,7 @@ public class UIElement : SceneObject
     public UIElement(Box2 localShape)
     {
         internalUIChildren = new(this, new(this));
+        Layout = new(this);
         LocalShape = localShape;
     }
 
@@ -168,7 +175,7 @@ public class UIElement : SceneObject
         bool boundsInitted = false;
         LastGlobalShape = globalShape;
 
-        for (_safeIterator = internalUIChildren.Count-1; _safeIterator >= 0; _safeIterator--)
+        for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
         {
             var ch = internalUIChildren[_safeIterator];
             ch.UpdateShape(globalShape, renderer);
@@ -185,6 +192,8 @@ public class UIElement : SceneObject
             childBounds.Extend(ch.LastGlobalShape.Min);
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
+        var trueParent = (UIElement)UIChildren.Owner;
+        Layout.Value?.LayoutChildren(this, trueParent.LastGlobalShape);
 
         LastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
 
