@@ -61,34 +61,18 @@ public class ScrollableArea : UIElement
     ScrollBarDisplayMode _verticalDisplay = ScrollBarDisplayMode.Min;
 
     /// <summary>
-    /// The height of the horizontal scroll bar.
+    /// The size of the scrollbars. 
     /// </summary>
-    public float HorizontalScrollbarHeight
+    public UISize ScrollbarSize
     {
-        get => _preferredScrollbarSize.Y;
+        get => _preferredScrollbarSize;
         set
         {
-            _preferredScrollbarSize.Y = value;
-            if (_horizontalSliderVisible)
-                _scrollbarSize.Y = value;
+            _preferredScrollbarSize = value;
             UpdateSliderShapes();
         }
     }
-    /// <summary>
-    /// The width of the vertical scroll bar.
-    /// </summary>
-    public float VerticalScrollbarWidth
-    {
-        get => _preferredScrollbarSize.X;
-        set
-        {
-            _preferredScrollbarSize.X = value;
-            if (_verticalSliderVisible)
-                _scrollbarSize.X = value;
-            UpdateSliderShapes();
-        }
-    }
-    Vector2 _preferredScrollbarSize = new(0.05f,0.05f);
+    UISize _preferredScrollbarSize = UISize.FromPixels(new(10,10));
 
     readonly ContentArea _contentArea;
     readonly UIElement _movingArea;
@@ -98,7 +82,6 @@ public class ScrollableArea : UIElement
 
     Vector2 _currentContentRatio;
     Vector2 _movingAreaOffset;
-    Vector2 _scrollbarSize = new(0.05f,0.05f);
     Vector2 _scrollValues
     {
         get
@@ -118,15 +101,11 @@ public class ScrollableArea : UIElement
             if (value)
             {
                 if (!_horizontalSlider.InScene)
-                {
                     internalUIChildren.Add(_horizontalSlider);
-                    _scrollbarSize.Y = _preferredScrollbarSize.Y;
-                }
             }
             else if (_horizontalSlider.InScene)
             {
                 _horizontalSlider.Remove();
-                _scrollbarSize.Y = 0;
             }
             UpdateSliderShapes();
         }
@@ -139,15 +118,11 @@ public class ScrollableArea : UIElement
             if (value)
             {
                 if (!_verticalSlider.InScene)
-                {
                     internalUIChildren.Add(_verticalSlider);
-                    _scrollbarSize.X = _preferredScrollbarSize.X;
-                }
             }
             else if (_verticalSlider.InScene)
             {
                 _verticalSlider.Remove();
-                _scrollbarSize.X = 0;
             }
             UpdateSliderShapes();
         }
@@ -157,19 +132,21 @@ public class ScrollableArea : UIElement
     {
         internalUIChildren.Add(Background = new());
 
+        var scrollbarSize = new Vector2(0.03f, 0.03f);
+
         internalUIChildren.Add(_contentArea = new());
-        _contentArea.LocalShape = new(_scrollbarSize, Vector2.One);
+        _contentArea.LocalShape = new(scrollbarSize, Vector2.One);
         _contentArea.UIChildren.Add(_movingArea = new());
 
         _horizontalSlider = new(1, false, 0);
-        _horizontalSlider.LocalShape = new(_scrollbarSize.X, 0, 1, _scrollbarSize.Y);
+        _horizontalSlider.LocalShape = new(scrollbarSize.X, 0, 1, scrollbarSize.Y);
         _horizontalSlider.OnScroll += UpdatePosition;
 
         _verticalSlider = new(1);
-        _verticalSlider.LocalShape = new(0, _scrollbarSize.Y, _scrollbarSize.X, 1);
+        _verticalSlider.LocalShape = new(0, scrollbarSize.Y, scrollbarSize.X, 1);
         _verticalSlider.OnScroll += UpdatePosition;
 
-        _sliderCorner = new(new(Vector2.Zero, _scrollbarSize), Style.BackgroundStrong);
+        _sliderCorner = new(new(Vector2.Zero, scrollbarSize), Style.BackgroundStrong);
         internalUIChildren.Add(_sliderCorner);
         UpdateSliderShapes();
     }
@@ -235,8 +212,14 @@ public class ScrollableArea : UIElement
         Vector2 contentEnd = default;
         Vector2 sliderStart = default;
         Vector2 sliderEnd = default;
-        SetShapeBounds(_verticalDisplay, ref contentStart.X, ref contentEnd.X, ref sliderStart.X, ref sliderEnd.X, _scrollbarSize.X);
-        SetShapeBounds(_horizontalDisplay, ref contentStart.Y, ref contentEnd.Y, ref sliderStart.Y, ref sliderEnd.Y, _scrollbarSize.Y);
+        Vector2 scrollbarSize = _preferredScrollbarSize.GetLocalSize(LastGlobalShape, LastRenderer);
+        if (!_horizontalSliderVisible)
+            scrollbarSize.Y = 0;
+        if (!_verticalSliderVisible)
+            scrollbarSize.X = 0;
+
+        SetShapeBounds(_verticalDisplay, ref contentStart.X, ref contentEnd.X, ref sliderStart.X, ref sliderEnd.X, scrollbarSize.X);
+        SetShapeBounds(_horizontalDisplay, ref contentStart.Y, ref contentEnd.Y, ref sliderStart.Y, ref sliderEnd.Y, scrollbarSize.Y);
         void SetShapeBounds(ScrollBarDisplayMode mode, ref float cStart, ref float cEnd, ref float sStart, ref float sEnd, float scrollbarSize)
         {
             switch (mode)
@@ -299,7 +282,7 @@ public class ScrollableArea : UIElement
             _verticalSlider.ScrollValue = 1;
             _verticalSliderVisible = false;
         }
-        UpdatePosition();
+        UpdateSliderShapes();
     }
 
     protected override UIElementSize GetSizeConstraints()
