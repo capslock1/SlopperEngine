@@ -52,6 +52,7 @@ public class UIRenderer : SceneRenderer
         foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
             uiRoot.AddRender(new(Vector2.NegativeInfinity, Vector2.PositiveInfinity), this);
 
+        Vector2 pixelFix = -0.25f * GetPixelScale();
         foreach (var (shape, mat, scissor) in _UIElementRenderQueue)
         {
             Box2 screenScaleScissor = new((scissor.Min + Vector2.One) * 0.5f, (scissor.Max + Vector2.One) * 0.5f);
@@ -82,7 +83,9 @@ public class UIRenderer : SceneRenderer
                     (int)screenScaleScissor.Size.Y);
             }
 
-            _drawMesh.SetShape(shape);
+            var sh = shape;
+            sh.Center += pixelFix;
+            _drawMesh.SetShape(sh);
             mat.Use(_drawMesh.GetMeshInfo(), this);
             _drawMesh.Draw();
         }

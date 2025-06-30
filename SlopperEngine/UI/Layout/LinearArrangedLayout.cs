@@ -17,12 +17,17 @@ public class LinearArrangedLayout : LayoutHandler
     /// <summary>
     /// Whether the elements should be arranged from max or from min.
     /// </summary>
-    public bool StartAtMax;
+    public bool StartAtMax = true;
 
     /// <summary>
     /// How the elements should be arranged tangent to their axis.
     /// </summary>
-    public Alignment ChildAlignment;
+    public Alignment ChildAlignment = Alignment.Min;
+
+    /// <summary>
+    /// The padding to use between elements.
+    /// </summary>
+    public UISize Padding = UISize.FromPixels(new(4,4));
 
     public override void LayoutChildren(UIElement owner, Box2 ownerGlobalShape)
     {
@@ -30,6 +35,29 @@ public class LinearArrangedLayout : LayoutHandler
 
         float position = StartAtMax ? 1 : 0;
         float direction = StartAtMax ? -1 : 1;
+
+        Vector2 padding = Padding.GetLocalSize(ownerGlobalShape, owner.LastRenderer);
+        if (StartAtMax)
+        {
+            if (IsLayoutHorizontal)
+                padding.X = -padding.X;
+            else padding.Y = -padding.Y;
+        }
+        switch (ChildAlignment)
+        {
+            default:
+                if (IsLayoutHorizontal)
+                    padding.Y = 0;
+                else padding.X = 0;
+                break;
+            case Alignment.Min:
+                break;
+            case Alignment.Max:
+                if (IsLayoutHorizontal)
+                    padding.Y = -padding.Y;
+                else padding.X = -padding.X;
+                break;
+        }
 
         var children = owner.UIChildren;
         bool flip = StartAtMax ^ IsLayoutHorizontal;
@@ -57,9 +85,9 @@ public class LinearArrangedLayout : LayoutHandler
                     alignDist = 1 - (IsLayoutHorizontal ? localBounds.Max.Y : localBounds.Max.X);
                     break;
             }
-            ch.LocalShape.Center += IsLayoutHorizontal ? new Vector2(posDist, alignDist) : new Vector2(alignDist, posDist);
+            ch.LocalShape.Center += padding + (IsLayoutHorizontal ? new Vector2(posDist, alignDist) : new Vector2(alignDist, posDist));
 
-            position += direction * (IsLayoutHorizontal ? localBounds.Size.X : localBounds.Size.Y);
+            position += direction * (IsLayoutHorizontal ? localBounds.Size.X : localBounds.Size.Y) + (IsLayoutHorizontal ? padding.X : padding.Y);
         }
 
         Vector2 MapToLocal(Vector2 globalPoint)

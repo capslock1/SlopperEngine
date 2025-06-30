@@ -193,7 +193,15 @@ public class UIElement : SceneObject
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
         var trueParent = (UIElement)UIChildren.Owner;
-        Layout.Value?.LayoutChildren(this, trueParent.LastGlobalShape);
+        var trueGlobal = trueParent.LastGlobalShape;
+        var trueSize = trueGlobal.Size;
+        if (!(float.IsNaN(trueGlobal.Min.X) ||
+            float.IsNaN(trueGlobal.Min.Y) ||
+            float.IsNaN(trueGlobal.Max.X) ||
+            float.IsNaN(trueGlobal.Max.Y)) && 
+            float.Abs(trueSize.X) > 0.00001f &&
+            float.Abs(trueSize.Y) > 0.00001f)
+            Layout.Value?.LayoutChildren(this, trueGlobal);
 
         LastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
 

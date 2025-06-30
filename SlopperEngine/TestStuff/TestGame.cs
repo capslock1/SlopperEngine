@@ -203,13 +203,11 @@ public class TestGame : SceneObject
         scrollable.UIChildren.Add(_myScrollableRectangle);
         _UIScene.Children.Add(scrollable);
 
-        var layoutTest = new ColorRectangle(new(0, 0.6f, 0.2f, 0.8f), BasicStyle.DefaultStyle.BackgroundStrong);
-        _UIScene.Children.Add(layoutTest);
         var layout = new LinearArrangedLayout();
-        layoutTest.Layout.Value = layout;
+        _myScrollableRectangle.Layout.Value = layout;
         for (int i = 0; i < 5; i++)
         {
-            layoutTest.UIChildren.Add(new ImageRectangle(new(0, 0, rand.NextSingle()*0.3f + 0.1f, rand.NextSingle()*0.3f + 0.1f), DefaultTextures.Error, new(0, 1f, 1f, 1f)));
+            _myScrollableRectangle.UIChildren.Add(new ImageRectangle(new(0, 0, rand.NextSingle()*0.3f + 0.1f, rand.NextSingle()*0.3f + 0.1f), DefaultTextures.Error, new(0, 1f, 1f, 1f)));
         }
 
         var myToggle = new ToggleButton();
