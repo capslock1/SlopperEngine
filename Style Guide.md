@@ -51,6 +51,7 @@ If you find any code that does NOT adhere to the style, feel free to touch it up
 	- A backing field for a property, even if `private`, should be placed next to the property.
 
 - Interface implementations should be grouped.
+- Structs implementing an interface for the use in a single method may be placed next to that method.
 
 ### Whitespace rules
 

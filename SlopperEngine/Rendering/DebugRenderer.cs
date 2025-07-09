@@ -11,6 +11,7 @@ using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.Core;
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.Rendering;
 
@@ -19,11 +20,11 @@ namespace SlopperEngine.Rendering;
 /// </summary>
 public class DebugRenderer : SceneRenderer
 {
-    [field:DontSerialize] public FrameBuffer Buffer {get; private set;}
+    [field: DontSerialize] public FrameBuffer Buffer { get; private set; }
     [DontSerialize] LightBuffer _lights;
     [DontSerialize] Bloom _coolBloom;
-    Vector2i _screenSize = (400,300);
-    Vector2i _trueScreenSize = (800,600);
+    Vector2i _screenSize = (400, 300);
+    Vector2i _trueScreenSize = (800, 600);
 
     public DebugRenderer() : base()
     {
@@ -42,19 +43,21 @@ public class DebugRenderer : SceneRenderer
             _lights = new();
         }
     }
-    
+
     //this is kind of lame but it works
-    public override void InputUpdate(InputUpdateArgs args){}
+    public override void InputUpdate(InputUpdateArgs args) { }
 
     protected override void RenderInternal()
     {
         if (Scene == null) return;
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
         _lights.ClearBuffer();
-        foreach (PointLightData dat in Scene.GetDataContainerEnumerable<PointLightData>())
-            _lights.AddLight(dat);
+        LightBufferUpdater lightUpdater = new(_lights);
+        Scene.GetDataContainerEnumerable<PointLightData>().Enumerate(ref lightUpdater);
         _lights.UseBuffer();
+
         foreach (Camera cam in cameras)
         {
             globals.Use();
@@ -62,22 +65,34 @@ public class DebugRenderer : SceneRenderer
             var camTransform = cam.GetGlobalTransform();
             globals.CameraView = camTransform.Inverted();
             globals.CameraPosition = new(camTransform.ExtractTranslation(), 1.0f);
-            foreach (Drawcall call in Scene.GetDataContainerEnumerable<Drawcall>())
-            {
-                call.Material.Use(call.Model.GetMeshInfo(), this);
-                globals.Model = call.Owner.GetGlobalTransform();
-                call.Model.Draw();
-            }
+            DrawcallUpdater updater = new(this);
+            Scene.GetDataContainerEnumerable<Drawcall>().Enumerate(ref updater);
         }
         FrameBuffer.Unuse();
         _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
+    }
+    struct LightBufferUpdater(LightBuffer buffer) : IRefEnumerator<PointLightData>
+    {
+        public void Next(ref PointLightData value)
+        {
+            buffer.AddLight(value);
+        }
+    }
+    struct DrawcallUpdater(DebugRenderer renderer) : IRefEnumerator<Drawcall>
+    {
+        public void Next(ref Drawcall call)
+        {
+            call.Material.Use(call.Model.GetMeshInfo(), renderer);
+            renderer.globals.Model = call.Owner.GetGlobalTransform();
+            call.Model.Draw();
+        }
     }
 
     public override void Resize(Vector2i newSize)
     {
         _trueScreenSize = newSize;
-        _screenSize = _trueScreenSize/2;
-        
+        _screenSize = _trueScreenSize / 2;
+
         Buffer?.DisposeAndTextures();
         Buffer = new(_screenSize.X, _screenSize.Y);
         _coolBloom.Dispose();
@@ -106,16 +121,16 @@ public class DebugRenderer : SceneRenderer
 }"
         );
     }
-    
+
     public override void AddFragmentMain(SyntaxTree scope, IndentedTextWriter writer)
     {
         bool writesAlbedo = false;
         bool writesAlpha = false;
         bool writesSpecular = false;
         int normPosWrite = 0;
-        foreach(var v in scope.pixOut)
+        foreach (var v in scope.pixOut)
         {
-            switch(v.Name)
+            switch (v.Name)
             {
                 case "Albedo": writesAlbedo = true; break;
                 case "Transparency": writesAlpha = true; break;
@@ -140,7 +155,7 @@ float SL_PhongLighting(vec3 position, vec3 normal, vec3 cameraDirection, SL_Poin
     lightDir /= lightDist;
 
     float litness = max(dot(normal, lightDir), 0);
-{(writesSpecular ? 
+{(writesSpecular ?
 @"
     vec3 rHatM = reflect(lightDir, normal);
 
@@ -180,5 +195,4 @@ void main()
 }}"
         );
     }
-
 }

@@ -113,7 +113,7 @@ public sealed class Scene : SceneObject
     /// Gets a SceneDataContainer as IEnumerable. Should not be modified.
     /// </summary>
     /// <typeparam name="T">The type of scene data to enumerate.</typeparam>
-    public IEnumerable<T> GetDataContainerEnumerable<T>()
+    public IRefEnumerable<T> GetDataContainerEnumerable<T>()
     {
         return GetOrCreateDataContainer<T>();
     }

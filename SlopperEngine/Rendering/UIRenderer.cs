@@ -9,6 +9,7 @@ using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics;
 using SlopperEngine.UI.Base;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.Rendering;
 
@@ -35,8 +36,9 @@ public class UIRenderer : SceneRenderer
     protected override void RenderInternal()
     {
         if (Scene == null) return;
-        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            uiRoot.UpdateShape(new(-1, -1, 1, 1), this);
+
+        ShapeUpdater shapeUpdater = new(this);
+        Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref shapeUpdater);
         Buffer.Use();
         globals.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -49,8 +51,8 @@ public class UIRenderer : SceneRenderer
         bool scissorActive = false;
         Box2 viewport = new(default, _screenSize);
 
-        foreach (var uiRoot in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            uiRoot.AddRender(new(Vector2.NegativeInfinity, Vector2.PositiveInfinity), this);
+        RenderUpdater renderUpdater = new(this);
+        Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref renderUpdater);
 
         Vector2 pixelFix = -0.25f * GetPixelScale();
         foreach (var (shape, mat, scissor) in _UIElementRenderQueue)
@@ -97,6 +99,20 @@ public class UIRenderer : SceneRenderer
 
         FrameBuffer.Unuse();
     }
+    struct ShapeUpdater(UIRenderer renderer) : IRefEnumerator<UIRootUpdate>
+    {
+        public void Next(ref UIRootUpdate value)
+        {
+            value.UpdateShape(new(-1, -1, 1, 1), renderer);
+        }
+    }
+    struct RenderUpdater(UIRenderer renderer) : IRefEnumerator<UIRootUpdate>
+    {
+        public void Next(ref UIRootUpdate value)
+        {
+            value.AddRender(new(Vector2.NegativeInfinity, Vector2.PositiveInfinity), renderer);
+        }
+    }
 
     public override void InputUpdate(InputUpdateArgs input)
     {
@@ -105,41 +121,39 @@ public class UIRenderer : SceneRenderer
         _previousMousePosition = NDCPos;
         Vector2 scrollDelta = input.MouseState.ScrollDelta;
 
+        MouseEventUpdater updater = new();
         for (int m = 0; m < (int)MouseButton.Last; m++)
         {
             var butt = (MouseButton)m;
             if (input.MouseState.IsButtonPressed(butt))
             {
-                foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-                {
-                    var e = new MouseEvent(NDCPos, NDCDelta, default, butt, (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.PressedButton);
-                    root.OnMouse(ref e);
-                }
+                updater.Event = new MouseEvent(NDCPos, NDCDelta, default, butt, (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.PressedButton);
+                Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
             }
             if (input.MouseState.IsButtonReleased(butt))
             {
-                foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-                {
-                    var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), butt, input.MouseState, input.KeyboardState, MouseEventType.ReleasedButton);
-                    root.OnMouse(ref e);
-                }
+                updater.Event = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), butt, input.MouseState, input.KeyboardState, MouseEventType.ReleasedButton);
+                Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
             }
         }
         if (NDCDelta != default)
         {
-            foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            {
-                var e = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Move);
-                root.OnMouse(ref e);
-            }
+            updater.Event = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Move);
+            Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
         }
         if (scrollDelta != default)
         {
-            foreach (var root in Scene!.GetDataContainerEnumerable<UIRootUpdate>())
-            {
-                var e = new MouseEvent(NDCPos, NDCDelta, scrollDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Scroll);
-                root.OnMouse(ref e);
-            }
+            updater.Event = new MouseEvent(NDCPos, NDCDelta, scrollDelta, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Scroll);
+            Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
+        }
+    }
+    ref struct MouseEventUpdater : IRefEnumerator<UIRootUpdate>
+    {
+        public MouseEvent Event;
+
+        public void Next(ref UIRootUpdate value)
+        {
+            value.OnMouse(ref Event);
         }
     }
 

@@ -1,4 +1,5 @@
 
+using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.Core.SceneComponents;
@@ -7,11 +8,11 @@ namespace SlopperEngine.Core.SceneComponents;
 /// Calls every methodHolder that's been added to it, with no respect for order.
 /// </summary>
 public class UpdateHandler : SceneComponent
-{    
+{
     /// <summary>
     /// The time that has passed since the instantiation of this UpdateHandler.
     /// </summary>
-    public ulong TimeMilliseconds {get; private set;}
+    public ulong TimeMilliseconds { get; private set; }
 
     private float _remainder;
 
@@ -27,19 +28,34 @@ public class UpdateHandler : SceneComponent
         _remainder -= millis;
         TimeMilliseconds += millis;
 
-        foreach(var u in Scene!.GetDataContainerEnumerable<OnFrameUpdate>())
+        FrameUpdater update = new(Scene!, input);
+        Scene!.GetDataContainerEnumerable<OnFrameUpdate>().Enumerate(ref update);
+    }
+    struct FrameUpdater(Scene scene, FrameUpdateArgs update) : IRefEnumerator<OnFrameUpdate>
+    {
+        Scene _scene = scene;
+        FrameUpdateArgs _update = update;
+        public void Next(ref OnFrameUpdate value)
         {
-            u.Invoke(input);
-            Scene?.UpdateRegister();
+            value.Invoke(_update);
+            _scene.UpdateRegister();
         }
     }
 
     public override void InputUpdate(InputUpdateArgs input)
     {
-        foreach(var u in Scene!.GetDataContainerEnumerable<OnInputUpdate>())
+        InputUpdater update = new(Scene!, input);
+        Scene!.GetDataContainerEnumerable<OnInputUpdate>().Enumerate(ref update);
+    }
+    struct InputUpdater(Scene scene, InputUpdateArgs update) : IRefEnumerator<OnInputUpdate>
+    {
+        Scene _scene = scene;
+        InputUpdateArgs _update = update;
+
+        public void Next(ref OnInputUpdate value)
         {
-            u.Invoke(input);
-            Scene?.UpdateRegister();
+            value.Invoke(_update);
+            _scene.UpdateRegister();
         }
     }
 }

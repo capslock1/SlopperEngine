@@ -39,14 +39,9 @@ public class SpanList<T>
             _values = newArray;
         }
     }
-    public T this[int index]
+    public ref T this[int index]
     {
-        get => _values[index];
-        set
-        {
-            T temp = value;
-            _values[index] = temp;
-        }
+        get => ref _values[index];
     }
 
     /// <summary>

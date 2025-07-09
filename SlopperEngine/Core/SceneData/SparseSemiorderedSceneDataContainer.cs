@@ -10,8 +10,7 @@ namespace SlopperEngine.Core.SceneData;
 public sealed class SparseSemiorderedSceneDataContainer<T> : SceneDataContainer<T>
 {
     readonly List<(SceneDataHandle index, T toAdd, bool removes)> _addRemoveQueue = [];
-    readonly List<T> _data = [];
-    readonly List<DataState> _activeData = [];
+    readonly SpanList<(T, DataState)> _data = new();
     int _earliestFreeIndex = -1;
 
     public override SceneDataHandle QueueAdd(T data)
@@ -31,31 +30,37 @@ public sealed class SparseSemiorderedSceneDataContainer<T> : SceneDataContainer<
         if(_earliestFreeIndex < 0)
         {
             //no gaps - add a new space to the list, reserve it
-            _data.Add(default!);
-            _activeData.Add(DataState.Reserved);
+            _data.Add((default!, DataState.Reserved));
             return new(_data.Count-1);
         }
         else
         {
             //there is a gap - we can fill it
             int index = _earliestFreeIndex;
-            _data[index] = default!;
-            _activeData[index] = DataState.Reserved;
-            _earliestFreeIndex = _activeData.IndexOf(DataState.Empty, index);
+            _data[index] = (default!, DataState.Reserved);
+            _earliestFreeIndex = IndexOfFirstFree(index);
             return new(index);
         }
     }
 
+    int IndexOfFirstFree(int startIndex)
+    {
+        for (; startIndex < _data.Count; startIndex++)
+        {
+            if (_data[startIndex].Item2 == DataState.Empty)
+                return startIndex;
+        }
+        return -1;
+    }
+
     void Set(SceneDataHandle handle, T data)
     {
-        _data[handle.Index] = data;
-        _activeData[handle.Index] = DataState.Used;
+        _data[handle.Index] = (data, DataState.Used);
     }
 
     void Remove(SceneDataHandle handle)
     {
-        _data[handle.Index] = default!; //its nullness will be registered in activeData, which is why its forgiven.
-        _activeData[handle.Index] = DataState.Empty;
+        _data[handle.Index] = (default!, DataState.Empty); //its nullness is be registered in DataState, which is why its forgiven.
 
         _earliestFreeIndex = _earliestFreeIndex < 0 ? handle.Index : int.Min(handle.Index, _earliestFreeIndex);
     }
@@ -71,48 +76,18 @@ public sealed class SparseSemiorderedSceneDataContainer<T> : SceneDataContainer<
         }
         _addRemoveQueue.Clear();
     }
-    
-    public override IEnumerator<T> GetEnumerator() => new SSSDCEnumerator(this);
+
+    public override void Enumerate<TEnumerator>(ref TEnumerator enumerator)
+    {
+        for (int i = 0; i < _data.Count; i++)
+            if (_data[i].Item2 == DataState.Used)
+                enumerator.Next(ref _data[i].Item1);
+    }
 
     enum DataState : byte
     {
         Empty = 0,
         Reserved = 0b01,
         Used = 0b11
-    }
-
-    private struct SSSDCEnumerator : IEnumerator<T>
-    {
-        SparseSemiorderedSceneDataContainer<T> values;
-        int currentIndex = -1;
-        public T Current => values._data[currentIndex];
-
-        object IEnumerator.Current => Current!;
-
-        public SSSDCEnumerator(SparseSemiorderedSceneDataContainer<T> values)
-        {
-            currentIndex = -1;
-            this.values = values;
-        }
-
-        public void Dispose(){}
-
-        public bool MoveNext()
-        {
-            currentIndex++;
-            while(currentIndex < values._data.Count)
-            {
-                if(values._activeData[currentIndex] == DataState.Used)
-                    return true;
-
-                currentIndex++;
-            }
-            return false;
-        }
-
-        public void Reset()
-        {
-            currentIndex = -1;
-        }
     }
 }

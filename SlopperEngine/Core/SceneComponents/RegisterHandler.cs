@@ -41,10 +41,11 @@ public class RegisterHandler
         {
             this.owner = owner;
         }
+
         public override void FinalizeQueue(){}
         public override SceneDataHandle QueueAdd(OnUnregister Data) => new(0);
         public override void QueueRemove(SceneDataHandle Handle, OnUnregister Data) => owner._registryQueue.Add((new(), Data));
-        public override IEnumerator<OnUnregister> GetEnumerator() => null!;
+        public override void Enumerate<TEnumerator>(ref TEnumerator enumerator){}
     }
     private class RegisterContainer : SceneDataContainer<OnRegister>
     {
@@ -60,6 +61,6 @@ public class RegisterHandler
             return new(0);
         }
         public override void QueueRemove(SceneDataHandle Handle, OnRegister Data) {}
-        public override IEnumerator<OnRegister> GetEnumerator() => null!;
+        public override void Enumerate<TEnumerator>(ref TEnumerator enumerator){}
     }
 }

@@ -1,5 +1,6 @@
 
 using System.Collections;
+using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
 
 namespace SlopperEngine.Core.SceneData;
@@ -8,7 +9,7 @@ namespace SlopperEngine.Core.SceneData;
 /// Abstract container for mass amounts of scene data, like drawcalls or registered methods. 
 /// </summary>
 /// <typeparam name="T">The data type to store. Optimally a struct.</typeparam>
-public abstract class SceneDataContainer<T> : IEnumerable<T>, ISceneDataContainer
+public abstract class SceneDataContainer<T> : IRefEnumerable<T>, ISceneDataContainer
 {
 
     /// <summary>
@@ -26,23 +27,18 @@ public abstract class SceneDataContainer<T> : IEnumerable<T>, ISceneDataContaine
     
     public abstract void FinalizeQueue();
 
-    public abstract IEnumerator<T> GetEnumerator();
-
     public virtual void OnAddedToScene(Scene scene){}
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    public abstract void Enumerate<TEnumerator>(ref TEnumerator enumerator) where TEnumerator : IRefEnumerator<T>, allows ref struct;
 }
 
 /// <summary>
 /// Stores the SceneDataContainer without the generic bit. Should only ever be inherited by SceneDataContainer<T> !
 /// </summary>
-public interface ISceneDataContainer
+internal interface ISceneDataContainer
 {
     /// <summary>
     /// Finalizes the add/remove queue.
     /// </summary>
-    public abstract void FinalizeQueue();
+    public void FinalizeQueue();
 }

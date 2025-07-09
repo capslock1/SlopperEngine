@@ -103,7 +103,7 @@ public partial class SerializedObject
         {
             primitiveData = new(primitiveDataCount);
             primitiveData.AddMultiple(primitiveDataCount);
-            stream.Read(primitiveData.AllValues);
+            stream.ReadExactly(primitiveData.AllValues);
         }
 
         return new(indexedTypes, serializedObjects, primitiveData ?? new());
@@ -123,7 +123,7 @@ public partial class SerializedObject
             Span<byte> binaryChar = stackalloc byte[2];
             for (int i = 0; i < length; i++)
             {
-                stream.Read(binaryChar);
+                stream.ReadExactly(binaryChar);
                 builder.Append((char)BinaryPrimitives.ReadInt16LittleEndian(binaryChar));
             }
             return builder.ToString();
