@@ -5,7 +5,8 @@ Planned features are a fully custom shading language, an editor, scalable multit
 
 To check out the engine, try looking at the SillyDemos namespace (SlopperEngine/SillyDemos/) 
 which shows basic code for how to use the engine.
-For more information about the design, check out the "Design justification.md" file.
+For more information about the design, check out the "Design Justification.md" file.
+If you're interested in contributing, check out "Style Guide.md" instead.
 
 Compile instructions: click the build button on your IDE
 
