@@ -5,6 +5,9 @@ using SlopperEngine.Core.Collections;
 
 namespace SlopperEngine.Core.Serialization;
 
+/// <summary>
+/// Caches reflection info used by the serialization system.
+/// </summary>
 public static class ReflectionCache
 {
     static FridgeDictionary<Type, ReadOnlyCollection<FieldInfo>> _fieldInfos = new();
@@ -31,7 +34,7 @@ public static class ReflectionCache
             _singleObject[0] = key;
             return madeMethod.Invoke(null, _singleObject);
         }
-        catch(ArgumentException) 
+        catch (ArgumentException)
         {
             _singleObject[0] = null; // cut the gc a little slack
             _twoTypes[0] = null;
@@ -46,16 +49,16 @@ public static class ReflectionCache
     /// </summary>
     public static ReadOnlyCollection<FieldInfo> GetSerializableFields(Type type)
     {
-        if(_fieldInfos.TryGetValue(type, out var res))
+        if (_fieldInfos.TryGetValue(type, out var res))
             return res;
 
-        var currTyp = type; 
+        var currTyp = type;
         List<FieldInfo> allowedFields = new();
-        while(currTyp != null)
+        while (currTyp != null)
         {
             var fields = currTyp.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            foreach(var f in fields)
-                if(!f.GetCustomAttributes(typeof(DontSerializeAttribute)).Any())
+            foreach (var f in fields)
+                if (!f.GetCustomAttributes(typeof(DontSerializeAttribute)).Any())
                     allowedFields.Add(f);
 
             currTyp = currTyp.BaseType;
@@ -71,7 +74,7 @@ public static class ReflectionCache
     /// </summary>
     public static ReadOnlyCollection<MethodInfo> GetOnSerializeMethods(Type type)
     {
-        if(_onSerializes.TryGetValue(type, out var res))
+        if (_onSerializes.TryGetValue(type, out var res))
             return res;
 
         var list = new List<MethodInfo>();
@@ -79,20 +82,20 @@ public static class ReflectionCache
 
         void RecursiveAddMethods(Type t)
         {
-            if(t.BaseType != null)
+            if (t.BaseType != null)
                 RecursiveAddMethods(t.BaseType);
 
-            foreach(var meth in t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+            foreach (var meth in t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
             {
-                if(meth.IsConstructor)
+                if (meth.IsConstructor)
                     continue;
-                if(meth.IsGenericMethod)
+                if (meth.IsGenericMethod)
                     continue;
-                    
+
                 if (!meth.GetCustomAttributes(typeof(OnSerializeAttribute)).Any())
-                        continue;
+                    continue;
                 var parameters = meth.GetParameters();
-                if(parameters.Length != 1)
+                if (parameters.Length != 1)
                 {
                     System.Console.WriteLine($"OnSerialize expects only a single parameter at {t.Name}.{meth.Name}().");
                     continue;
@@ -102,7 +105,7 @@ public static class ReflectionCache
                     System.Console.WriteLine($"OnSerialize expects only non-virtual methods at {t.Name}.{meth.Name}().");
                     continue;
                 }
-                if(parameters[0].ParameterType != typeof(SerializedObjectTree.CustomSerializer))
+                if (parameters[0].ParameterType != typeof(OnSerializeArgs))
                 {
                     System.Console.WriteLine($"OnSerialize expects the paramater at {t.Name}.{meth.Name}() to be of type 'SerializedObjectTree.CustomSerializer'.");
                     continue;

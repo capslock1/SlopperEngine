@@ -273,7 +273,7 @@ public class TestGame : SceneObject
         _testWindow.FramebufferResize += OnFramebufferResize;
     }
 
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer tree)
+    [OnSerialize] void OnSerialize(OnSerializeArgs tree)
     {
         if(tree.IsReader) return;
 
@@ -316,7 +316,7 @@ public class TestGame : SceneObject
             _framesThisSecond = 0;
         }
 
-        _myScrollableRectangle.LocalShape = new(0, 0, 1 + MathF.Sin((float)_secsSinceStart * 0.224f), 1 + MathF.Sin((float)_secsSinceStart * .197f));
+        //_myScrollableRectangle.LocalShape = new(0, 0, 1 + MathF.Sin((float)_secsSinceStart * 0.224f), 1 + MathF.Sin((float)_secsSinceStart * .197f));
 
         _rb.AddImpulse(45 * args.DeltaTime * Vector3.UnitY * (MathF.Sin((float)_secsSinceStart)+1));
         Random rand = new(203958);
@@ -333,6 +333,11 @@ public class TestGame : SceneObject
         _UIScene?.InputUpdate(args);
         if (args.KeyboardState.IsKeyDown(Keys.Escape))
             _testWindow.Close();
+        if (args.KeyboardState.IsKeyPressed(Keys.N))
+        {
+            var lm = _main!.Serialize();
+            lm.Instantiate();
+        }
     }
 
     void OnFramebufferResize(FramebufferResizeEventArgs e)

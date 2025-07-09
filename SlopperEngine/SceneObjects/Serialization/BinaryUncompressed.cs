@@ -8,16 +8,16 @@ using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects.Serialization;
 
-public partial class SerializedObjectTree
+public partial class SerializedObject
 {
     const int _BinaryUncompressedVersion = 1;
-    public static SerializedObjectTree? LoadBinaryUncompressed(string filepath)
+    public static SerializedObject? LoadBinaryUncompressed(string filepath)
     {
         using var stream = new FileStream(Assets.GetPath(filepath), FileMode.Open, FileAccess.Read);
         return LoadBinaryUncompressed(stream);
     }
 
-    public static SerializedObjectTree? LoadBinaryUncompressed(Stream stream)
+    public static SerializedObject? LoadBinaryUncompressed(Stream stream)
     {
         bool header =
             stream.ReadByte() == (byte)'S' &&

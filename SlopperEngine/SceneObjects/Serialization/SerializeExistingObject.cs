@@ -9,12 +9,12 @@ using SlopperEngine.Core.Serialization;
 
 namespace SlopperEngine.SceneObjects.Serialization;
 
-public partial class SerializedObjectTree
+public partial class SerializedObject
 {
     /// <summary>
     /// Serializes a SceneObject. Should only be called by SceneObject.Serialize().
     /// </summary>
-    internal SerializedObjectTree(SceneObject toSerialize)
+    internal SerializedObject(SceneObject toSerialize)
     {
         if (toSerialize.InScene)
             throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
@@ -67,7 +67,7 @@ public partial class SerializedObjectTree
         foreach(var meth in methods)
         {
             List<object?>? results = null;
-            CustomSerializer serializer = new(ref results, this);
+            OnSerializeArgs serializer = new(ref results, this);
             CallOnSerializeQuick(meth, toSerialize, serializer);
 
             SerialHandle methodResHandle = default;
@@ -180,7 +180,13 @@ public partial class SerializedObjectTree
         SerialHandle res = default;
         res.SerialType = SerialHandle.Type.Array;
         res.Handle = _serializedObjects.Count;
-        int typeIndex = GetTypeIndex(array.GetType().GetElementType()!, refs);
+        var elementType = array.GetType().GetElementType();
+        if (elementType is null)
+            return default;
+        if (elementType.IsPointer)
+            return default;
+
+        int typeIndex = GetTypeIndex(elementType!, refs);
 
         var valueSpan = _serializedObjects.AddMultiple(array.Length + 1 + array.Rank);
         SerialHandle rank = default;
@@ -202,18 +208,18 @@ public partial class SerializedObjectTree
 
         if(array.Rank == 1)
         {
-            for(int i = 0; i<array.Length; i++)
+            for (int i = 0; i < array.Length; i++)
             {
                 var val = array.GetValue(i);
-                if(val != null)
+                if (val != null)
                 {
                     var handle = SerializeRecursive(val, res.Handle + 2 + i, refs);
-                    valueSpan[2+i] = handle;
+                    valueSpan[2 + i] = handle;
                 }
             }
             return res;
         }
-        throw new ArgumentException("I am not serializing multi-dimensional arrays right now.");
+        return default;//throw new ArgumentException("I am not serializing multi-dimensional arrays right now.");
     }
     
     SerialHandle WritePrimitive(object obj, in SerializationRefs refs)

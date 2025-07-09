@@ -17,7 +17,7 @@ public class PhysicsHandler : SceneComponent
     public readonly bool SlowDownAtLowFPS = false;
     [DontSerialize] public Simulation Simulator;
 
-    private ThreadDispatcher _physThreadDispatcher;
+    [DontSerialize] private ThreadDispatcher _physThreadDispatcher;
 
     float _timeSinceLastUpdate;
     bool _lateStart = true;
@@ -39,7 +39,7 @@ public class PhysicsHandler : SceneComponent
             );
     }
 
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    [OnSerialize] void OnSerialize(OnSerializeArgs serializer)
     {
         if(serializer.IsWriter)
             Init();

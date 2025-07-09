@@ -16,7 +16,8 @@ public class TextBox : UIElement
     /// <summary>
     /// The text to display on this box. May resize the textbox.
     /// </summary>
-    public string Text{
+    public string Text
+    {
         get => _currentText;
         set
         {
@@ -29,7 +30,8 @@ public class TextBox : UIElement
     /// <summary>
     /// The font to use in the box. May resize this textbox.
     /// </summary>
-    public RasterFont Font{
+    public RasterFont Font
+    {
         get => _currentFont;
         set
         {
@@ -115,7 +117,7 @@ public class TextBox : UIElement
         Text = text;
     }
 
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    [OnSerialize] void OnSerialize(OnSerializeArgs serializer)
     {
         if (serializer.IsWriter)
         {

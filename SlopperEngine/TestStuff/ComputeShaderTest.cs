@@ -24,7 +24,7 @@ public class ComputeShaderTest : SceneObject
     }
 
     [OnSerialize]
-    void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    void OnSerialize(OnSerializeArgs serializer)
     {
         if (serializer.IsWriter)
             _texQuad = new(this);

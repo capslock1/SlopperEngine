@@ -33,7 +33,7 @@ public sealed class Scene : SceneObject
         Components = new(this);
         Renderers = new(this);
     }
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    [OnSerialize] void OnSerialize(OnSerializeArgs serializer)
     {
         if (serializer.IsWriter)
         {

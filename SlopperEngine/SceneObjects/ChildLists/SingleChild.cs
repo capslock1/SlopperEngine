@@ -66,7 +66,7 @@ public partial class SceneObject
         }
 
         [OnSerialize]
-        void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+        void OnSerialize(OnSerializeArgs serializer)
         {
             if (serializer.IsReader) return;
 

@@ -33,7 +33,7 @@ public class DebugRenderer : SceneRenderer
     }
 
     [OnSerialize]
-    void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    void OnSerialize(OnSerializeArgs serializer)
     {
         if (serializer.IsWriter)
         {

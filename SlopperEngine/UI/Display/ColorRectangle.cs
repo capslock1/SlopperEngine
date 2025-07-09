@@ -39,7 +39,7 @@ public sealed class ColorRectangle : DisplayElement
 
 
     [OnSerialize]
-    void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    void OnSerialize(OnSerializeArgs serializer)
     {
         if (serializer.IsWriter)
         {

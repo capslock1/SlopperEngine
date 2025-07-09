@@ -244,6 +244,13 @@ Structs also cannot be polymorphic - it is impossible to inherit from one.
 - Use a struct when it concerns data that has a particular owner or is used in mass.
 - Use a struct when it concerns data that only exists on the stack.
 
+### SlopperEngine features
+
+- Methods that are called by the engine through the use of an attribute (for example, `[OnFrameUpdate]` or 
+`[OnSerialize]`) should at most have only one input, named (attribute name)Args, for example `FrameUpdateArgs`.
+- Public and protected members and objects should always have a summary attached, unless it's extremely
+obvious what everything means.
+
 ### Extension methods
 
 - For most types, avoid extension methods at all costs.
@@ -266,8 +273,8 @@ seriously improve performance over using classes or copying structs, and is thus
 **LINQ**
 
 LINQ is quite handy for creating algorithms that apply well to any situation. However, LINQ methods 
-can generate quite a lot of memory garbage. Avoid LINQ and IEnumerable extension method calls at all 
-costs.
+can generate quite a lot of memory garbage. Avoid LINQ and IEnumerable extension method calls for any part 
+of the engine.
 
 **Namespaces**
 

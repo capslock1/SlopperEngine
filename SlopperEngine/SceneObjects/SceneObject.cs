@@ -68,7 +68,7 @@ public partial class SceneObject
         _registeredMethodHandles = new SceneDataHandle[_registeredMethods.Count];
     }
 
-    [OnSerialize] void OnSerialize(SerializedObjectTree.CustomSerializer serializer)
+    [OnSerialize] void OnSerialize(OnSerializeArgs serializer)
     {
         if(serializer.IsWriter)
         {
@@ -165,7 +165,7 @@ public partial class SceneObject
     /// <param name="parentMatrix">The parent's transform.</param>
     protected virtual void TransformFromParent(ref Matrix4 parentMatrix){}
 
-    public SerializedObjectTree Serialize()
+    public SerializedObject Serialize()
     {
         bool insc = InScene;
         var sc = Scene;
@@ -175,7 +175,7 @@ public partial class SceneObject
             sc!.UpdateRegister();
         }
 
-        var res = new SerializedObjectTree(this);
+        var res = new SerializedObject(this);
 
         if(insc)
             Register(sc!);
