@@ -3,6 +3,7 @@
 The style of code to be used for any C# code related to any official SlopperEngine releases.
 In any ambiguous case, write code the way it looks prettiest / easiest to read. 
 This style guide and example is based on and reformatted from https://google.github.io/styleguide/csharp-style.html.
+
 If you find any code that does NOT adhere to the style, feel free to touch it up!
 
 ## Formatting guidelines
@@ -10,6 +11,7 @@ If you find any code that does NOT adhere to the style, feel free to touch it up
 ### Naming rules
 
 **Code**
+
 - Classes, methods, enums, namespaces are all `PascalCase`.
 - Public fields/properties are all `PascalCase`.
 - Protected fields/properties, and method variables are all `camelCase`.
@@ -21,16 +23,19 @@ If you find any code that does NOT adhere to the style, feel free to touch it up
 	- If their use is not obvious, they should be named after their use (`PascalCase`), prefixed with a T, for example `TGenerator`.
 
 **Files**
+
 - Filenames and directory names are all `PascalCase`, except for the file extension.
 - The filename should be equal to the name of the main object in the file, for example `IMyInterface.cs`.
 
 ### Organisation rules
 
 **Namespaces**
+
 - Namespace usings are at the top of the file. 
 - Namespaces should be file scoped.
 
 **Class member ordering**
+
 - Member types should be ordered as follows:
 	- Properties.
 	- Fields.
@@ -48,6 +53,7 @@ If you find any code that does NOT adhere to the style, feel free to touch it up
 - Interface implementations should be grouped.
 
 ### Whitespace rules
+
 - Only one statement per line.
 - Only one assignment per statement.
 - Indentation of four spaces, no tabs.
@@ -229,6 +235,7 @@ Expression body example: `int SomeProperty => _someField;`
 The difference between structs and classes, is that classes exist on the heap and are garbage collected, 
 while structs almost always exist on the stack. This makes structs significantly more performant, at the
 cost of flexibility. 
+
 Structs are almost always passed and returned by value (meaning it gets copied), resulting in possible
 unexpected behaviour. Think of them like an `int` in this way, only changing when explicitly assigned to.
 Structs also cannot be polymorphic - it is impossible to inherit from one.
@@ -257,28 +264,35 @@ seriously improve performance over using classes or copying structs, and is thus
 ### Little things
 
 **LINQ**
+
 LINQ is quite handy for creating algorithms that apply well to any situation. However, LINQ methods 
 can generate quite a lot of memory garbage. Avoid LINQ and IEnumerable extension method calls at all 
 costs.
 
 **Namespaces**
+
 Namespaces match folder structure, for example `SlopperEngine.MyStuff.IMyInterface` should be in the 
 `SlopperEngine/MyStuff/IMyInterface.cs` file.
 
 **Nesting**
+
 Avoid nesting as much as possible. 
 
 **Var**
+
 Use the `var` keyword when it aids readability, or if the variable is obvious or unimportant.
 
 **Exceptions**
+
 Avoid throwing exceptions. Methods like `bool TryXYZ(out T success)` are much preferred.
 Once a more advanced logging system is in place, use this instead.
 
 **Lambdas vs named methods**
+
 If a lambda is complicated (more than ~3 lines), it should likely be a named method.
 This named method may be nested at your discretion.
 
 **Field initializers**
+
 Try adding field initializers, even if it's the default value.
 If the value is irrelevant when default, it may be omitted.
