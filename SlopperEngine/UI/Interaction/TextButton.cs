@@ -2,6 +2,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Display;
 using SlopperEngine.UI.Text;
+using SlopperEngine.SceneObjects.ChildContainers;
 
 namespace SlopperEngine.UI.Interaction;
 

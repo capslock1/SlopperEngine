@@ -8,7 +8,7 @@ using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.SceneObjects.ChildContainers;
 
 namespace SlopperEngine.Physics;
 

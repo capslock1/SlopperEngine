@@ -12,30 +12,37 @@ public record class BasicStyle
     /// Stronger version of the background color (darkest assuming dark mode).
     /// </summary>
     public readonly Color4 BackgroundStrong;
+
     /// <summary>
     /// Weaker version of the background color.
     /// </summary>
     public readonly Color4 BackgroundWeak;
+
     /// <summary>
     /// Weaker version of the foreground color.
     /// </summary>
     public readonly Color4 ForegroundWeak;
+
     /// <summary>
     /// Stronger version of the foreground color (brightest assuming dark mode). 
     /// </summary>
     public readonly Color4 ForegroundStrong;
+
     /// <summary>
     /// The brightest color in the style.
     /// </summary>
     public readonly Color4 Tint;
+
     /// <summary>
     /// A color for marking selected elements (like text).
     /// </summary>
     public readonly Color4 Highlight;
+
     /// <summary>
     /// The font for the style.
     /// </summary>
     public readonly RasterFont Font;
+    
     /// <summary>
     /// The font's scale.
     /// </summary>

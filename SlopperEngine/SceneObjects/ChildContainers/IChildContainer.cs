@@ -2,10 +2,10 @@ namespace SlopperEngine.SceneObjects;
 
 public partial class SceneObject
 {
-    protected interface IChildList
+    protected interface IChildContainer
     {
         /// <summary>
-        /// The owner of this ChildList.
+        /// The owner of this ChildContainer.
         /// </summary>
         public SceneObject Owner {get;}
 
@@ -22,7 +22,7 @@ public partial class SceneObject
         public SceneObject Get(int index);
 
         /// <summary>
-        /// The amount of children this ChildList stores.
+        /// The amount of children this ChildContainer stores.
         /// </summary>
         public int Count {get;}
         

@@ -1,4 +1,4 @@
-namespace SlopperEngine.SceneObjects.ChildLists;
+namespace SlopperEngine.SceneObjects.ChildContainers;
 
 /// <summary>
 /// Handles the absence of events on a ChildList.

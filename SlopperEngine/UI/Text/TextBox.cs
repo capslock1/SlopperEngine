@@ -26,6 +26,7 @@ public class TextBox : UIElement
             _invalidateTexture = true;
         }
     }
+    string _currentText = string.Empty;
 
     /// <summary>
     /// The font to use in the box. May resize this textbox.
@@ -40,6 +41,7 @@ public class TextBox : UIElement
             _invalidateTexture = true;
         }
     }
+    RasterFont _currentFont = RasterFont.EightXSixteen;
 
     /// <summary>
     /// The color of the text.
@@ -88,8 +90,6 @@ public class TextBox : UIElement
     /// </summary>
     public Alignment Vertical = Alignment.Min;
 
-    string _currentText = string.Empty;
-    RasterFont _currentFont = RasterFont.EightXSixteen;
     [DontSerialize] Texture2D? _texture;
     [DontSerialize] Material _material;
     bool _invalidateTexture = true;

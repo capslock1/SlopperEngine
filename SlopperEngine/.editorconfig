@@ -11,4 +11,6 @@ charset = utf-8
 trim_trailing_whitespace = false
 insert_final_newline = false
 
+dotnet_style_prefer_collection_expression = false
+
 dotnet_diagnostic.CS8602.severity = warning

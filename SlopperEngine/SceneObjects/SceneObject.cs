@@ -4,6 +4,7 @@ using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.SceneObjects.ChildContainers;
 
 namespace SlopperEngine.SceneObjects;
 
@@ -37,11 +38,11 @@ public partial class SceneObject
     /// </summary>
     public ChildList<SceneObject> Children => _children ??= new ChildList<SceneObject>(this);
 
-    [DontSerialize] private IChildList? _parentList = null;
+    [DontSerialize] private IChildContainer? _parentList = null;
     private ChildList<SceneObject>? _children;
     [DontSerialize] private int _parentListIndex = -1;
     [DontSerialize] private bool _registryComplete = false;
-    [DontSerialize] private List<IChildList>? _childLists;
+    [DontSerialize] private List<IChildContainer>? _childLists;
 
     //premature optimisation? couldnt be me.
     //actually, the registered method handles could be stored in the scene to avoid allocations..... i shant
@@ -96,6 +97,7 @@ public partial class SceneObject
             foreach(var children in _childLists)
                 children.CheckRegistered();
     }
+
     void Unregister()
     {
         if(Scene is not null)
