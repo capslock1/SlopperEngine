@@ -9,6 +9,7 @@ using SlopperEngine.Graphics.DefaultResources;
 using OpenTK.Mathematics;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.SceneObjects.ChildContainers;
 
 namespace SlopperEngine.TestStuff;
 

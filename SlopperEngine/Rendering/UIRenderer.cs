@@ -153,7 +153,8 @@ public class UIRenderer : SceneRenderer
 
         public void Next(ref UIRootUpdate value)
         {
-            value.OnMouse(ref Event);
+            var e = Event;
+            value.OnMouse(ref e);
         }
     }
 
