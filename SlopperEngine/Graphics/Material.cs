@@ -6,6 +6,7 @@ using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Graphics.GPUResources.Shaders;
 using SlopperEngine.Rendering;
+using SlopperEngine.Core;
 
 namespace SlopperEngine.Graphics;
 
@@ -24,7 +25,7 @@ public class Material
     /// The uniforms contained within the material's shader. 
     /// </summary>
     public readonly UniformDescription[] Uniforms;
-    public static Material MissingMaterial = Create(SlopperShader.Create("shaders/errorShader.sesl"));
+    public static Material MissingMaterial = Create(SlopperShader.Create(Assets.GetPath("shaders/errorShader.sesl", "EngineAssets")));
 
     protected Material(SlopperShader shader, UniformDescription[] uniforms)
     {

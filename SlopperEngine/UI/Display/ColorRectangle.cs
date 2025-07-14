@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using SlopperEngine.Core;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics;
 using SlopperEngine.SceneObjects.Serialization;
@@ -50,7 +51,7 @@ public sealed class ColorRectangle : DisplayElement
 
     void Init()
     {
-        _shader ??= SlopperShader.Create("shaders/UI/Color.sesl");
+        _shader ??= SlopperShader.Create(Assets.GetPath("shaders/UI/Color.sesl", "EngineAssets"));
         _material = Material.Create(_shader);
         if (_matTextureIndex == -1)
             _matTextureIndex = _material.GetUniformIndexFromName("mainColor");

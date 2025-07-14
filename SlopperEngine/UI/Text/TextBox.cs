@@ -1,5 +1,6 @@
 using System.Drawing;
 using OpenTK.Mathematics;
+using SlopperEngine.Core;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.Graphics;
 using SlopperEngine.Graphics.GPUResources.Textures;
@@ -131,7 +132,7 @@ public class TextBox : UIElement
 
     void Init()
     {
-        _shader ??= SlopperShader.Create("shaders/UI/TextBox.sesl");
+        _shader ??= SlopperShader.Create(Assets.GetPath("shaders/UI/TextBox.sesl", "EngineAssets"));
         _material = Material.Create(_shader);
         if(_materialTexIndex == -1)
         {

@@ -11,12 +11,21 @@ namespace SlopperEngine.SceneObjects.Serialization;
 public partial class SerializedObject
 {
     const int _BinaryUncompressedVersion = 1;
+
+    /// <summary>
+    /// Loads a BinaryUncompressed format SerializedObject.
+    /// </summary>
+    /// <param name="filepath">Path to the file. NOT relative - use Core.Assets to get a full path.</param>
     public static SerializedObject? LoadBinaryUncompressed(string filepath)
     {
-        using var stream = new FileStream(Assets.GetPath(filepath), FileMode.Open, FileAccess.Read);
+        using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
         return LoadBinaryUncompressed(stream);
     }
 
+    /// <summary>
+    /// Loads a BinaryUncompressed format SerializedObject from a stream.
+    /// </summary>
+    /// <param name="stream">The stream to load from.</param>
     public static SerializedObject? LoadBinaryUncompressed(Stream stream)
     {
         bool header =
@@ -139,12 +148,20 @@ public partial class SerializedObject
         }
     }
 
+    /// <summary>
+    /// Saves this SerializedObject to a file in the BinaryUncompressed format.
+    /// </summary>
+    /// <param name="filepath">The path to save to. NOT relative - use Core.Assets to get a full path.</param>
     public void SaveBinaryUncompressed(string filepath)
     {
-        using var stream = new FileStream(Assets.GetPath(filepath), FileMode.Create, FileAccess.Write);
+        using var stream = new FileStream(filepath, FileMode.Create, FileAccess.Write);
         SaveBinaryUncompressed(stream);
     }
 
+    /// <summary>
+    /// Saves this SerializedObject to a stream in the BinaryUncompressed format.
+    /// </summary>
+    /// <param name="stream">The stream to save to.</param>
     public void SaveBinaryUncompressed(Stream stream)
     {
         stream.WriteByte((byte)'S'); // header for SlopBinaryUncompressed

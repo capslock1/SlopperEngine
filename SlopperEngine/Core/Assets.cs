@@ -7,31 +7,36 @@ namespace SlopperEngine.Core;
 public static class Assets
 {
     /// <summary>
-    /// The path to the Assets folder.
+    /// Contains
     /// </summary>
-    public static readonly string Path;
-    
-    static Assets()
+    static readonly Dictionary<string, string> _assetFolders = new();
+
+    /// <summary>
+    /// Gets the filepath to an asset relative to a specific assets folder.
+    /// </summary>
+    /// <param name="relativePath">The relative path. Should look like "myTextures/Image.png".</param>
+    /// <param name="assetFolderName">The name of the assets folder. "Assets" on default.</param>
+    /// <returns>A path to the asset.</returns>
+    /// <exception cref="Exception"></exception>
+    public static string GetPath(string relativePath, string assetFolderName = "Assets")
     {
-        string? path = System.IO.Path.GetFullPath("./");
-        string[]? AssetPath;
-        while(true)
+        if (_assetFolders.TryGetValue(assetFolderName, out string? path))
+            return Path.Combine(path, relativePath);
+
+        path = Directory.GetCurrentDirectory();
+        string[]? assetPath;
+        while (true)
         {
-            if(path == null)
+            if (path == null)
                 throw new Exception("Could not find the Assets folder.");
 
-            AssetPath = Directory.GetDirectories(path, "Assets");
-            if(AssetPath.Length != 0)
+            assetPath = Directory.GetDirectories(path, assetFolderName);
+            if (assetPath.Length != 0)
                 break;
 
             path = Directory.GetParent(path)?.FullName;
         }
-        Path = AssetPath[0];
+        _assetFolders[assetFolderName] = path;
+        return Path.Combine(path, relativePath);
     }
-
-    /// <summary>
-    /// Gets a full path relative to the Assets folder.
-    /// </summary>
-    /// <param name="relativePath">The path from the Assets folder. Should look like: "Textures/image.png"</param>
-    public static string GetPath(string relativePath) => System.IO.Path.Combine(Path, relativePath);
 }

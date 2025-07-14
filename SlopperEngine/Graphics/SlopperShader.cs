@@ -35,11 +35,11 @@ public class SlopperShader : ISerializableFromKey<string>
     /// <summary>
     /// Creates a SlopperShader.
     /// </summary>
-    /// <param name="filepath">The path to the .sesl file.</param>
+    /// <param name="filepath">The path to the .sesl file. NOT relative - use Core.Assets to get a full path.</param>
     /// <exception cref="FileNotFoundException"></exception>
     public static SlopperShader Create(string filepath)
     {
-        string path = Assets.GetPath(filepath);
+        string path = filepath;
         if(!File.Exists(path)) 
             throw new FileNotFoundException($"Couldnt find shader file at {filepath}");
 

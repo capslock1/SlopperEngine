@@ -3,6 +3,7 @@ using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
+using SlopperEngine.Core;
 
 namespace SlopperEngine.UI.Display;
 
@@ -69,7 +70,7 @@ public sealed class ImageRectangle : DisplayElement
 
     void Init()
     {
-        _shader ??= SlopperShader.Create("shaders/UI/Image.sesl");
+        _shader ??= SlopperShader.Create(Assets.GetPath("shaders/UI/Image.sesl", "EngineAssets"));
         _material = Material.Create(_shader);
         if (_matTextureIndex == -1)
         {

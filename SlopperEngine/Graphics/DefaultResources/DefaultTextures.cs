@@ -1,5 +1,6 @@
 using SlopperEngine.Graphics.Loaders;
 using SlopperEngine.Graphics.GPUResources.Textures;
+using SlopperEngine.Core;
 
 namespace SlopperEngine.Graphics.DefaultResources;
 
@@ -8,5 +9,5 @@ namespace SlopperEngine.Graphics.DefaultResources;
 /// </summary>
 public static class DefaultTextures
 {
-    public static readonly Texture2D Error = TextureLoader.FromFilepath("defaultTextures/error.png");
+    public static readonly Texture2D Error = TextureLoader.FromFilepath(Assets.GetPath("defaultTextures/error.png", "EngineAssets"));
 }

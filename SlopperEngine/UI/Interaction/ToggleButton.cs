@@ -1,4 +1,5 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using SlopperEngine.Core;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.Loaders;
 using SlopperEngine.UI.Base;
@@ -52,14 +53,17 @@ public class ToggleButton : BaseButton
     ImageRectangle _check;
     ColorRectangle _background;
 
-    public ToggleButton(string texturePath = "defaultTextures/checkmark.png")
+    public ToggleButton(Texture2D texture)
     {
-        _checkImage = TextureLoader.FromFilepath(texturePath);
+        _checkImage = texture;
         _check = new(new(0, 0, 1, 1), _checkImage, default);
         _background = new(new(0, 0, 1, 1), Style.BackgroundWeak);
         UIChildren.Add(_background);
         UIChildren.Add(_check);
     }
+    public ToggleButton() : this(
+        TextureLoader.FromFilepath(Assets.GetPath("defaultTextures/checkmark.png", "EngineAssets"))
+    ){}
 
     protected override void OnStyleChanged()
     {

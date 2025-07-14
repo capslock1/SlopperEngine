@@ -51,7 +51,7 @@ public static class MeshLoader
     /// <summary>
     /// Loads a wavefront OBJ mesh from a filepath.
     /// </summary>
-    /// <param name="filename">The path of the file. Is relative to the full game path.</param>
+    /// <param name="filename">The path of the file. NOT relative - use Core.Assets to get a full path.</param>
     /// <returns>A new Mesh instance, or an instance from the cache.</returns>
     /// <exception cref="Exception"></exception>
     public static Mesh SimpleFromWavefrontOBJ(string filepath)
@@ -65,7 +65,7 @@ public static class MeshLoader
         List<Vector3> normData = new List<Vector3>();
         List<Vector3i> indices = new List<Vector3i>();
         
-        string filename = Assets.GetPath(filepath);
+        string filename = filepath;
         if (!File.Exists(filename))
             throw new Exception("Model could not be found at filepath " + filename);
         if (filename.Substring(filename.Length - 4) != ".obj")

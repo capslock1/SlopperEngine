@@ -15,8 +15,8 @@ public static class ShaderLoader
     /// <summary>
     /// Gets a DrawShader from the filepaths to a vertex and fragment shader.
     /// </summary>
-    /// <param name="VertexFilepath">The path to the .vert file. Is relative to the full game path.</param>
-    /// <param name="FragmentFilepath">The path to the .frag file. Is relative to the full game path.</param>
+    /// <param name="VertexFilepath">The path to the .vert file. NOT relative - use Core.Assets to get a full path.</param>
+    /// <param name="FragmentFilepath">The path to the .frag file. NOT relative - use Core.Assets to get a full path.</param>
     /// <returns>A new DrawShader instance, or an instance from the cache.</returns>
     /// <exception cref="Exception"></exception>
     public static DrawShader FromRawGLSLFilepaths(string VertexFilepath, string FragmentFilepath)
@@ -26,8 +26,8 @@ public static class ShaderLoader
         if(res != null)
             return res;
 
-        string VertexShaderSource = File.ReadAllText(Assets.GetPath(VertexFilepath));
-        string FragmentShaderSource = File.ReadAllText(Assets.GetPath(FragmentFilepath));
+        string VertexShaderSource = File.ReadAllText(VertexFilepath);
+        string FragmentShaderSource = File.ReadAllText(FragmentFilepath);
 
         VertexShader vert = VertexShader.Create(VertexShaderSource);
         FragmentShader frag = FragmentShader.Create(FragmentShaderSource);

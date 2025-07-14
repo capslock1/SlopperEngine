@@ -16,7 +16,7 @@ public static class TextureLoader
     /// <summary>
     /// Gets a 2D texture from the filepath with the desired format.
     /// </summary>
-    /// <param name="filepath">The path to the texture file. Is relative to the full game path.</param>
+    /// <param name="filepath">The path to the texture file. NOT relative - use Core.Assets to get a full path.</param>
     /// <param name="format">The format on the GPU of the texture.</param>
     /// <returns>A new Texture2D instance, or an instance from the cache.</returns>
     public static Texture2D FromFilepath(string filepath, SizedInternalFormat format = SizedInternalFormat.Rgba8)
@@ -27,7 +27,7 @@ public static class TextureLoader
         
         StbImage.stbi_set_flip_vertically_on_load(1);
 
-        ImageResult image = ImageResult.FromStream(File.OpenRead(Assets.GetPath(filepath)), ColorComponents.RedGreenBlueAlpha);
+        ImageResult image = ImageResult.FromStream(File.OpenRead(filepath), ColorComponents.RedGreenBlueAlpha);
         res = Texture2D.Create(image.Width, image.Height, format, PixelFormat.Rgba, image.Data);
 
         _textureCache.Set(filepath, res);
