@@ -33,7 +33,7 @@ public abstract class SceneDataContainer<T> : IRefEnumerable<T>, ISceneDataConta
 }
 
 /// <summary>
-/// Stores the SceneDataContainer without the generic bit. Should only ever be inherited by SceneDataContainer<T> !
+/// Stores the SceneDataContainer without the generic bit. Should only ever be inherited by SceneDataContainer
 /// </summary>
 internal interface ISceneDataContainer
 {

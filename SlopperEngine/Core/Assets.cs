@@ -36,7 +36,7 @@ public static class Assets
 
             path = Directory.GetParent(path)?.FullName;
         }
-        _assetFolders[assetFolderName] = path;
-        return Path.Combine(path, relativePath);
+        _assetFolders[assetFolderName] = assetPath[0];
+        return Path.Combine(assetPath[0], relativePath);
     }
 }

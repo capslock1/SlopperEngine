@@ -1,15 +1,18 @@
 {
 	"version": "2.0.0",
 	"tasks": [
-		{
-			"type": "dotnet",
-			"task": "build",
-			"group": "build",
-			"problemMatcher": [],
-			"label": "dotnet: build"
-		},
         {
-			"label": "release build",
+            "type": "dotnet",
+            "task": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "label": "dotnet: build"
+        },
+        {
+            "label": "release build",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -19,6 +22,6 @@
                 "Release"
             ],
             "problemMatcher": "$msCompile"
-        }  
-	]
+        }
+    ]
 }

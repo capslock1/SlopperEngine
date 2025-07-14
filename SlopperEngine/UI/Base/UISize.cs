@@ -39,10 +39,8 @@ public readonly record struct UISize
     public static UISize RelativeToRoot(Vector2 sizeGlobal) => new(Mode.RelativeToRoot, default, sizeGlobal);
 
     /// <summary>
-    /// Gets this UISize 
+    /// Gets this UISize's size relative to a parent's global shape.
     /// </summary>
-    /// <param name="element"></param>
-    /// <returns></returns>
     public readonly Vector2 GetLocalSize(Box2 parentGlobalShape, UIRenderer? renderer)
     {
         switch (_mode)

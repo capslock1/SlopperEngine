@@ -137,6 +137,7 @@ public sealed class Scene : SceneObject
     /// </summary>
     /// <typeparam name="T">The data to unregister.</typeparam>
     /// <param name="handle">The data's handle.</param>
+    /// <param name="data">The data.</param>
     public void UnregisterSceneData<T>(SceneDataHandle handle, T data)
     {
         //System.Console.WriteLine("Unregistered "+typeof(T)+" at "+handle.Index);

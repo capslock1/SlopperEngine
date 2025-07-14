@@ -25,7 +25,7 @@ public class Bloom : IDisposable
     /// Creates a new instance of the bloom postprocessing effect. Expects the input texture to be Rgba16.
     /// </summary>
     /// <param name="mainTextureSize">The size of the texture to do postprocessing on. Using a different sized image may cause artifacts.</param>
-    /// <param name="mipCount">The amount of mips to use. If <0, it will be automatically set to cause the lowest mip to be ~4*4 pixels in size.</param>
+    /// <param name="mipCount">The amount of mips to use. If below 0, it will be automatically set to cause the lowest mip to be ~4*4 pixels in size.</param>
     public Bloom(Vector2i mainTextureSize, int mipCount = -1)
     {
         if(mipCount < 0)

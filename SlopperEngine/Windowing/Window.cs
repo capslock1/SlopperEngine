@@ -140,21 +140,16 @@ public class Window : NativeWindow, ISerializableFromKey<WindowSettings>
             APIVersion = new(4,6),
         });
     }
+
     /// <summary>
-    /// Creates a new window of a specific size.
+    /// Creates a new window of a specific size and settings.
     /// </summary>
-    /// <param name="Size">The size of the window.</param>
-    /// <param name="Position">The position to start it at.</param>
-    /// <param name="Title">The title of the window.</param>
-    /// <param name="WindowState">The state in which the window should start.</param>
-    /// <param name="StartVisible">Whether or not the window is visible when it starts.</param>
-    /// <param name="TransparentFrameBuffer">Whether or not the window can be transparent.</param>
-    /// <param name="Icon">The icon of the window.</param>
     public static Window Create(WindowSettings settings)
     {
-        return new Window(new(){
+        return new Window(new()
+        {
             SharedContext = MainContext.Instance.Context,
-            APIVersion = new(4,6),
+            APIVersion = new(4, 6),
             ClientSize = settings.Size,
             Location = settings.Position,
             Title = settings.Title,

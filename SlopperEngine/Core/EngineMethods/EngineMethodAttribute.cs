@@ -31,5 +31,6 @@ public abstract class EngineMethodAttribute : Attribute
     /// </summary>
     /// <param name="scene">The scene to unregister from.</param>
     /// <param name="handle">The handle of the registered method.</param>
+    /// <param name="obj">The SceneObject to unregister.</param>
     public abstract void UnregisterFromScene(Scene scene, SceneDataHandle handle, SceneObject obj);
 }

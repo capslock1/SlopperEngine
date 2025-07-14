@@ -51,7 +51,7 @@ public static class MeshLoader
     /// <summary>
     /// Loads a wavefront OBJ mesh from a filepath.
     /// </summary>
-    /// <param name="filename">The path of the file. NOT relative - use Core.Assets to get a full path.</param>
+    /// <param name="filepath">The path of the file. NOT relative - use Core.Assets to get a full path.</param>
     /// <returns>A new Mesh instance, or an instance from the cache.</returns>
     /// <exception cref="Exception"></exception>
     public static Mesh SimpleFromWavefrontOBJ(string filepath)

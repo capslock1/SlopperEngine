@@ -7,6 +7,7 @@ namespace SlopperEngine.Physics.Colliders;
 /// <summary>
 /// A simple spherical collider.
 /// </summary>
+/// <param name="mass">The mass of the sphere.</param>
 /// <param name="radius">The size of the sphere.</param>
 public class SphereCollider(float mass, float radius) : Collider(mass)
 {

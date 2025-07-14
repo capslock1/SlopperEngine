@@ -12,6 +12,7 @@ namespace SlopperEngine.UI.Base;
 /// <param name="pressedButton">A button that was pressed this frame.</param>
 /// <param name="releasedButton">A button that was released this frame.</param>
 /// <param name="state">The mouse state. Should be passed for querying if a button is held.</param>
+/// <param name="keyboardState">The keyboardState. Should be passed for quering what modifiers are held.</param>
 /// <param name="type">What type of event this object represents.</param>
 public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelta, MouseButton pressedButton, MouseButton releasedButton, MouseState state, KeyboardState keyboardState, MouseEventType type)
 {
