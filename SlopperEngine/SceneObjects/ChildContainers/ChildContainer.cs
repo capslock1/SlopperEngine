@@ -8,11 +8,18 @@ public partial class SceneObject
     /// <summary>
     /// Base class for child containers.
     /// </summary>
-    public abstract class ChildContainer : IChildContainer
+    public abstract class ChildContainer
     {
+        /// <summary>
+        /// The owner of this ChildContainer. SceneObjects added to this container will be children of the owner.
+        /// </summary>
         public SceneObject Owner { get; }
 
-        int IChildContainer.Count => GetCount();
+        /// <summary>
+        /// The amount of children this ChildContainer holds.
+        /// </summary>
+        public abstract int Count { get; }
+
         bool _currentlyRegistered;
 
         public ChildContainer(SceneObject owner)
@@ -37,42 +44,40 @@ public partial class SceneObject
             SetAllChildrensListIndex();
         }
 
-        void IChildContainer.CheckRegistered()
+        public void CheckRegistered()
         {
             if (Owner.InScene == _currentlyRegistered) return;
 
             _currentlyRegistered = Owner.InScene;
             if (_currentlyRegistered)
             {
-                int c = GetCount();
+                int c = Count;
                 for (int i = 0; i < c; i++)
                     GetByIndex(i).Register(Owner.Scene!);
             }
             else
             {
-                int c = GetCount();
+                int c = Count;
                 for (int i = 0; i < c; i++)
                     GetByIndex(i).Unregister();
             }
         }
 
         /// <summary>
-        /// Gets the amount of children.
-        /// </summary>
-        /// <returns></returns>
-        protected abstract int GetCount();
-
-        /// <summary>
         /// Gets a child by index.
         /// </summary>
-        protected abstract SceneObject GetByIndex(int index);
-        SceneObject IChildContainer.Get(int index) => GetByIndex(index);
+        public abstract SceneObject GetByIndex(int index);
 
         /// <summary>
         /// Removes a child by index.
         /// </summary>
-        protected abstract void RemoveByIndex(int index);
-        void IChildContainer.Remove(int index) => RemoveByIndex(index);
+        public abstract void RemoveByIndex(int index);
+
+        /// <summary>
+        /// Adds a child to the container. Avoid using in favour of container specific functions.
+        /// </summary>
+        /// <returns>Whether or not the object was added.</returns>
+        public abstract bool TryAdd(SceneObject obj);
 
         /// <summary>
         /// Sets the child's parentListIndex.

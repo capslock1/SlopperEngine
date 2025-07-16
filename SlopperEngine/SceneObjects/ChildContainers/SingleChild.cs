@@ -15,6 +15,7 @@ public class SingleChild<TSceneObject, TEvents> : SceneObject.ChildContainer
     where TSceneObject : SceneObject
     where TEvents : IChildListEvents<TSceneObject>
 {
+    public override int Count => _child == null ? 0 : 1;
 
     /// <summary>
     /// The child stored in the SingleChild.
@@ -47,15 +48,25 @@ public class SingleChild<TSceneObject, TEvents> : SceneObject.ChildContainer
         _events = events;
     }
 
-    protected override int GetCount() => _child == null ? 0 : 1;
-    protected override SceneObject GetByIndex(int index) => _child!; // if you nullref here, thats intentional.
-    protected override void RemoveByIndex(int index)
+    public override SceneObject GetByIndex(int index) => _child!; // if you nullref here, thats intented and deserved.
+
+    public override void RemoveByIndex(int index)
     {
         if (_child == null) return;
         TryUnregister(_child);
         UnsetChildListIndex(_child);
         _events.OnChildRemoved(_child, index);
         _child = null;
+    }
+
+    public override bool TryAdd(SceneObject obj)
+    {
+        if (Value != null && obj is TSceneObject t)
+        {
+            Value = t;
+            return true;
+        }
+        return false;
     }
 
     protected override void SetAllChildrensListIndex()

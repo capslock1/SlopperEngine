@@ -12,7 +12,7 @@ public class ChildList<TSceneObject, TEvents> : SceneObject.ChildContainer
     where TSceneObject : SceneObject
     where TEvents : IChildListEvents<TSceneObject>
 {
-    public int Count => _children.Count;
+    public override int Count => _children.Count;
 
     /// <summary>
     /// All children as an IEnumerable.
@@ -82,10 +82,19 @@ public class ChildList<TSceneObject, TEvents> : SceneObject.ChildContainer
         return res;
     }
 
-    protected override int GetCount() => Count;
-    protected override SceneObject GetByIndex(int index) => this[index];
+    public override SceneObject GetByIndex(int index) => this[index];
 
-    protected override void RemoveByIndex(int index)
+    public override bool TryAdd(SceneObject obj)
+    {
+        if (obj is TSceneObject t)
+        {
+            Add(t);
+            return true;
+        }
+        return false;
+    }
+
+    public override void RemoveByIndex(int index)
     {
         var removed = _children[index];
         TryUnregister(removed);

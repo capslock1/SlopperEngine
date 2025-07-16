@@ -29,7 +29,7 @@ partial class SceneObject
                     wr.WriteLine(':');
                     wr.Indent++;
                     for (int i = 0; i < l.Count; i++)
-                        RecursiveWriteTree(l.Get(i));
+                        RecursiveWriteTree(l.GetByIndex(i));
                     wr.Indent--;
                 }
                 wr.Indent--;
@@ -47,7 +47,7 @@ partial class SceneObject
             {
                 res += l.Count;
                 for (int i = 0; i < l.Count; i++)
-                    res += RecursiveChildCount(l.Get(i));
+                    res += RecursiveChildCount(l.GetByIndex(i));
             }
             return res;
         }

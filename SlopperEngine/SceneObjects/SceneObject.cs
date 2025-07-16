@@ -5,6 +5,7 @@ using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.SceneObjects.ChildContainers;
+using System.Runtime.CompilerServices;
 
 namespace SlopperEngine.SceneObjects;
 
@@ -17,6 +18,11 @@ public partial class SceneObject
     /// The parent of the object.
     /// </summary>
     public SceneObject? Parent => _parentList?.Owner;
+
+    /// <summary>
+    /// The childcontainer containing this object.
+    /// </summary>
+    public ChildContainer? ParentContainer => _parentList;
 
     /// <summary>
     /// Whether the object is within a Scene.
@@ -38,11 +44,11 @@ public partial class SceneObject
     /// </summary>
     public ChildList<SceneObject> Children => _children ??= new ChildList<SceneObject>(this);
 
-    [DontSerialize] private IChildContainer? _parentList = null;
+    [DontSerialize] private ChildContainer? _parentList = null;
     private ChildList<SceneObject>? _children;
     [DontSerialize] private int _parentListIndex = -1;
     [DontSerialize] private bool _registryComplete = false;
-    [DontSerialize] private List<IChildContainer>? _childLists;
+    [DontSerialize] private List<ChildContainer>? _childLists;
 
     //premature optimisation? couldnt be me.
     //actually, the registered method handles could be stored in the scene to avoid allocations..... i shant
@@ -121,7 +127,7 @@ public partial class SceneObject
     /// <summary>
     /// Removes this SceneObject from its parent.
     /// </summary>
-    public void Remove() => _parentList?.Remove(_parentListIndex);
+    public void Remove() => _parentList?.RemoveByIndex(_parentListIndex);
 
     /// <summary>
     /// Destroys this SceneObject. After destruction, a SceneObject will insist that it is null, and can no longer be used in scenes.
@@ -137,7 +143,7 @@ public partial class SceneObject
         if(_childLists != null)
             foreach(var children in _childLists)
                 for(int i = 0; i < children.Count; i++)
-                    children.Get(i).SetDestroyed();
+                    children.GetByIndex(i).SetDestroyed();
 
         OnDestroyed();
         Destroyed = true;
