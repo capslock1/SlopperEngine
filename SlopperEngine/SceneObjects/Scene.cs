@@ -16,12 +16,57 @@ namespace SlopperEngine.SceneObjects;
 /// </summary>
 public sealed class Scene : SceneObject
 {
+    /// <summary>
+    /// Whether or not the scene receives updates from the main context. Inactive scenes can still manually be updated.
+    /// </summary>
+    [EditorIntegration.HideInInspector]
+    public bool Active
+    {
+        get => _active;
+        set
+        {
+            if (value == _active)
+                return;
+            if (value && Destroyed)
+                return;
+
+            _active = value;
+            if (value)
+                _activeScenes.Add(this);
+            else _activeScenes.Remove(this);
+        }
+    }
+    bool _active;
+
+    /// <summary>
+    /// All scenes will be updated by the main context.
+    /// </summary>
     public static ReadOnlyCollection<Scene> ActiveScenes => _activeScenes.AsReadOnly();
+
+    /// <summary>
+    /// The components of this scene. These can act as singletons, and generally interact with the scenes through SceneData.
+    /// </summary>
     public readonly ChildList<SceneComponent> Components;
+
+    /// <summary>
+    /// The renderers of this scene.
+    /// </summary>
     public readonly ChildList<SceneRenderer> Renderers;
-    public UpdateHandler? UpdateHandler {get; private set;}
-    public SceneRenderer? SceneRenderer {get; private set;}
-    public PhysicsHandler? PhysicsHandler {get; private set;}
+    
+    /// <summary>
+    /// The main update handler of this scene.
+    /// </summary>
+    public UpdateHandler? UpdateHandler { get; private set; }
+    
+    /// <summary>
+    /// The main renderer of this scene.
+    /// </summary>
+    public SceneRenderer? SceneRenderer { get; private set; }
+    
+    /// <summary>
+    /// The main physics handler of this scene.
+    /// </summary>
+    public PhysicsHandler? PhysicsHandler { get; private set; }
 
     [DontSerialize] FridgeDictionary<Type, ISceneDataContainer> _dataContainers = new();
     [DontSerialize] RegisterHandler _register;
@@ -29,7 +74,7 @@ public sealed class Scene : SceneObject
 
     private Scene()
     {
-        _activeScenes.Add(this);
+        Active = true;
         _register = new(this);
         Components = new(this);
         Renderers = new(this);
@@ -221,6 +266,6 @@ public sealed class Scene : SceneObject
 
     protected override void OnDestroyed()
     {
-        _activeScenes.Remove(this);
+        Active = false;
     }
 }

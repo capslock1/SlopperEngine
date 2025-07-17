@@ -16,6 +16,7 @@ public partial class SceneObject
     /// <summary>
     /// The parent of the object.
     /// </summary>
+    [EditorIntegration.HideInInspector]
     public SceneObject? Parent => _parentList?.Owner;
 
     /// <summary>
@@ -27,16 +28,19 @@ public partial class SceneObject
     /// <summary>
     /// Whether the object is within a Scene.
     /// </summary>
+    [EditorIntegration.HideInInspector]
     public bool InScene => Scene != null;
 
     /// <summary>
     /// The scene this object is in.
     /// </summary>
+    [EditorIntegration.HideInInspector]
     [field:DontSerialize] public Scene? Scene {get; private set;}
 
     /// <summary>
     /// Whether the object exists or is destroyed. Destroyed objects cannot be used in Scenes.
     /// </summary>
+    [EditorIntegration.HideInInspector]
     public bool Destroyed {get; private set;}
 
     /// <summary>
@@ -48,7 +52,7 @@ public partial class SceneObject
     private ChildList<SceneObject>? _children;
     [DontSerialize] private int _parentListIndex = -1;
     [DontSerialize] private bool _registryComplete = false;
-    [DontSerialize] private List<ChildContainer>? _childLists;
+    [DontSerialize] private List<ChildContainer>? _childContainers;
 
     //premature optimisation? couldnt be me.
     //actually, the registered method handles could be stored in the scene to avoid allocations..... i shant
@@ -99,8 +103,8 @@ public partial class SceneObject
         for(int i = 0; i<_registeredMethods.Count; i++)
             _registeredMethodHandles[i] = _registeredMethods[i].RegisterToScene(sc, this);
 
-        if(_childLists != null)
-            foreach(var children in _childLists)
+        if(_childContainers != null)
+            foreach(var children in _childContainers)
                 children.CheckRegistered();
     }
 
@@ -119,8 +123,8 @@ public partial class SceneObject
             Scene = null;
         }
 
-        if(_childLists != null)
-            foreach(var children in _childLists)
+        if(_childContainers != null)
+            foreach(var children in _childContainers)
                 children.CheckRegistered();
     }
 
@@ -140,15 +144,19 @@ public partial class SceneObject
     }
     private void SetDestroyed()
     {
-        if(_childLists != null)
-            foreach(var children in _childLists)
+        if(_childContainers != null)
+            foreach(var children in _childContainers)
                 for(int i = 0; i < children.Count; i++)
                     children.GetByIndex(i).SetDestroyed();
 
-        OnDestroyed();
         Destroyed = true;
+        OnDestroyed();
     }
-    protected virtual void OnDestroyed(){}
+    
+    /// <summary>
+    /// Gets called after the SceneObject is destroyed.
+    /// </summary>
+    protected virtual void OnDestroyed() { }
     
     /// <summary>
     /// Gets the transform from this object's space to global space, also known as the model-to-global space matrix.

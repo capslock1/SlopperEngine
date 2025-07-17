@@ -21,9 +21,9 @@ partial class SceneObject
                 wr.WriteLine(obj.GetType().Name);
                 wr.Write("registry complete: ");
                 wr.WriteLine(obj._registryComplete);
-                if (obj._childLists == null) return;
+                if (obj._childContainers == null) return;
                 wr.Indent++;
-                foreach (var l in obj._childLists)
+                foreach (var l in obj._childContainers)
                 {
                     wr.Write(l.GetType().Name);
                     wr.WriteLine(':');
@@ -42,8 +42,8 @@ partial class SceneObject
         public static int RecursiveChildCount(SceneObject obj)
         {
             int res = 0;
-            if (obj._childLists == null) return 0;
-            foreach (var l in obj._childLists)
+            if (obj._childContainers == null) return 0;
+            foreach (var l in obj._childContainers)
             {
                 res += l.Count;
                 for (int i = 0; i < l.Count; i++)

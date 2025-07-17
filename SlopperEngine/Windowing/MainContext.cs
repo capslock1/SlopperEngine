@@ -64,7 +64,7 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         
         GPUResource.ClearLostResources();
 
-        //first update inputs
+        // first update inputs
         int aliveWindows = 0;
         for (int i = Window.AllWindows.Count - 1; i >= 0; i--)
         {
@@ -90,12 +90,9 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             return;
         }
         
-        //spawns a new parallel task for every scene that needs an update, once previous frame is finished
-        FrameUpdateArgs time = new FrameUpdateArgs((float)args.Time);
-        List<Scene> alive = new();
-        foreach(var sc in Scene.ActiveScenes)
-            if(!sc.Destroyed)
-                alive.Add(sc);
+        // creates a new parallel task for every scene that needs an update, once previous frame is finished
+        FrameUpdateArgs time = new ((float)args.Time);
+        Scene[] alive = Scene.ActiveScenes.ToArray();
 
         if (MultithreadedFrameUpdate)
         {
@@ -112,9 +109,9 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         else foreach (var sc in alive)
             sc.FrameUpdate(time);
 
-        //then, render every scene once
+        // then, render every scene once
         Context?.MakeCurrent();
-        for (int i = 0; i < alive.Count; i++)
+        for (int i = 0; i < alive.Length; i++)
         {
             const string Message = "SlopperEngine Scene render";
             GL.PushDebugGroup(DebugSourceExternal.DebugSourceApplication, i, Message.Length, Message);

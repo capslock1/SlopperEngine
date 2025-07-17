@@ -31,8 +31,8 @@ public partial class SceneObject
 
         void Init()
         {
-            Owner._childLists ??= new(1);
-            Owner._childLists.Add(this);
+            Owner._childContainers ??= new(1);
+            Owner._childContainers.Add(this);
         }
 
         [OnSerialize]
