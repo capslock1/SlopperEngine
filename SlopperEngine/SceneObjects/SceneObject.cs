@@ -5,7 +5,6 @@ using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.SceneObjects.ChildContainers;
-using System.Runtime.CompilerServices;
 
 namespace SlopperEngine.SceneObjects;
 
@@ -22,6 +21,7 @@ public partial class SceneObject
     /// <summary>
     /// The childcontainer containing this object.
     /// </summary>
+    [EditorIntegration.HideInInspector]
     public ChildContainer? ParentContainer => _parentList;
 
     /// <summary>

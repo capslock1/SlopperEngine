@@ -57,7 +57,7 @@ public class ToggleButton : BaseButton
     {
         _checkImage = texture;
         _check = new(new(0, 0, 1, 1), _checkImage, default);
-        _background = new(new(0, 0, 1, 1), Style.BackgroundWeak);
+        _background = new(new(0, 0, 1, 1), Style.ForegroundWeak);
         UIChildren.Add(_background);
         UIChildren.Add(_check);
     }

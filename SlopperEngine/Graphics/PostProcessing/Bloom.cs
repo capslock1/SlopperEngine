@@ -143,10 +143,10 @@ public class Bloom : IDisposable
     static void InitShaders()
     {
         if(_upscale != null) return; //dont even care
-        _downscale = ComputeShader.Create(File.ReadAllText(Assets.GetPath("shaders/PostProcessing/BloomDownscale.compute")));
+        _downscale = ComputeShader.Create(File.ReadAllText(Assets.GetPath("shaders/PostProcessing/BloomDownscale.compute", "EngineAssets")));
         _UdownDTS = _downscale.GetUniformLocation("DestinationTexelSize");
         _UdownSTS = _downscale.GetUniformLocation("SourceTexelSize");
-        _upscale = ComputeShader.Create(File.ReadAllText(Assets.GetPath("shaders/PostProcessing/BloomUpscale.compute")));
+        _upscale = ComputeShader.Create(File.ReadAllText(Assets.GetPath("shaders/PostProcessing/BloomUpscale.compute", "EngineAssets")));
         _UupDTS = _upscale.GetUniformLocation("DestinationTexelSize");
         _UupSTS = _upscale.GetUniformLocation("SourceTexelSize");
         _UupDCont = _upscale.GetUniformLocation("DestinationContribution");

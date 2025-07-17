@@ -75,6 +75,7 @@ public class ScrollableArea : UIElement
     }
     UISize _preferredScrollbarSize = UISize.FromPixels(new(10,10));
 
+    readonly ColorRectangle _contentBackground;
     readonly ContentArea _contentArea;
     readonly UIElement _movingArea;
     readonly Slider _horizontalSlider;
@@ -134,6 +135,8 @@ public class ScrollableArea : UIElement
         internalUIChildren.Add(Background = new());
 
         var scrollbarSize = new Vector2(0.03f, 0.03f);
+
+        internalUIChildren.Add(_contentBackground = new(new(0, 0, 1, 1), Style.BackgroundStrong));
 
         internalUIChildren.Add(_contentArea = new());
         _contentArea.LocalShape = new(scrollbarSize, Vector2.One);
@@ -246,6 +249,7 @@ public class ScrollableArea : UIElement
         _horizontalSlider.LocalShape = new(contentStart.X, sliderStart.Y, contentEnd.X, sliderEnd.Y);
         _verticalSlider.LocalShape = new(sliderStart.X, contentStart.Y, sliderEnd.X, contentEnd.Y);
         _sliderCorner.LocalShape = new(sliderStart, sliderEnd);
+        _contentBackground.LocalShape = new(contentStart, contentEnd);
         _contentArea.LocalShape = new(contentStart, contentEnd);
         UpdatePosition();
     }
@@ -328,6 +332,7 @@ public class ScrollableArea : UIElement
         _horizontalSlider.Style = Style;
         _verticalSlider.Style = Style;
         _sliderCorner.Color = Style.BackgroundStrong;
+        _contentBackground.Color = Style.BackgroundStrong;
     }
 
     /// <summary>
