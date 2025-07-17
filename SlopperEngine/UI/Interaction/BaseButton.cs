@@ -10,9 +10,27 @@ namespace SlopperEngine.UI.Interaction;
 /// </summary>
 public abstract class BaseButton : UIElement
 {
+    /// <summary>
+    /// Whether or not the button can be interacted with.
+    /// </summary>
     public bool Enabled
     {
         get => _enabled;
+        set
+        {
+            if (value == _enabled)
+                return;
+
+            _enabled = value;
+            if (!value && hovered)
+            {
+                OnDisable();
+                hovered = false;
+            }
+            if (value)
+                OnEnable();
+            else OnDisable();
+        }
     }
     bool _enabled = true;
 
@@ -35,6 +53,12 @@ public abstract class BaseButton : UIElement
 
     protected override void HandleEvent(ref MouseEvent e)
     {
+        if (!Enabled)
+        {
+            e.Block();
+            return;
+        }
+
         if (!hovered)
             OnMouseEntry();
         hovered = true;
