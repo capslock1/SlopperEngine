@@ -9,7 +9,7 @@ namespace SlopperEngine.UI.Interaction;
 /// <summary>
 /// A button with text on it.
 /// </summary>
-public class TextButton : BaseButton
+public sealed class TextButton : BaseButton
 {
     /// <summary>
     /// Gets called when the text button gets pressed.
@@ -43,12 +43,21 @@ public class TextButton : BaseButton
         OnStyleChanged();
     }
 
+    public TextButton(string text) : this()
+    {
+        Text = text;
+    }
+
     protected override void OnStyleChanged()
     {
-        _background.Color = mouseButtonsHeld > 0 ? Style.Tint : hovered ? Style.ForegroundStrong : Style.ForegroundWeak;
-        _textRenderer.TextColor = mouseButtonsHeld > 0 ? Style.ForegroundStrong : Style.Tint;
-        _textRenderer.Font = Style.Font;
         _textRenderer.Scale = Style.FontScale;
+        _textRenderer.Font = Style.Font;
+        if (Enabled)
+        {
+            _background.Color = mouseButtonsHeld > 0 ? Style.Tint : hovered ? Style.ForegroundStrong : Style.ForegroundWeak;
+            _textRenderer.TextColor = mouseButtonsHeld > 0 ? Style.ForegroundStrong : Style.Tint;
+        }
+        else OnDisable();
     }
     
     protected override UIElementSize GetSizeConstraints()
@@ -83,5 +92,16 @@ public class TextButton : BaseButton
     {
         _background.Color = Style.ForegroundWeak;
         _textRenderer.TextColor = Style.Tint;
+    }
+
+    protected override void OnEnable()
+    {
+        OnMouseExit();
+    }
+
+    protected override void OnDisable()
+    {
+        _background.Color = Style.BackgroundWeak;
+        _textRenderer.TextColor = Style.ForegroundStrong;
     }
 }

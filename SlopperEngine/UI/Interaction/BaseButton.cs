@@ -10,6 +10,12 @@ namespace SlopperEngine.UI.Interaction;
 /// </summary>
 public abstract class BaseButton : UIElement
 {
+    public bool Enabled
+    {
+        get => _enabled;
+    }
+    bool _enabled = true;
+
     protected bool hovered { get; private set; }
     protected int mouseButtonsHeld { get; private set; }
 
@@ -56,4 +62,6 @@ public abstract class BaseButton : UIElement
     protected abstract void OnAllButtonsReleased();
     protected abstract void OnMouseEntry();
     protected abstract void OnMouseExit();
+    protected abstract void OnEnable();
+    protected abstract void OnDisable();
 }

@@ -103,6 +103,8 @@ public class Slider : UIElement
         UpdateBar();
     }
 
+    public Slider() : this(2){}
+
     [OnRegister]
     void UpdateBar()
     {

@@ -155,6 +155,8 @@ public class ScrollableArea : UIElement
         UpdateSliderShapes();
     }
 
+    public ScrollableArea() : this(new(0,0,1,1)){}
+
     void UpdatePosition()
     {
         Vector2 center = new Vector2(.5f) - _movingAreaOffset;

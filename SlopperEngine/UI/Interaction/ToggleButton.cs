@@ -10,7 +10,7 @@ namespace SlopperEngine.UI.Interaction;
 /// <summary>
 /// A toggle button.
 /// </summary>
-public class ToggleButton : BaseButton
+public sealed class ToggleButton : BaseButton
 {
 
     /// <summary>
@@ -36,7 +36,7 @@ public class ToggleButton : BaseButton
 
             _checked = value;
             if (value)
-                _check.Color = Style.Tint;
+                _check.Color = Enabled ? Style.Tint : Style.ForegroundStrong;
             else _check.Color = default;
 
             OnToggle?.Invoke(value);
@@ -101,5 +101,19 @@ public class ToggleButton : BaseButton
     {
         _background.Color = Style.Tint;
         Checked = !Checked;
+    }
+
+    protected override void OnEnable()
+    {
+        OnMouseExit();
+        if (Checked)
+            _check.Color = Style.Tint;
+    }
+
+    protected override void OnDisable()
+    {
+        _background.Color = Style.BackgroundWeak;
+        if(Checked)
+            _check.Color = Style.ForegroundStrong;
     }
 }
