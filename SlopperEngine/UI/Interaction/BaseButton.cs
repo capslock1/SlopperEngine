@@ -22,11 +22,8 @@ public abstract class BaseButton : UIElement
                 return;
 
             _enabled = value;
-            if (!value && hovered)
-            {
-                OnDisable();
-                hovered = false;
-            }
+            hovered = false;
+
             if (value)
                 OnEnable();
             else OnDisable();
@@ -61,6 +58,13 @@ public abstract class BaseButton : UIElement
 
         if (!hovered)
             OnMouseEntry();
+
+        if (!Enabled)
+        {
+            e.Block();
+            return;
+        }
+
         hovered = true;
         if (e.Type == MouseEventType.PressedButton)
         {
@@ -74,7 +78,7 @@ public abstract class BaseButton : UIElement
             mouseButtonsHeld--;
             OnAnyRelease(e.ReleasedButton);
             e.Use();
-            if (mouseButtonsHeld == 0)
+            if (mouseButtonsHeld == 0 && Enabled)
                 OnAllButtonsReleased();
             return;
         }
