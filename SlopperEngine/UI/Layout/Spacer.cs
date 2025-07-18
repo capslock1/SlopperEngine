@@ -39,8 +39,5 @@ public sealed class Spacer : UIElement
 
     protected override UIElementSize GetSizeConstraints() => new(GrowDirectionX, GrowDirectionY, MinWidth, MinHeight, MaxWidth, MaxHeight);
 
-    protected override Box2 GetScissorRegion()
-    {
-        return base.GetScissorRegion();
-    }
+    protected override Box2 GetScissorRegion() => ScissorRegion;
 }

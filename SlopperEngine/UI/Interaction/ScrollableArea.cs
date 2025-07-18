@@ -350,5 +350,6 @@ public class ScrollableArea : UIElement
     class ContentArea : UIElement
     {
         protected override Box2 GetScissorRegion() => new(0, 0, 1, 1);
+        protected override bool IncludeInChildbounds() => false;
     }
 }

@@ -128,10 +128,14 @@ public class UIElement : SceneObject
     /// Handles a mouse event. Remember to call e.Use() when using info from the event in any way (or to simply block it).
     /// </summary>
     protected virtual void HandleEvent(ref MouseEvent e) { }
+    /// <summary>
+    /// Whether or not this element should have its bounds included in ChildBounds.
+    /// </summary>
+    protected virtual bool IncludeInChildbounds() => true;
 
     private void ReceiveEvent(ref MouseEvent e)
     {
-        MouseEvent childEvent = e; 
+        MouseEvent childEvent = e;
         if (LastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
         {
             for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
@@ -179,6 +183,9 @@ public class UIElement : SceneObject
         {
             var ch = internalUIChildren[_safeIterator];
             ch.UpdateShape(globalShape, renderer);
+            if (!ch.IncludeInChildbounds())
+                continue;
+                
             if (!boundsInitted)
             {
                 childBounds = ch.LastChildrenBounds;
@@ -192,6 +199,7 @@ public class UIElement : SceneObject
             childBounds.Extend(ch.LastGlobalShape.Min);
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
+
         var trueParent = (UIElement)UIChildren.Owner;
         var trueGlobal = trueParent.LastGlobalShape;
         var trueSize = trueGlobal.Size;
