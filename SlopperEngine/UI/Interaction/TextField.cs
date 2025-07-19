@@ -77,7 +77,7 @@ public class TextField : UIElement
     int _selectionMax => int.Min(_fullText.Length + 1, int.Max(_cursorPosition, _cursorPosition + _selectionLength));
     int _selectionMin => int.Max(0, int.Min(_cursorPosition, _cursorPosition + _selectionLength));
 
-    public TextField(int length)
+    public TextField(int length = 10)
     {
         Length = length;
         _textRenderer = new();

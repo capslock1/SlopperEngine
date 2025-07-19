@@ -11,6 +11,14 @@ namespace SlopperEngine.Physics.Colliders;
 /// <param name="radius">The size of the sphere.</param>
 public class SphereCollider(float mass, float radius) : Collider(mass)
 {
+    /// <summary>
+    /// Creates a SphereCollider with mass and radius 1.
+    /// </summary>
+    public SphereCollider() : this(1, 1) { }
+
+    /// <summary>
+    /// The radius of this collider.
+    /// </summary>
     public float Radius
     {
         get => _radius;

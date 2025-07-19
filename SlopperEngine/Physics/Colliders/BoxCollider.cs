@@ -12,6 +12,14 @@ namespace SlopperEngine.Physics.Colliders;
 /// <param name="dimensions">How large the box is.</param>
 public class BoxCollider(float mass, Vector3 dimensions) : Collider(mass)
 {
+    /// <summary>
+    /// Creates a BoxCollider of mass and dimensions 1. 
+    /// </summary>
+    public BoxCollider() : this(1, Vector3.One) { }
+
+    /// <summary>
+    /// The size of the box.
+    /// </summary>
     public Vector3 Dimensions
     {
         get => _dimensions;
