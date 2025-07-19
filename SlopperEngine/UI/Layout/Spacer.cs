@@ -36,8 +36,14 @@ public sealed class Spacer : UIElement
     /// Decides where in the spacer's space elements should be cut off.
     /// </summary>
     public Box2 ScissorRegion = new(Vector2.NegativeInfinity, Vector2.PositiveInfinity);
+    /// <summary>
+    /// Whether or not this spacer and its children contribute to its parent's perceived bounds.
+    /// </summary>
+    public bool IncludeInChildBounds = true;
 
     protected override UIElementSize GetSizeConstraints() => new(GrowDirectionX, GrowDirectionY, MinWidth, MinHeight, MaxWidth, MaxHeight);
 
     protected override Box2 GetScissorRegion() => ScissorRegion;
+
+    protected override bool IncludeInChildbounds() => IncludeInChildBounds;
 }

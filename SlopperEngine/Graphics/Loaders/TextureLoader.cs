@@ -1,5 +1,4 @@
 using OpenTK.Graphics.OpenGL4;
-using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Textures;

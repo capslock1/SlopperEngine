@@ -1,7 +1,6 @@
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using OpenTK.Mathematics;
-using SlopperEngine.Physics;
 
 namespace SlopperEngine.Physics.Colliders;
 

@@ -1,6 +1,5 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.DefaultResources;

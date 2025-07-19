@@ -1,5 +1,3 @@
-
-using System.Collections;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
 

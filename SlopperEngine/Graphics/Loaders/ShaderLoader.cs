@@ -1,4 +1,3 @@
-using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Shaders;

@@ -1,8 +1,6 @@
 
 using System.CodeDom.Compiler;
-using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
-using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.Graphics.GPUResources.Shaders;
 using SlopperEngine.Graphics.GPUResources.Meshes;

@@ -1,7 +1,6 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using OpenTK.Windowing.Common;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources;

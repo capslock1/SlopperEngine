@@ -1,5 +1,3 @@
-using OpenTK.Windowing.GraphicsLibraryFramework;
-
 namespace SlopperEngine.Core;
 
 /// <summary>
