@@ -35,9 +35,18 @@ public sealed class ToggleButton : BaseButton
                 return;
 
             _checked = value;
-            if (value)
-                _check.Color = Enabled ? Style.Tint : Style.ForegroundStrong;
-            else _check.Color = default;
+            if (_falseImage == null)
+            {
+                if (value)
+                    _check.Color = Enabled ? Style.Tint : Style.ForegroundStrong;
+                else _check.Color = default;
+            }
+            else
+            {
+                if (value)
+                    _check.Texture = _trueImage;
+                else _check.Texture = _falseImage;
+            }
 
             OnToggle?.Invoke(value);
         }
@@ -49,21 +58,27 @@ public sealed class ToggleButton : BaseButton
     /// </summary>
     public event Action<bool>? OnToggle;
 
-    Texture2D _checkImage;
-    ImageRectangle _check;
-    ColorRectangle _background;
+    readonly Texture2D _trueImage;
+    readonly Texture2D? _falseImage;
+    readonly ImageRectangle _check;
+    readonly ColorRectangle _background;
 
-    public ToggleButton(Texture2D texture)
+    public ToggleButton(Texture2D texture, Texture2D? uncheckedTexture)
     {
-        _checkImage = texture;
-        _check = new(new(0, 0, 1, 1), _checkImage, default);
+        _trueImage = texture;
+        _falseImage = uncheckedTexture;
+        _check = new(new(0, 0, 1, 1), _falseImage ?? _trueImage, _falseImage == null ? default : Style.Tint);
         _background = new(new(0, 0, 1, 1), Style.ForegroundWeak);
         UIChildren.Add(_background);
         UIChildren.Add(_check);
     }
+    
+    public ToggleButton(Texture2D texture) : this(texture, null) { }
+    
     public ToggleButton() : this(
         TextureLoader.FromFilepath(Assets.GetPath("defaultTextures/checkmark.png", "EngineAssets"))
-    ){}
+    )
+    { }
 
     protected override void OnStyleChanged()
     {
@@ -75,10 +90,10 @@ public sealed class ToggleButton : BaseButton
     protected override UIElementSize GetSizeConstraints() =>
         new(Horizontal,
             Vertical,
-            _checkImage.Width,
-            _checkImage.Height,
-            _checkImage.Width,
-            _checkImage.Height);
+            _trueImage.Width,
+            _trueImage.Height,
+            _trueImage.Width,
+            _trueImage.Height);
 
     protected override void OnAllButtonsReleased()
     {
@@ -106,14 +121,14 @@ public sealed class ToggleButton : BaseButton
     protected override void OnEnable()
     {
         OnMouseExit();
-        if (Checked)
+        if (Checked || _falseImage != null)
             _check.Color = Style.Tint;
     }
 
     protected override void OnDisable()
     {
         _background.Color = Style.BackgroundWeak;
-        if(Checked)
+        if(Checked || _falseImage != null)
             _check.Color = Style.ForegroundStrong;
     }
 }
