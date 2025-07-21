@@ -120,7 +120,7 @@ public sealed class Scene : SceneObject
     {
         UpdateRegister();
         FinalizeQueues();
-        foreach(var comp in Components.All)
+        foreach(var comp in Components.All.ToArray())
             comp.FrameUpdate(update);
         UpdateRegister();
         FinalizeQueues();
@@ -134,9 +134,9 @@ public sealed class Scene : SceneObject
     {
         UpdateRegister();
         FinalizeQueues();
-        foreach(var comp in Components.All)
+        foreach(var comp in Components.All.ToArray())
             comp.InputUpdate(update);
-        foreach (var rend in Renderers.All)
+        foreach (var rend in Renderers.All.ToArray())
             rend.InputUpdate(update);
         UpdateRegister();
         FinalizeQueues();
@@ -149,7 +149,7 @@ public sealed class Scene : SceneObject
     {
         UpdateRegister();
         FinalizeQueues();
-        foreach(var rend in Renderers.AllOfType<SceneRenderer>())
+        foreach(var rend in Renderers.All.ToArray())
             rend.Render(args);
         UpdateRegister();
         FinalizeQueues();
