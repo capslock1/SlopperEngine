@@ -155,9 +155,9 @@ public class TextBox : UIElement
         }
         UIElementSize res = new(Horizontal, Vertical,
             _texture?.Width * Scale ?? 0,
-            _texture?.Height * Scale ?? RasterFont.FourXEight.CharacterSize.Y,
+            _texture?.Height * Scale ?? Font.CharacterSize.Y,
             _texture?.Width * Scale ?? 0,
-            _texture?.Height * Scale ?? RasterFont.FourXEight.CharacterSize.Y);
+            _texture?.Height * Scale ?? Font.CharacterSize.Y);
         return res;
     }
 
