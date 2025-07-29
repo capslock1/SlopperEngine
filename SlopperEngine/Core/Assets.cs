@@ -2,14 +2,33 @@
 namespace SlopperEngine.Core;
 
 /// <summary>
-/// Helper class to find assets.
+/// Helper class to find assets. Assumes asset folders do not change during the program's runtime.
 /// </summary>
-public static class Assets
+public class Assets
 {
     /// <summary>
-    /// Contains
+    /// The assetloader to use. Can be overridden when necessary (some asset folder is not located in a usual location, for example).
     /// </summary>
-    static readonly Dictionary<string, string> _assetFolders = new();
+    public static Assets Instance
+    {
+        get
+        {
+            lock (_instance)
+            {
+                return _instance;
+            }
+        }
+        set
+        {
+            lock (_instance)
+            {
+                _instance = value;
+            }
+        }
+    }
+    static Assets _instance = new();
+
+    readonly Dictionary<(string, string?), string> _foundFolderPaths = new();
 
     /// <summary>
     /// Gets the filepath to an asset relative to a specific assets folder.
@@ -20,23 +39,44 @@ public static class Assets
     /// <exception cref="Exception"></exception>
     public static string GetPath(string relativePath, string assetFolderName = "Assets")
     {
-        if (_assetFolders.TryGetValue(assetFolderName, out string? path))
-            return Path.Combine(path, relativePath);
+        lock (_instance)
+            return _instance.GetPathInternal(relativePath, assetFolderName);
+    }
 
-        path = Directory.GetCurrentDirectory();
+    /// <summary>
+    /// Refer to static string GetPath(,).
+    /// </summary>
+    protected virtual string GetPathInternal(string relativePath, string assetFolderName)
+    {
+        var path = FindPathToFolder(assetFolderName);
+        return Path.Combine(path, relativePath);
+    }
+
+    /// <summary>
+    /// Searches upwards for a folder with a specific name.
+    /// </summary>
+    /// <param name="folderName">The folder to find.</param>
+    /// <param name="startDirectory">The directory to start the search at. If null, the program's directory will be used.</param>
+    /// <returns>The full path to the folder.</returns>
+    protected string FindPathToFolder(string folderName = "Assets", string? startDirectory = null)
+    {
+        if (_foundFolderPaths.TryGetValue((folderName, startDirectory), out var res))
+            return res;
+
+        startDirectory ??= Directory.GetCurrentDirectory();
         string[]? assetPath;
         while (true)
         {
-            if (path == null)
-                throw new Exception("Could not find the Assets folder.");
+            if (startDirectory == null)
+                throw new Exception($"Could not find the {folderName} folder.");
 
-            assetPath = Directory.GetDirectories(path, assetFolderName);
+            assetPath = Directory.GetDirectories(startDirectory, folderName);
             if (assetPath.Length != 0)
                 break;
 
-            path = Directory.GetParent(path)?.FullName;
+            startDirectory = Directory.GetParent(startDirectory)?.FullName;
         }
-        _assetFolders[assetFolderName] = assetPath[0];
-        return Path.Combine(assetPath[0], relativePath);
+        _foundFolderPaths[(folderName, startDirectory)] = assetPath[0];
+        return assetPath[0];
     }
 }
