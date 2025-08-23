@@ -144,7 +144,7 @@ public partial class SerializedObject
     string? ReadString(SerialHandle handle)
     {
         int count = BinaryPrimitives.ReadInt32LittleEndian(_primitiveData.AllValues.Slice(handle.Handle));
-        return Encoding.Unicode.GetString(_primitiveData.AllValues.Slice(handle.Handle + 4, count));
+        return Encoding.UTF8.GetString(_primitiveData.AllValues.Slice(handle.Handle + 4, count));
     }
 
     object? ReadPrimitive(SerialHandle handle)
@@ -188,9 +188,6 @@ public partial class SerializedObject
 
     public record struct SerializationToken(SerializedObject owner)
     {
-        readonly SerializedObject _owner = owner;
-
-
         public object? RecursiveDeserialize(int serialHandleIndex, Dictionary<int, object?> deserializedObjects)
         {
             return owner.RecursiveDeserialize(serialHandleIndex, deserializedObjects);

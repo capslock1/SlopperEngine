@@ -8,7 +8,7 @@ namespace SlopperEngine.SceneObjects.Serialization;
 
 public partial class SerializedObject
 {
-    const int _BinaryUncompressedVersion = 1;
+    const int _BinaryUncompressedVersion = 2;
 
     /// <summary>
     /// Loads a BinaryUncompressed format SerializedObject.
@@ -166,7 +166,7 @@ public partial class SerializedObject
         stream.WriteByte((byte)'L');
         stream.WriteByte((byte)'B');
         stream.WriteByte((byte)'U');
-        using StreamWriter textReader = new(stream, Encoding.Unicode);
+        using StreamWriter textReader = new(stream, Encoding.UTF8);
 
         WriteIntToStream(_BinaryUncompressedVersion); // version
 

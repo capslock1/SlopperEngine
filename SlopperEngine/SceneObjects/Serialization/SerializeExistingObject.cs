@@ -164,13 +164,13 @@ public partial class SerializedObject
         res.SerialType = SerialHandle.Type.Reference;
         res.Handle = _primitiveData.Count;
 
-        int stringLength = Encoding.Unicode.GetByteCount(obj);
+        int stringLength = Encoding.UTF8.GetByteCount(obj);
         res.IndexedType = GetTypeIndex(typeof(string), refs);
         res.DebugTypeName = "string";
 
-        var span = _primitiveData.AddMultiple(Encoding.Unicode.GetByteCount(obj) + 4);
+        var span = _primitiveData.AddMultiple(Encoding.UTF8.GetByteCount(obj) + 4);
         BinaryPrimitives.WriteInt32LittleEndian(span, stringLength);
-        Encoding.Unicode.GetBytes(obj, span.Slice(4));
+        Encoding.UTF8.GetBytes(obj, span.Slice(4));
 
         return res;
     }

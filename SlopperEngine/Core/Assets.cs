@@ -26,7 +26,7 @@ public class Assets
             }
         }
     }
-    static Assets _instance = new();
+    volatile static Assets _instance = new();
 
     readonly Dictionary<(string, string?), string> _foundFolderPaths = new();
 
