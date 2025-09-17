@@ -92,12 +92,16 @@ public class RGBA8Texture
         _gpuUpToDate = false;
         var col = (Vector4)color;
         col *= 255;
-        Vector4.Clamp(col, new(0), new(255));
         int pos = (position.X + Width * position.Y) * 4;
-        _pixels[pos] = (byte)col.X;
-        _pixels[pos+1] = (byte)col.Y;
-        _pixels[pos+2] = (byte)col.Z;
-        _pixels[pos+3] = (byte)col.W;
+        _pixels[pos] = ToByte(col.X);
+        _pixels[pos+1] = ToByte(col.Y);
+        _pixels[pos+2] = ToByte(col.Z);
+        _pixels[pos+3] = ToByte(col.W);
+
+        byte ToByte(float val)
+        {
+            return (val < 0) ? (byte)0 : (val >= 255) ? (byte)255 : (byte)val;
+        }
 
         return true;
     }
