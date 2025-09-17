@@ -1,6 +1,8 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using SlopperEngine.Core;
+using SlopperEngine.Core.SceneData;
+using SlopperEngine.SceneObjects;
 using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Interaction;
@@ -34,7 +36,9 @@ public abstract class BaseButton : UIElement
     protected bool hovered { get; private set; }
     protected int mouseButtonsHeld { get; private set; }
 
-    [OnInputUpdate]
+    SceneDataHandle _optionalInputUpdate;
+
+    //[OnInputUpdate]
     void InputUpdate(InputUpdateArgs args)
     {
         if (!hovered)
@@ -48,6 +52,28 @@ public abstract class BaseButton : UIElement
         }
     }
 
+    [OnUnregister]
+    void OnUnregister(Scene scene)
+    {
+        if (_optionalInputUpdate.IsRegistered)
+            scene.UnregisterSceneData<OnInputUpdate>(_optionalInputUpdate, default);   
+        System.Console.WriteLine("UNregistered optional input");
+    }
+
+    static void OptionalInputUpdate(SceneObject button, InputUpdateArgs args)
+    {
+        if (button is not BaseButton bb)
+            return;
+
+        if (bb.LastGlobalShape.ContainsInclusive(args.NormalizedMousePosition * 2 - Vector2.One))
+            return;
+
+        if(bb.Scene != null)
+            bb.OnUnregister(bb.Scene);
+        bb.mouseButtonsHeld = 0;
+        bb.OnMouseExit();
+    }
+
     protected override void HandleEvent(ref MouseEvent e)
     {
         if (!Enabled)
@@ -56,16 +82,15 @@ public abstract class BaseButton : UIElement
             return;
         }
 
-        if (!hovered)
-            OnMouseEntry();
-
-        if (!Enabled)
+        if (!_optionalInputUpdate.IsRegistered)
+        unsafe
         {
-            e.Block();
-            return;
+            OnMouseEntry();
+            _optionalInputUpdate = Scene!.RegisterSceneData<OnInputUpdate>(new(
+                (delegate*<SceneObject, InputUpdateArgs, void>)((Action<SceneObject, InputUpdateArgs>)OptionalInputUpdate).Method.MethodHandle.GetFunctionPointer(),
+                this));
+            System.Console.WriteLine("registered optional input");
         }
-
-        hovered = true;
         if (e.Type == MouseEventType.PressedButton)
         {
             mouseButtonsHeld++;
