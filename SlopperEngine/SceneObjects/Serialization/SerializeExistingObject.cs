@@ -12,18 +12,36 @@ namespace SlopperEngine.SceneObjects.Serialization;
 public partial class SerializedObject
 {
     /// <summary>
-    /// Serializes a SceneObject. Should only be called by SceneObject.Serialize().
+    /// Serializes a SceneObject. The SceneObject will be temporarily unregistered.
     /// </summary>
     public SerializedObject(SceneObject toSerialize)
     {
-        bool insc = toSerialize.InScene;
-        var sc = toSerialize.Scene;
-        if(insc)
+        bool inScene = toSerialize.InScene;
+        var scene = toSerialize.Scene;
+        if(inScene)
         {
             toSerialize.Unregister();
-            sc!.UpdateRegister();
+            scene!.UpdateRegister();
         }
 
+        Serialize(toSerialize);
+
+        if (inScene)
+            toSerialize.Register(scene!);
+    }
+
+    /// <summary>
+    /// Serializes any object.
+    /// </summary>
+    public SerializedObject(object toSerialize)
+    {
+        if (toSerialize is SceneObject sc && sc.InScene)
+            throw new Exception("Cannot serialize a SceneObject that is in the scene through the object constructor. Use the dedicated SceneObject constructor");
+        Serialize(toSerialize);
+    }
+
+    void Serialize(object toSerialize)
+    {
         var res = _serializedObjects.AddMultiple(2);
         SerializationRefs refs = new();
         refs.ReferenceIDs = new();
@@ -38,9 +56,6 @@ public partial class SerializedObject
         
         _onFinishSerializing?.Invoke();
         _onFinishSerializing = null;
-
-        if (insc)
-            toSerialize.Register(sc!);
     }
 
     SerialHandle SerializeRecursive(object toSerialize, int destinationIndex, in SerializationRefs refs)
