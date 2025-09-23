@@ -4,6 +4,9 @@ namespace SlopperEngine.SceneObjects;
 
 partial class SceneObject
 {
+    /// <summary>
+    /// Readonly static debug information about SceneObjects.
+    /// </summary>
     public static class DebugFunctions
     {
         /// <summary>

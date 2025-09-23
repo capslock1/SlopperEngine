@@ -26,6 +26,7 @@ If you find any code that does NOT adhere to the style, feel free to touch it up
 
 - Filenames and directory names are all `PascalCase`, except for the file extension.
 - The filename should be equal to the name of the main object in the file, for example `IMyInterface.cs`.
+	- In partial classes, the file should be postfixed with its function and placed in the same spot in the file structure, for example `IMyInterface-Utilities.cs`.
 
 ### Organisation rules
 
@@ -304,3 +305,7 @@ This named method may be nested at your discretion.
 
 Try adding field initializers, even if it's the default value.
 If the value is irrelevant when default, it may be omitted.
+
+**Summaries**
+
+Add a summary to every `public` or `protected` member.
