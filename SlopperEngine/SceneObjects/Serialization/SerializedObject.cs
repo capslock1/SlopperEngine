@@ -26,10 +26,10 @@ public partial class SerializedObject
         _primitiveData = primitiveData;
     }
 
-    public SceneObject Instantiate()
+    public object Instantiate()
     {
         Dictionary<int, object?> deserializedObjects = new();
-        var res = (SceneObject)RecursiveDeserialize(1, deserializedObjects)!;
+        var res = RecursiveDeserialize(1, deserializedObjects)!;
         _onFinishSerializing?.Invoke();
         _onFinishSerializing = null;
         return res;

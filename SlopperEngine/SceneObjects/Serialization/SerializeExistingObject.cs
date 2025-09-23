@@ -14,10 +14,15 @@ public partial class SerializedObject
     /// <summary>
     /// Serializes a SceneObject. Should only be called by SceneObject.Serialize().
     /// </summary>
-    internal SerializedObject(SceneObject toSerialize)
+    public SerializedObject(SceneObject toSerialize)
     {
-        if (toSerialize.InScene)
-            throw new Exception("SceneObject was in the scene while being serialized - call SceneObject.Serialize() to properly serialize it.");
+        bool insc = toSerialize.InScene;
+        var sc = toSerialize.Scene;
+        if(insc)
+        {
+            toSerialize.Unregister();
+            sc!.UpdateRegister();
+        }
 
         var res = _serializedObjects.AddMultiple(2);
         SerializationRefs refs = new();
@@ -33,6 +38,9 @@ public partial class SerializedObject
         
         _onFinishSerializing?.Invoke();
         _onFinishSerializing = null;
+
+        if (insc)
+            toSerialize.Register(sc!);
     }
 
     SerialHandle SerializeRecursive(object toSerialize, int destinationIndex, in SerializationRefs refs)

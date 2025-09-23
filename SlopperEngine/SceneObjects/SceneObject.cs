@@ -93,7 +93,7 @@ public partial class SceneObject
     }
 
     [OnRegister] void CompleteRegister() => _registryComplete = true;
-    void Register(Scene sc)
+    internal void Register(Scene sc)
     {
         if(Destroyed) 
             throw new Exception("whoops! "+this+" has been destroyed, and should not have been registered.");
@@ -108,7 +108,7 @@ public partial class SceneObject
                 children.CheckRegistered();
     }
 
-    void Unregister()
+    internal void Unregister()
     {
         if(Scene is not null)
         {
@@ -180,23 +180,6 @@ public partial class SceneObject
     /// </summary>
     /// <param name="parentMatrix">The parent's transform.</param>
     protected virtual void TransformFromParent(ref Matrix4 parentMatrix){}
-
-    public SerializedObject Serialize()
-    {
-        bool insc = InScene;
-        var sc = Scene;
-        if(insc)
-        {
-            Unregister();
-            sc!.UpdateRegister();
-        }
-
-        var res = new SerializedObject(this);
-
-        if(insc)
-            Register(sc!);
-        return res;
-    }
 
     //the evil '== null' code
     public static bool operator ==(SceneObject? A, SceneObject? B)
