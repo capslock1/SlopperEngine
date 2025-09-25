@@ -28,7 +28,10 @@ public class RGBA8Texture
     readonly byte[] _pixels;
     bool _gpuUpToDate;
 
-    public RGBA8Texture(int width, int height) : this(width, height, new byte[width * height * 4]){}
+    /// <summary>
+    /// Creates a new RGBA8Texture from width and height. Is initialized to transparent black.
+    /// </summary>
+    public RGBA8Texture(int width, int height) : this(width, height, new byte[width * height * 4]) { }
 
     RGBA8Texture(int width, int height, byte[] pixels)
     {
@@ -84,6 +87,7 @@ public class RGBA8Texture
     /// </summary>
     /// <param name="position">The pixel to change.</param>
     /// <param name="color">The color to set the color as.</param>
+    /// <returns>Whether or not the pixel was in bounds (and could be written).</returns>
     public bool TrySetPixel(Vector2i position, Color4 color)
     {
         if ((uint)position.X > Width) return false;
@@ -94,14 +98,33 @@ public class RGBA8Texture
         col *= 255;
         int pos = (position.X + Width * position.Y) * 4;
         _pixels[pos] = ToByte(col.X);
-        _pixels[pos+1] = ToByte(col.Y);
-        _pixels[pos+2] = ToByte(col.Z);
-        _pixels[pos+3] = ToByte(col.W);
+        _pixels[pos + 1] = ToByte(col.Y);
+        _pixels[pos + 2] = ToByte(col.Z);
+        _pixels[pos + 3] = ToByte(col.W);
 
         byte ToByte(float val)
         {
             return (val < 0) ? (byte)0 : (val >= 255) ? (byte)255 : (byte)val;
         }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to read a pixel on the texture.
+    /// </summary>
+    /// <param name="position">The pixel to read.</param>
+    /// <param name="color">The color at the point.</param>
+    /// <returns>Whether or not the pixel was in bounds (and could be read).</returns>
+    public bool TryGetPixel(Vector2i position, out Color4 color)
+    {
+        color = default;
+
+        if ((uint)position.X > Width) return false;
+        if ((uint)position.Y > Height) return false;
+
+        int pos = (position.X + Width * position.Y) * 4;
+        color = new(_pixels[pos], _pixels[pos + 1], _pixels[pos + 2], _pixels[pos + 3]);
 
         return true;
     }
