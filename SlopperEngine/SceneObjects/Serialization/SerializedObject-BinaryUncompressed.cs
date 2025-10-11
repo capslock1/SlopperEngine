@@ -126,14 +126,9 @@ public partial class SerializedObject
             int length = ReadInt();
             if (length < 1) return null;
 
-            StringBuilder builder = new(length, length);
-            Span<byte> binaryChar = stackalloc byte[2];
-            for (int i = 0; i < length; i++)
-            {
-                stream.ReadExactly(binaryChar);
-                builder.Append((char)BinaryPrimitives.ReadInt16LittleEndian(binaryChar));
-            }
-            return builder.ToString();
+            var bytes = new byte[length];
+            stream.ReadExactly(bytes);
+            return Encoding.UTF8.GetString(bytes);
         }
         SerialHandle ReadSerialHandle()
         {
