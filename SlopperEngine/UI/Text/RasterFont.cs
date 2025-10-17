@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Frozen;
+using System.Collections.Generic;
+using System.IO;
 using OpenTK.Mathematics;
 using SlopperEngine.Core;
 using StbImageSharp;

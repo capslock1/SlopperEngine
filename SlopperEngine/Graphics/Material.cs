@@ -6,6 +6,8 @@ using SlopperEngine.Graphics.DefaultResources;
 using SlopperEngine.Graphics.GPUResources.Shaders;
 using SlopperEngine.Rendering;
 using SlopperEngine.Core;
+using System.Collections.Generic;
+using System;
 
 namespace SlopperEngine.Graphics;
 

@@ -1,4 +1,5 @@
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.Text;
 
 namespace SlopperEngine.Graphics.ShadingLanguage;

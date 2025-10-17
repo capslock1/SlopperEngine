@@ -1,4 +1,3 @@
-
 using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
 
@@ -24,7 +23,7 @@ public class UpdateHandler : SceneComponent
     {
         //accurate millisecond timer (minimal rounding error).
         _remainder += input.DeltaTime * 1000;
-        var millis = (ulong)MathF.Floor(_remainder);
+        var millis = (ulong)float.Floor(_remainder);
         _remainder -= millis;
         TimeMilliseconds += millis;
 

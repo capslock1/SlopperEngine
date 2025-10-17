@@ -1,4 +1,7 @@
 
+using System;
+using System.Collections.Generic;
+
 namespace SlopperEngine.SceneObjects.Serialization;
 
 /// <summary>

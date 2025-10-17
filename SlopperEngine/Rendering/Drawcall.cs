@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Graphics;
+using System;
 
 namespace SlopperEngine.Rendering;
 

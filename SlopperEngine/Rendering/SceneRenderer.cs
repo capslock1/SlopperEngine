@@ -6,6 +6,8 @@ using OpenTK.Mathematics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Core;
+using System;
+using System.Collections.Generic;
 
 namespace SlopperEngine.Rendering;
 

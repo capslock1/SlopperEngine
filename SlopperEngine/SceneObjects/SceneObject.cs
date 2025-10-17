@@ -5,6 +5,8 @@ using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.SceneObjects.ChildContainers;
+using System.Collections.Generic;
+using System;
 
 namespace SlopperEngine.SceneObjects;
 

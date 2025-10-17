@@ -4,6 +4,7 @@ using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Graphics.GPUResources.Shaders;
 using OpenTK.Windowing.Desktop;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace SlopperEngine.Graphics;
 

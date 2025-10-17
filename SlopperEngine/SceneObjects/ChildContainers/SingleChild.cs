@@ -1,4 +1,6 @@
 
+using System;
+
 namespace SlopperEngine.SceneObjects.ChildContainers;
 
 public class SingleChild<TSceneObject> : SingleChild<TSceneObject, NoEvents<TSceneObject>>

@@ -1,4 +1,5 @@
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using SlopperEngine.Graphics.ShadingLanguage;
 
 namespace SlopperEngine.Graphics.GPUResources.Meshes;
@@ -9,7 +10,7 @@ namespace SlopperEngine.Graphics.GPUResources.Meshes;
 /// </summary>
 public abstract class MeshInfo
 {
-    int _id;
+    readonly int _id;
     static List<MeshInfo> _allMeshInfos = new();
     protected MeshInfo()
     {

@@ -1,3 +1,5 @@
+using System;
+
 namespace SlopperEngine.EditorIntegration;
 
 /// <summary>

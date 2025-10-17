@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace SlopperEngine.SceneObjects.ChildContainers;
 
 public class ChildList<TSceneObject> : ChildList<TSceneObject, NoEvents<TSceneObject>> where TSceneObject : SceneObject

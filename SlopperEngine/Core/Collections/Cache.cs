@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace SlopperEngine.Core.Collections;
 
 /// <summary>
@@ -5,8 +8,8 @@ namespace SlopperEngine.Core.Collections;
 /// </summary>
 /// <typeparam name="TKey">The type of key for the cache. Usually the filepath, as a string.</typeparam>
 /// <typeparam name="TValue">The type of value to cache.</typeparam>
-public class Cache<TKey, TValue> 
-    where TValue : class 
+public class Cache<TKey, TValue>
+    where TValue : class
     where TKey : notnull
 {
     readonly private Dictionary<TKey, WeakReference<TValue>> _dict = new();
@@ -20,10 +23,10 @@ public class Cache<TKey, TValue>
     {
         WeakReference<TValue>? refres;
         if (!_dict.TryGetValue(key, out refres))
-            return null; 
-        if(refres.TryGetTarget(out TValue? res))
+            return null;
+        if (refres.TryGetTarget(out TValue? res))
             return res;
-        
+
         return null;
     }
 

@@ -2,6 +2,9 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.Core.Collections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SlopperEngine.Core.Serialization;
 

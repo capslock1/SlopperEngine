@@ -8,6 +8,9 @@ using SlopperEngine.Core.Serialization;
 using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.SceneObjects.ChildContainers;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace SlopperEngine.SceneObjects;
 

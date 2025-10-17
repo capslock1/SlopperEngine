@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.GPUResources.Textures;
@@ -22,8 +24,8 @@ public class FrameBuffer : GPUResource
         FBO = GL.GenFramebuffer();
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, FBO);
 
-        this.Width = width;
-        this.Height = height;
+        Width = width;
+        Height = height;
         List<Texture2D> textures = new();
         for(int i = 0; i<colorAttachmentCount; i++)
         {
