@@ -29,14 +29,14 @@ public class LinearArrangedLayout : LayoutHandler
     /// </summary>
     public UISize Padding = UISize.FromPixels(new(4,4));
 
-    public override void LayoutChildren(UIElement owner, Box2 ownerGlobalShape)
+    public override void LayoutChildren(UIElement parent, Box2 parentGlobalShape)
     {
-        var invOwnerSize = Vector2.One / ownerGlobalShape.Size;
+        var invOwnerSize = Vector2.One / parentGlobalShape.Size;
 
         float position = StartAtMax ? 1 : 0;
         float direction = StartAtMax ? -1 : 1;
 
-        Vector2 padding = Padding.GetLocalSize(ownerGlobalShape, owner.LastRenderer);
+        Vector2 padding = Padding.GetLocalSize(parentGlobalShape, parent.LastRenderer);
         if (StartAtMax)
         {
             if (IsLayoutHorizontal)
@@ -59,7 +59,7 @@ public class LinearArrangedLayout : LayoutHandler
                 break;
         }
 
-        var children = owner.UIChildren;
+        var children = parent.UIChildren;
         bool flip = StartAtMax ^ IsLayoutHorizontal;
         for (int i = flip ? 0 : children.Count - 1; flip ? i < children.Count : i >= 0; i += flip ? 1 : -1) // disgusting loop
         {
@@ -92,7 +92,7 @@ public class LinearArrangedLayout : LayoutHandler
 
         Vector2 MapToLocal(Vector2 globalPoint)
         {
-            globalPoint -= ownerGlobalShape.Min;
+            globalPoint -= parentGlobalShape.Min;
             globalPoint *= invOwnerSize;
             return globalPoint;
         }

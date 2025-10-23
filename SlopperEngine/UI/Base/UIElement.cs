@@ -156,24 +156,17 @@ public class UIElement : SceneObject
             HandleEvent(ref e);
     }
 
-    private void UpdateShape(Box2 parentShape, UIRenderer renderer)
+    private void UpdateShape(Box2 parentShape, LayoutHandler? parentLayout, UIRenderer renderer)
     {
         LastRenderer = renderer;
 
-        Box2 globalShape = new(
+        Box2 globalShape = parentLayout?.ComputeGlobalShape(parentShape, LocalShape) ?? new(
             Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Min),
             Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Max)
         );
 
-        var screenScale = renderer.GetPixelScale();
         LastSizeConstraints = GetSizeConstraints();
-        float minSizeX = LastSizeConstraints.MinimumSizeX * screenScale.X;
-        float maxSizeX = LastSizeConstraints.MaximumSizeX * screenScale.X;
-        float minSizeY = LastSizeConstraints.MinimumSizeY * screenScale.Y;
-        float maxSizeY = LastSizeConstraints.MaximumSizeY * screenScale.Y;
-        var (minX, maxX) = Resize(globalShape.Min.X, globalShape.Max.X, minSizeX, maxSizeX, LastSizeConstraints.GrowX);
-        var (minY, maxY) = Resize(globalShape.Min.Y, globalShape.Max.Y, minSizeY, maxSizeY, LastSizeConstraints.GrowY);
-        globalShape = new(minX, minY, maxX, maxY);
+        ApplySizeConstraints(parentShape, ref globalShape, LastSizeConstraints, renderer);
 
         Box2 childBounds = default;
         bool boundsInitted = false;
@@ -182,10 +175,10 @@ public class UIElement : SceneObject
         for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
         {
             var ch = internalUIChildren[_safeIterator];
-            ch.UpdateShape(globalShape, renderer);
+            ch.UpdateShape(globalShape, Layout, renderer);
             if (!ch.IncludeInChildbounds())
                 continue;
-                
+
             if (!boundsInitted)
             {
                 childBounds = ch.LastChildrenBounds;
@@ -206,14 +199,28 @@ public class UIElement : SceneObject
         if (!(float.IsNaN(trueGlobal.Min.X) ||
             float.IsNaN(trueGlobal.Min.Y) ||
             float.IsNaN(trueGlobal.Max.X) ||
-            float.IsNaN(trueGlobal.Max.Y)) && 
+            float.IsNaN(trueGlobal.Max.Y)) &&
             float.Abs(trueSize.X) > 0.00001f &&
             float.Abs(trueSize.Y) > 0.00001f)
             Layout.Value?.LayoutChildren(this, trueGlobal);
 
         LastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
+    }
+    
+    static void ApplySizeConstraints(Box2 ownerShape, ref Box2 currentGlobalShape, UIElementSize constraints, UIRenderer renderer)
+    {
 
-        static (float min, float max) Resize(float min, float max, in float minSize, in float maxSize, in Alignment direction)
+        var screenScale = renderer.GetPixelScale();
+        float minSizeX = constraints.MinimumSizeX * screenScale.X;
+        float maxSizeX = constraints.MaximumSizeX * screenScale.X;
+        float minSizeY = constraints.MinimumSizeY * screenScale.Y;
+        float maxSizeY = constraints.MaximumSizeY * screenScale.Y;
+        var (minX, maxX) = ResizeAligned(currentGlobalShape.Min.X, currentGlobalShape.Max.X, minSizeX, maxSizeX, constraints.GrowX);
+        var (minY, maxY) = ResizeAligned(currentGlobalShape.Min.Y, currentGlobalShape.Max.Y, minSizeY, maxSizeY, constraints.GrowY);
+
+        currentGlobalShape = new(minX, minY, maxX, maxY);
+
+        static (float min, float max) ResizeAligned(float min, float max, in float minSize, in float maxSize, in Alignment direction)
         {
             float size = max - min;
             float difference = 0;
@@ -237,6 +244,7 @@ public class UIElement : SceneObject
             return (min, max);
         }
     }
+
     private void Render(Box2 parentScissorRegion, UIRenderer renderer)
     {
         var mat = GetMaterial();
