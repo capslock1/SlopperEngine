@@ -52,7 +52,9 @@ public class UIElement : SceneObject
     /// <summary>
     /// The last global shape that was calculated of this UIElement, in normalized device coordinates.
     /// </summary>
-    public Box2 LastGlobalShape { get; private set; }
+    public Box2 LastGlobalShape => _globalShape;
+    private Box2 _globalShape;
+    private bool _globalShapeSetByLayout;
 
     /// <summary>
     /// The last size constraints of this UIElement.
@@ -160,22 +162,41 @@ public class UIElement : SceneObject
     {
         LastRenderer = renderer;
 
-        Box2 globalShape = parentLayout?.ComputeGlobalShape(parentShape, LocalShape) ?? new(
-            Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Min),
-            Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Max)
-        );
+        if (!_globalShapeSetByLayout)
+        {
+            Box2 globalShape = new(
+                Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Min),
+                Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Max)
+            );
 
-        LastSizeConstraints = GetSizeConstraints();
-        ApplySizeConstraints(parentShape, ref globalShape, LastSizeConstraints, renderer);
+            LastSizeConstraints = GetSizeConstraints();
+            ApplySizeConstraints(ref globalShape, LastSizeConstraints, renderer);
+            _globalShape = globalShape;
+        }
+        _globalShapeSetByLayout = false;
 
         Box2 childBounds = default;
         bool boundsInitted = false;
-        LastGlobalShape = globalShape;
+
+        var trueParent = (UIElement)UIChildren.Owner;
+        var trueGlobal = trueParent.LastGlobalShape;
+        var trueSize = trueGlobal.Size;
+
+        if (!(float.IsNaN(trueGlobal.Min.X) ||
+            float.IsNaN(trueGlobal.Min.Y) ||
+            float.IsNaN(trueGlobal.Max.X) ||
+            float.IsNaN(trueGlobal.Max.Y)) &&
+            float.Abs(trueSize.X) > 0.00001f &&
+            float.Abs(trueSize.Y) > 0.00001f)
+        {
+            GlobalShapeKey key = new(this);
+            Layout.Value?.LayoutChildren(this, ref key, trueGlobal, renderer);
+        }
 
         for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
         {
             var ch = internalUIChildren[_safeIterator];
-            ch.UpdateShape(globalShape, Layout, renderer);
+            ch.UpdateShape(_globalShape, Layout, renderer);
             if (!ch.IncludeInChildbounds())
                 continue;
 
@@ -193,23 +214,11 @@ public class UIElement : SceneObject
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
 
-        var trueParent = (UIElement)UIChildren.Owner;
-        var trueGlobal = trueParent.LastGlobalShape;
-        var trueSize = trueGlobal.Size;
-        if (!(float.IsNaN(trueGlobal.Min.X) ||
-            float.IsNaN(trueGlobal.Min.Y) ||
-            float.IsNaN(trueGlobal.Max.X) ||
-            float.IsNaN(trueGlobal.Max.Y)) &&
-            float.Abs(trueSize.X) > 0.00001f &&
-            float.Abs(trueSize.Y) > 0.00001f)
-            Layout.Value?.LayoutChildren(this, trueGlobal);
-
-        LastChildrenBounds = boundsInitted ? childBounds : new(globalShape.Center, globalShape.Center);
+        LastChildrenBounds = boundsInitted ? childBounds : new(_globalShape.Center, _globalShape.Center);
     }
     
-    static void ApplySizeConstraints(Box2 ownerShape, ref Box2 currentGlobalShape, UIElementSize constraints, UIRenderer renderer)
+    static void ApplySizeConstraints(ref Box2 currentGlobalShape, UIElementSize constraints, UIRenderer renderer)
     {
-
         var screenScale = renderer.GetPixelScale();
         float minSizeX = constraints.MinimumSizeX * screenScale.X;
         float maxSizeX = constraints.MaximumSizeX * screenScale.X;
@@ -273,6 +282,38 @@ public class UIElement : SceneObject
         {
             var ch = internalUIChildren[i];
             ch.Render(LastGlobalScissor, renderer);
+        }
+    }
+
+    /// <summary>
+    /// Allows a LayoutHandler to change a UIElement's childrens' global shapes.
+    /// </summary>
+    public interface IGlobalShapeKey
+    {
+        /// <summary>
+        /// Sets the child's global shape, and applies its size constraints.
+        /// </summary>
+        /// <param name="childIndex">The child to set the global shape of.</param>
+        /// <param name="globalShape">The shape to set.</param>
+        /// <param name="renderer">The UIRenderer.</param>
+        public void SetGlobalShape(int childIndex, ref Box2 globalShape, UIRenderer renderer);
+    }
+
+    ref struct GlobalShapeKey(UIElement _owner) : IGlobalShapeKey
+    {
+        /// <summary>
+        /// Sets the child's global shape, and applies its size constraints.
+        /// </summary>
+        /// <param name="childIndex">The child to set the global shape of.</param>
+        /// <param name="globalShape">The shape to set.</param>
+        /// <param name="renderer">The UIRenderer.</param>
+        public void SetGlobalShape(int childIndex, ref Box2 globalShape, UIRenderer renderer)
+        {
+            var element = _owner.UIChildren[childIndex];
+            element.LastSizeConstraints = element.GetSizeConstraints();
+            ApplySizeConstraints(ref globalShape, element.LastSizeConstraints, renderer);
+            element._globalShape = globalShape;
+            element._globalShapeSetByLayout = true;
         }
     }
 

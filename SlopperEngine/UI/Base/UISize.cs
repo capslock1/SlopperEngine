@@ -59,6 +59,26 @@ public readonly record struct UISize
         }
     }
 
+    /// <summary>
+    /// Gets this UISize's size relative to global space.
+    /// </summary>
+    public readonly Vector2 GetGlobalSize(Box2 parentGlobalShape, UIRenderer? renderer)
+    {
+        switch(_mode)
+        {
+            default: // root
+                return _sizeFloat;
+
+            case Mode.PixelSize:
+                if (renderer == null)
+                    return new Vector2(0.01f, 0.01f) * _sizeInt;
+                return renderer.GetPixelScale() * _sizeInt;
+
+            case Mode.RelativeToParent:
+                return _sizeFloat * parentGlobalShape.Size;
+        }
+    }
+
     enum Mode
     {
         RelativeToParent,

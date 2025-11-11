@@ -1,5 +1,5 @@
-
 using OpenTK.Mathematics;
+using SlopperEngine.Rendering;
 using SlopperEngine.UI.Base;
 
 namespace SlopperEngine.UI.Layout;
@@ -12,7 +12,7 @@ public class LinearArrangedLayout : LayoutHandler
     /// <summary>
     /// Whether the elements should be arranged horizontally or vertically.
     /// </summary>
-    public bool IsLayoutHorizontal;
+    public bool IsLayoutHorizontal = false;
 
     /// <summary>
     /// Whether the elements should be arranged from max or from min.
@@ -29,72 +29,89 @@ public class LinearArrangedLayout : LayoutHandler
     /// </summary>
     public UISize Padding = UISize.FromPixels(new(4,4));
 
-    public override void LayoutChildren(UIElement parent, Box2 parentGlobalShape)
+    public override void LayoutChildren<TLayoutKey>(UIElement owner, ref TLayoutKey layoutKey, Box2 parentShape, UIRenderer renderer)
     {
-        var invOwnerSize = Vector2.One / parentGlobalShape.Size;
-
-        float position = StartAtMax ? 1 : 0;
+        var parentSize = parentShape.Size;
+        float parentLength = IsLayoutHorizontal ? parentSize.X : parentSize.Y;
+        float parentWidth = IsLayoutHorizontal ? parentSize.Y : parentSize.X;
         float direction = StartAtMax ? -1 : 1;
 
-        Vector2 padding = Padding.GetLocalSize(parentGlobalShape, parent.LastRenderer);
+        Vector2 paddingVector = Padding.GetGlobalSize(parentShape, renderer);
         if (StartAtMax)
         {
             if (IsLayoutHorizontal)
-                padding.X = -padding.X;
-            else padding.Y = -padding.Y;
-        }
-        switch (ChildAlignment)
-        {
-            default:
-                if (IsLayoutHorizontal)
-                    padding.Y = 0;
-                else padding.X = 0;
-                break;
-            case Alignment.Min:
-                break;
-            case Alignment.Max:
-                if (IsLayoutHorizontal)
-                    padding.Y = -padding.Y;
-                else padding.X = -padding.X;
-                break;
+                paddingVector.X = -paddingVector.X;
+            else paddingVector.Y = -paddingVector.Y;
         }
 
-        var children = parent.UIChildren;
+        float forwardPos; // the position *along* the layout
+        float tangentPos; // the position *tangent to* the layout
+        switch(ChildAlignment)
+        {
+            default: tangentPos = IsLayoutHorizontal ? parentShape.Center.Y : parentShape.Center.X; break; 
+            case Alignment.Min: tangentPos = IsLayoutHorizontal ? parentShape.Min.Y : parentShape.Min.X; break;
+            case Alignment.Max: tangentPos = IsLayoutHorizontal ? parentShape.Max.Y : parentShape.Max.X; break;
+        }
+        float forwardPadding;
+        float tangentPadding;
+        if (IsLayoutHorizontal)
+        {
+            forwardPadding = paddingVector.X;
+            tangentPadding = paddingVector.Y;
+            forwardPos = StartAtMax ? parentShape.Max.X : parentShape.Min.X;
+        }
+        else
+        {
+            forwardPadding = paddingVector.Y;
+            tangentPadding = paddingVector.X;
+            forwardPos = StartAtMax ? parentShape.Max.Y : parentShape.Min.Y;
+        }
+        forwardPadding *= direction;
+
+        var children = owner.UIChildren;
         bool flip = StartAtMax ^ IsLayoutHorizontal;
-        for (int i = flip ? 0 : children.Count - 1; flip ? i < children.Count : i >= 0; i += flip ? 1 : -1) // disgusting loop
+        for (int i = flip ? 0 : children.Count - 1; flip ? i < children.Count : i >= 0; i += flip ? 1 : -1) // loop flips based on vibes
         {
             var ch = children[i];
-            var globalBounds = ch.LastChildrenBounds;
-            globalBounds.Extend(ch.LastGlobalShape.Min);
-            globalBounds.Extend(ch.LastGlobalShape.Max);
 
-            var localBounds = new Box2(MapToLocal(globalBounds.Min), MapToLocal(globalBounds.Max));
-            var corner = StartAtMax ? localBounds.Max : localBounds.Min;
-            float posDist = position - (IsLayoutHorizontal ? corner.X : corner.Y);
+            forwardPos += forwardPadding;
 
-            float alignDist;
+            var desiredSize = ch.LocalShape.Size * parentSize;
+            if (IsLayoutHorizontal)
+                desiredSize = desiredSize.Yx; // rotate
+
+            desiredSize.X = float.Max(0, float.Min(desiredSize.X, parentWidth - 2 * tangentPadding)); // make sure the width doesnt exceed the container's + padding on both sides
+
+            Box2 globalShape;
             switch (ChildAlignment)
             {
                 default:
-                    alignDist = 0.5f - (IsLayoutHorizontal ? localBounds.Center.Y : localBounds.Center.X);
+                    float hWidth = 0.5f * desiredSize.X;
+                    globalShape = new(
+                        tangentPos - hWidth, forwardPos,
+                        tangentPos + hWidth, forwardPos + desiredSize.Y * direction);
                     break;
+
                 case Alignment.Min:
-                    alignDist = IsLayoutHorizontal ? -localBounds.Min.Y : -localBounds.Min.X;
+                    globalShape = new(
+                        tangentPos + tangentPadding, forwardPos,
+                        tangentPos + desiredSize.X, forwardPos + desiredSize.Y * direction);
                     break;
+
                 case Alignment.Max:
-                    alignDist = 1 - (IsLayoutHorizontal ? localBounds.Max.Y : localBounds.Max.X);
+                    globalShape = new(
+                        tangentPos + tangentPadding, forwardPos,
+                        tangentPos - desiredSize.X, forwardPos + desiredSize.Y * direction);
                     break;
             }
-            ch.LocalShape.Center += padding + (IsLayoutHorizontal ? new Vector2(posDist, alignDist) : new Vector2(alignDist, posDist));
 
-            position += direction * (IsLayoutHorizontal ? localBounds.Size.X : localBounds.Size.Y) + (IsLayoutHorizontal ? padding.X : padding.Y);
-        }
+            if(IsLayoutHorizontal)
+                globalShape = new(globalShape.Min.Yx, globalShape.Max.Yx); // rotate back
 
-        Vector2 MapToLocal(Vector2 globalPoint)
-        {
-            globalPoint -= parentGlobalShape.Min;
-            globalPoint *= invOwnerSize;
-            return globalPoint;
+            layoutKey.SetGlobalShape(i, ref globalShape, renderer);
+
+            var finalSize = Vector2.ComponentMax(globalShape.Size, ch.LastChildrenBounds.Size);
+            forwardPos += (IsLayoutHorizontal ? finalSize.X : finalSize.Y) * direction; // add the child's final size to the position
         }
     }
 }
