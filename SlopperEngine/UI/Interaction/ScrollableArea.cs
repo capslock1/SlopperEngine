@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Display;
 using SlopperEngine.SceneObjects.ChildContainers;
+using SlopperEngine.UI.Layout;
 
 namespace SlopperEngine.UI.Interaction;
 
@@ -12,7 +13,9 @@ public class ScrollableArea : UIElement
 {
     // TODO:  
     // middle click scroll gizmo. low priority
+    
     public override ChildList<UIElement, UIChildEvents> UIChildren => _movingArea.UIChildren;
+    public override SingleChild<LayoutHandler> Layout => _movingArea.Layout;
 
     /// <summary>
     /// How to horizontally align the content when the content is thinner than the container.
@@ -157,6 +160,8 @@ public class ScrollableArea : UIElement
 
     public ScrollableArea() : this(new(0,0,1,1)){}
 
+    Box2 GetMovingElementsBounds() => _movingArea.LastChildrenBounds;
+
     void UpdatePosition()
     {
         Vector2 center = new Vector2(.5f) - _movingAreaOffset;
@@ -166,10 +171,11 @@ public class ScrollableArea : UIElement
             (Vector2.One - _scrollValues) *
             (Vector2.One - Vector2.One / contentToContainer);
 
+        var chBounds = GetMovingElementsBounds();
+        var conBounds = _contentArea.LastGlobalShape;
+            
         if (!_horizontalSliderVisible)
         {
-            var chBounds = _movingArea.LastChildrenBounds;
-            var conBounds = _contentArea.LastGlobalShape;
             float offset;
             switch (HorizontalContentAlignment)
             {
@@ -188,8 +194,6 @@ public class ScrollableArea : UIElement
         }
         if (!_verticalSliderVisible)
         {
-            var chBounds = _movingArea.LastChildrenBounds;
-            var conBounds = _contentArea.LastGlobalShape;
             float offset;
             switch (VerticalContentAlignment)
             {
@@ -259,14 +263,15 @@ public class ScrollableArea : UIElement
     void UpdateContentRatio()
     {
         Vector2 inverseSize = Vector2.One / _movingArea.LastGlobalShape.Size;
-        Vector2 contentRatio = _movingArea.LastChildrenBounds.Size * inverseSize;
+        
+        Vector2 contentRatio = GetMovingElementsBounds().Size * inverseSize;
         if (contentRatio == _currentContentRatio)
             return;
 
         _horizontalSlider.ContentToContainerRatio = contentRatio.X;
         _verticalSlider.ContentToContainerRatio = contentRatio.Y;
         _currentContentRatio = contentRatio;
-        _movingAreaOffset = (_movingArea.LastChildrenBounds.Max - _movingArea.LastGlobalShape.Max) * inverseSize;
+        _movingAreaOffset = (GetMovingElementsBounds().Max - _movingArea.LastGlobalShape.Max) * inverseSize;
 
         if (_horizontalSlider.ContentToContainerRatio > 1 && !_horizontalSliderVisible)
         {
@@ -308,7 +313,7 @@ public class ScrollableArea : UIElement
 
             Vector2 screenSize = LastRenderer?.GetScreenSize() ?? new(100);
             direction *= ScrollSensitivity;
-            direction /= _movingArea.LastChildrenBounds.Size * screenSize;
+            direction /= GetMovingElementsBounds().Size * screenSize;
             _horizontalSlider.ScrollValue -= float.IsNaN(direction.X) ? 0 : direction.X;
             _verticalSlider.ScrollValue += float.IsNaN(direction.Y) ? 0 : direction.Y;
             e.Use();

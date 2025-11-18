@@ -29,10 +29,15 @@ public class LinearArrangedLayout : LayoutHandler
     /// </summary>
     public UISize Padding = UISize.FromPixels(new(4,4));
 
+    public override bool AddsPadding(Box2 parentShape, UIRenderer renderer, out Vector2 currentlyAddedPadding)
+    {
+        currentlyAddedPadding = Padding.GetGlobalSize(parentShape, renderer);
+        return true;
+    }
+
     public override void LayoutChildren<TLayoutKey>(UIElement owner, ref TLayoutKey layoutKey, Box2 parentShape, UIRenderer renderer)
     {
         var parentSize = parentShape.Size;
-        float parentLength = IsLayoutHorizontal ? parentSize.X : parentSize.Y;
         float parentWidth = IsLayoutHorizontal ? parentSize.Y : parentSize.X;
         float direction = StartAtMax ? -1 : 1;
 
@@ -66,11 +71,9 @@ public class LinearArrangedLayout : LayoutHandler
             tangentPadding = paddingVector.X;
             forwardPos = StartAtMax ? parentShape.Max.Y : parentShape.Min.Y;
         }
-        forwardPadding *= direction;
 
         var children = owner.UIChildren;
-        bool flip = StartAtMax ^ IsLayoutHorizontal;
-        for (int i = flip ? 0 : children.Count - 1; flip ? i < children.Count : i >= 0; i += flip ? 1 : -1) // loop flips based on vibes
+        for (int i = 0; i < children.Count; i++) 
         {
             var ch = children[i];
 

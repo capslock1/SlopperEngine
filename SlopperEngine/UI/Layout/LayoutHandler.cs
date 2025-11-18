@@ -14,4 +14,10 @@ public abstract class LayoutHandler : SceneObject
     /// Gets called when the owner starts laying out its children.
     /// </summary>
     public abstract void LayoutChildren<TLayoutKey>(UIElement owner, ref TLayoutKey layoutKey, Box2 parentShape, UIRenderer renderer) where TLayoutKey : UIElement.IGlobalShapeKey, allows ref struct;
+
+    /// <summary>
+    /// Whether or not the LayoutHandler adds padding.
+    /// </summary>
+    /// <param name="currentlyAddedPadding">How much padding is added by the layout in NDC.</param>
+    public abstract bool AddsPadding(Box2 parentShape, UIRenderer renderer, out Vector2 currentlyAddedPadding);
 }

@@ -26,9 +26,9 @@ public class UIElement : SceneObject
     public virtual ChildList<UIElement, UIChildEvents> UIChildren => internalUIChildren;
 
     /// <summary>
-    /// The layout of the UI element. By default, children do not get automatically laid out.
+    /// The layout of the UI element. If null, children do not get automatically laid out.
     /// </summary>
-    public SingleChild<LayoutHandler> Layout { get; private set; }
+    public virtual SingleChild<LayoutHandler> Layout => internalLayout;
 
     /// <summary>
     /// The style of the element.
@@ -76,6 +76,10 @@ public class UIElement : SceneObject
     /// A set of hidden UI elements.
     /// </summary>
     protected ChildList<UIElement, UIChildEvents> internalUIChildren { get; private set; }
+    /// <summary>
+    /// The hidden internal layout.
+    /// </summary>
+    protected SingleChild<LayoutHandler> internalLayout { get; private set; }
 
     SceneDataHandle _UIRootUpdateHandle;
     bool _isUIRoot;
@@ -85,7 +89,7 @@ public class UIElement : SceneObject
     public UIElement(Box2 localShape)
     {
         internalUIChildren = new(this, new(this));
-        Layout = new(this);
+        internalLayout = new(this);
         LocalShape = localShape;
     }
 
@@ -190,7 +194,7 @@ public class UIElement : SceneObject
             float.Abs(trueSize.Y) > 0.00001f)
         {
             GlobalShapeKey key = new(this);
-            Layout.Value?.LayoutChildren(this, ref key, trueGlobal, renderer);
+            internalLayout.Value?.LayoutChildren(this, ref key, trueGlobal, renderer);
         }
 
         for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
