@@ -104,7 +104,7 @@ public class UIRenderer : SceneRenderer
     {
         public void Next(ref UIRootUpdate value)
         {
-            value.UpdateShape(new(-1, -1, 1, 1), null, renderer);
+            value.UpdateShape(new(-1, -1, 1, 1), renderer);
         }
     }
     struct RenderUpdater(UIRenderer renderer) : IRefEnumerator<UIRootUpdate>

@@ -113,7 +113,7 @@ public class LinearArrangedLayout : LayoutHandler
 
             layoutKey.SetGlobalShape(i, ref globalShape, renderer);
 
-            var finalSize = Vector2.ComponentMax(globalShape.Size, ch.LastChildrenBounds.Size);
+            var finalSize = ch.VisibleBounds.Size;
             forwardPos += (IsLayoutHorizontal ? finalSize.X : finalSize.Y) * direction; // add the child's final size to the position
         }
     }

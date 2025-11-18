@@ -54,7 +54,7 @@ public class UIElement : SceneObject
     /// </summary>
     public Box2 LastGlobalShape => _globalShape;
     private Box2 _globalShape;
-    private bool _globalShapeSetByLayout;
+    private LayoutControlState _globalShapeSetByLayout;
 
     /// <summary>
     /// The last size constraints of this UIElement.
@@ -62,14 +62,26 @@ public class UIElement : SceneObject
     public UIElementSize LastSizeConstraints { get; private set; }
 
     /// <summary>
-    /// The last global scissor region that was calculated of this UIElement, in normalized device coordinates.
-    /// </summary>
-    public Box2 LastGlobalScissor { get; private set; }
-
-    /// <summary>
     /// The last global bounds that were calculated of the UIElement's children. 
     /// </summary>
     public Box2 LastChildrenBounds { get; private set; }
+
+    /// <summary>
+    /// The visible portion of this UIElement in normalized device coordinates (ignoring the parent's scissor).
+    /// </summary>
+    public Box2 VisibleBounds
+    {
+        get
+        {
+            var scissor = GetGlobalScissor();
+            scissor = new(
+                Vector2.ComponentMax(scissor.Min, LastChildrenBounds.Min),
+                Vector2.ComponentMin(scissor.Max, LastChildrenBounds.Max));
+            return new(
+                Vector2.ComponentMin(scissor.Min, LastGlobalShape.Min),
+                Vector2.ComponentMax(scissor.Max, LastGlobalShape.Max));
+        }
+    }
 
 
     /// <summary>
@@ -139,10 +151,37 @@ public class UIElement : SceneObject
     /// </summary>
     protected virtual bool IncludeInChildbounds() => true;
 
+    /// <summary>
+    /// Gets the global scissor of just this UIElement.
+    /// </summary>
+    public Box2 GetGlobalScissor()
+    {
+        var scissor = GetScissorRegion();
+        return new(
+            Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Min),
+            Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Max));
+    }
+
+    /// <summary>
+    /// Gets the true global scissor of the UIElement, and whether or not it renders at all.
+    /// </summary>
+    /// <param name="parentScissorRegion">The parent's global scissor.</param>
+    /// <param name="globalScissor">The result.</param>
+    /// <returns>Whether or not the global scissor has any area.</returns>
+    public bool GetGlobalScissor(Box2 parentScissorRegion, out Box2 globalScissor)
+    {
+        globalScissor = GetGlobalScissor();
+        var globalScissorMin = Vector2.ComponentMax(globalScissor.Min, parentScissorRegion.Min);
+        var globalScissorMax = Vector2.ComponentMin(globalScissor.Max, parentScissorRegion.Max);
+        bool validScissor = globalScissorMax.X > globalScissorMin.X && globalScissorMax.Y > globalScissorMin.Y;
+        globalScissor = validScissor ? new(globalScissorMin, globalScissorMax) : new(globalScissorMin, globalScissorMin);
+        return validScissor;
+    }
+
     private void ReceiveEvent(ref MouseEvent e)
     {
         MouseEvent childEvent = e;
-        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition) && LastGlobalScissor.ContainsInclusive(e.NDCPosition))
+        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition) && GetGlobalScissor().ContainsInclusive(e.NDCPosition))
         {
             for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
             {
@@ -162,12 +201,13 @@ public class UIElement : SceneObject
             HandleEvent(ref e);
     }
 
-    private void UpdateShape(Box2 parentShape, LayoutHandler? parentLayout, UIRenderer renderer)
+    private void UpdateShape(Box2 parentShape, UIRenderer renderer)
     {
         LastRenderer = renderer;
 
-        if (!_globalShapeSetByLayout)
+        switch(_globalShapeSetByLayout)
         {
+            default: // uncontrolled
             Box2 globalShape = new(
                 Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Min),
                 Vector2.Lerp(parentShape.Min, parentShape.Max, LocalShape.Max)
@@ -176,8 +216,14 @@ public class UIElement : SceneObject
             LastSizeConstraints = GetSizeConstraints();
             ApplySizeConstraints(ref globalShape, LastSizeConstraints, renderer);
             _globalShape = globalShape;
+            break;
+
+            case LayoutControlState.Resolving:
+            _globalShapeSetByLayout = LayoutControlState.Resolved;
+            break;
+
+            case LayoutControlState.Resolved: return;
         }
-        _globalShapeSetByLayout = false;
 
         Box2 childBounds = default;
         bool boundsInitted = false;
@@ -200,7 +246,7 @@ public class UIElement : SceneObject
         for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
         {
             var ch = internalUIChildren[_safeIterator];
-            ch.UpdateShape(_globalShape, Layout, renderer);
+            ch.UpdateShape(_globalShape, renderer);
             if (!ch.IncludeInChildbounds())
                 continue;
 
@@ -261,13 +307,6 @@ public class UIElement : SceneObject
     private void Render(Box2 parentScissorRegion, UIRenderer renderer)
     {
         var mat = GetMaterial();
-        var scissor = GetScissorRegion();
-        var globalScissorMin = Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Min);
-        var globalScissorMax = Vector2.Lerp(LastGlobalShape.Min, LastGlobalShape.Max, scissor.Max);
-        globalScissorMin = Vector2.ComponentMax(globalScissorMin, parentScissorRegion.Min);
-        globalScissorMax = Vector2.ComponentMin(globalScissorMax, parentScissorRegion.Max);
-        bool validScissor = globalScissorMax.X > globalScissorMin.X && globalScissorMax.Y > globalScissorMin.Y;
-        LastGlobalScissor = validScissor ? new(globalScissorMin, globalScissorMax) : new(globalScissorMin, globalScissorMin);
 
         Box2 NDC = new(-1, -1, 1, 1);
         Box2 global = LastGlobalShape;
@@ -279,13 +318,13 @@ public class UIElement : SceneObject
             )
             renderer.AddRenderToQueue(LastGlobalShape, mat, parentScissorRegion);
 
-        if (!validScissor)
+        if (!GetGlobalScissor(parentScissorRegion, out var trueScissor))
             return;
 
         for (int i = 0; i < internalUIChildren.Count; i++)
         {
             var ch = internalUIChildren[i];
-            ch.Render(LastGlobalScissor, renderer);
+            ch.Render(trueScissor, renderer);
         }
     }
 
@@ -317,7 +356,8 @@ public class UIElement : SceneObject
             element.LastSizeConstraints = element.GetSizeConstraints();
             ApplySizeConstraints(ref globalShape, element.LastSizeConstraints, renderer);
             element._globalShape = globalShape;
-            element._globalShapeSetByLayout = true;
+            element._globalShapeSetByLayout = LayoutControlState.Resolving;
+            element.UpdateShape((element.Parent as UIElement)?.LastGlobalShape ?? new(-1,-1,1,1), renderer);
         }
     }
 
@@ -334,5 +374,11 @@ public class UIElement : SceneObject
             if (previousIndex < _owner._safeIterator)
                 _owner._safeIterator--;
         }
+    }
+
+    enum LayoutControlState
+    {
+        Uncontrolled = 0,
+        Resolving, Resolved
     }
 }
