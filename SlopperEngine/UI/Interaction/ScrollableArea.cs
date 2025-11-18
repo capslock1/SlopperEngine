@@ -160,7 +160,17 @@ public class ScrollableArea : UIElement
 
     public ScrollableArea() : this(new(0,0,1,1)){}
 
-    Box2 GetMovingElementsBounds() => _movingArea.LastChildrenBounds;
+    Box2 GetMovingElementsBounds() 
+    {
+        var b = _movingArea.LastChildrenBounds;
+        if(Layout.Value == null || LastRenderer == null) 
+            return b;
+
+        if(Layout.Value.AddsPadding(_movingArea.LastGlobalShape, LastRenderer, out Vector2 padding))
+            b.Inflate(padding);
+
+        return b;
+    }
 
     void UpdatePosition()
     {

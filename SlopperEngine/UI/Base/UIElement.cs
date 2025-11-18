@@ -181,6 +181,9 @@ public class UIElement : SceneObject
 
         if (LastGlobalShape.ContainsInclusive(e.NDCPosition))
             HandleEvent(ref e);
+
+        if(childEvent.Type == MouseEventType.Blocked)
+            e.Block();
     }
 
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
