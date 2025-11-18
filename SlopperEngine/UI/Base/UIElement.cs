@@ -67,24 +67,6 @@ public class UIElement : SceneObject
     public Box2 LastChildrenBounds { get; private set; }
 
     /// <summary>
-    /// The visible portion of this UIElement in normalized device coordinates (ignoring the parent's scissor).
-    /// </summary>
-    public Box2 VisibleBounds
-    {
-        get
-        {
-            var scissor = GetGlobalScissor();
-            scissor = new(
-                Vector2.ComponentMax(scissor.Min, LastChildrenBounds.Min),
-                Vector2.ComponentMin(scissor.Max, LastChildrenBounds.Max));
-            return new(
-                Vector2.ComponentMin(scissor.Min, LastGlobalShape.Min),
-                Vector2.ComponentMax(scissor.Max, LastGlobalShape.Max));
-        }
-    }
-
-
-    /// <summary>
     /// A set of hidden UI elements.
     /// </summary>
     protected ChildList<UIElement, UIChildEvents> internalUIChildren { get; private set; }
@@ -181,7 +163,7 @@ public class UIElement : SceneObject
     private void ReceiveEvent(ref MouseEvent e)
     {
         MouseEvent childEvent = e;
-        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition) && GetGlobalScissor().ContainsInclusive(e.NDCPosition))
+        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition))
         {
             for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
             {
@@ -263,6 +245,10 @@ public class UIElement : SceneObject
             childBounds.Extend(ch.LastGlobalShape.Min);
             childBounds.Extend(ch.LastGlobalShape.Max);
         }
+        var scissor = GetGlobalScissor();
+        childBounds =  new(
+                Vector2.ComponentMax(scissor.Min, childBounds.Min),
+                Vector2.ComponentMin(scissor.Max, childBounds.Max));
 
         LastChildrenBounds = boundsInitted ? childBounds : new(_globalShape.Center, _globalShape.Center);
     }
