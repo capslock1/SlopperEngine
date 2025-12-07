@@ -55,11 +55,6 @@ public ref struct MouseEvent(Vector2 position, Vector2 delta, Vector2 scrollDelt
     public void Use() => Type = MouseEventType.Used;
 
     /// <summary>
-    /// Blocks the event, ensuring only UIElements rendered over this can receive it.
-    /// </summary>
-    public void Block() => Type = MouseEventType.Blocked;
-
-    /// <summary>
     /// Gets a bool indicating whether a given button is held.
     /// </summary>
     public readonly bool IsButtonDown(MouseButton button) => _state.IsButtonDown(button);

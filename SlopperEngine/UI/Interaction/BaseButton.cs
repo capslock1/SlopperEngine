@@ -48,11 +48,11 @@ public abstract class BaseButton : UIElement
         }
     }
 
+    protected override bool BlocksMouse() => true;
     protected override void HandleEvent(ref MouseEvent e)
     {
         if (!Enabled)
         {
-            e.Block();
             return;
         }
 
@@ -61,7 +61,6 @@ public abstract class BaseButton : UIElement
 
         if (!Enabled)
         {
-            e.Block();
             return;
         }
 
@@ -82,7 +81,6 @@ public abstract class BaseButton : UIElement
                 OnAllButtonsReleased();
             return;
         }
-        e.Block();
     }
 
     protected abstract void OnPressed(MouseButton button);

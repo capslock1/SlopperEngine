@@ -38,8 +38,10 @@ public class UIRenderer : SceneRenderer
     {
         if (Scene == null) return;
 
-        ShapeUpdater shapeUpdater = new(this);
-        Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref shapeUpdater);
+        // TODO: jank bandaid! please fix whatever the actual cause of janky popin is
+        UpdateShapes();
+        UpdateShapes();
+
         Buffer.Use();
         globals.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -100,18 +102,24 @@ public class UIRenderer : SceneRenderer
 
         FrameBuffer.Unuse();
     }
-    struct ShapeUpdater(UIRenderer renderer) : IRefEnumerator<UIRootUpdate>
-    {
-        public void Next(ref UIRootUpdate value)
-        {
-            value.UpdateShape(new(-1, -1, 1, 1), renderer);
-        }
-    }
     struct RenderUpdater(UIRenderer renderer) : IRefEnumerator<UIRootUpdate>
     {
         public void Next(ref UIRootUpdate value)
         {
             value.AddRender(new(Vector2.NegativeInfinity, Vector2.PositiveInfinity), renderer);
+        }
+    }
+
+    void UpdateShapes()
+    {
+        ShapeUpdater shapeUpdater = new(this);
+        Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref shapeUpdater);
+    }
+    struct ShapeUpdater(UIRenderer renderer) : IRefEnumerator<UIRootUpdate>
+    {
+        public void Next(ref UIRootUpdate value)
+        {
+            value.UpdateShape(new(-1, -1, 1, 1), renderer);
         }
     }
 
@@ -122,7 +130,18 @@ public class UIRenderer : SceneRenderer
         _previousMousePosition = NDCPos;
         Vector2 scrollDelta = input.MouseState.ScrollDelta;
 
+        // hovered UI must be tested every frame regardless of whether the mouse moves because UI elements can also move
         MouseEventUpdater updater = new();
+        updater.Event = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.OnHover);
+        Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
+        updater.Event = new MouseEvent(NDCPos - NDCDelta, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.OnEndHover);
+        Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
+
+        if (NDCDelta != default)
+        {
+            updater.Event = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Move);
+            Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
+        }
         for (int m = 0; m < (int)MouseButton.Last; m++)
         {
             var butt = (MouseButton)m;
@@ -136,11 +155,6 @@ public class UIRenderer : SceneRenderer
                 updater.Event = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), butt, input.MouseState, input.KeyboardState, MouseEventType.ReleasedButton);
                 Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
             }
-        }
-        if (NDCDelta != default)
-        {
-            updater.Event = new MouseEvent(NDCPos, NDCDelta, default, (MouseButton)(-1), (MouseButton)(-1), input.MouseState, input.KeyboardState, MouseEventType.Move);
-            Scene!.GetDataContainerEnumerable<UIRootUpdate>().Enumerate(ref updater);
         }
         if (scrollDelta != default)
         {

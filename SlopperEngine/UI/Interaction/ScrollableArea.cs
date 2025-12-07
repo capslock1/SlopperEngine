@@ -313,6 +313,7 @@ public class ScrollableArea : UIElement
         return base.GetSizeConstraints();
     }
 
+    protected override bool BlocksMouse() => true;
     protected override void HandleEvent(ref MouseEvent e)
     {
         if (e.Type == MouseEventType.Scroll)
@@ -341,7 +342,6 @@ public class ScrollableArea : UIElement
             e.Use();
             return;
         }
-        e.Block();
     }
 
     protected override void OnStyleChanged()

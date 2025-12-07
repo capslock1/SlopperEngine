@@ -149,6 +149,7 @@ public class TextField : UIElement
             0.9f);
     }
 
+    protected override bool BlocksMouse() => true;
     protected override void HandleEvent(ref MouseEvent e)
     {
         _hovered = true;
@@ -166,7 +167,6 @@ public class TextField : UIElement
             e.Use();
             return;
         }
-        e.Block();
     }
 
     [OnInputUpdate]

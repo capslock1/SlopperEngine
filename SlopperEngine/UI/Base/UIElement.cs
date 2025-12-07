@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using System.Reflection.Metadata;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using SlopperEngine.Core;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Graphics;
@@ -78,6 +81,7 @@ public class UIElement : SceneObject
     SceneDataHandle _UIRootUpdateHandle;
     bool _isUIRoot;
     int _safeIterator;
+    HoverState _hoverState;
 
     public UIElement() : this(new(0, 0, 1, 1)) { }
     public UIElement(Box2 localShape)
@@ -97,7 +101,7 @@ public class UIElement : SceneObject
             {
                 UpdateShape = UpdateShape,
                 AddRender = Render,
-                OnMouse = ReceiveEvent
+                OnMouse = PassEvent,
             });
         }
     }
@@ -125,13 +129,18 @@ public class UIElement : SceneObject
     /// </summary>
     protected virtual Box2 GetScissorRegion() => new(Vector2.NegativeInfinity, Vector2.PositiveInfinity);
     /// <summary>
-    /// Handles a mouse event. Remember to call e.Use() when using info from the event in any way (or to simply block it).
+    /// Handles a mouse event. Remember to call e.Use() when using info from the event in any way, and to also override BlocksMouse() if applicable.
     /// </summary>
     protected virtual void HandleEvent(ref MouseEvent e) { }
+    /// <summary>
+    /// Whether or not UIElements rendering behind this one are blocked from receiving mouse events.
+    /// </summary>
+    protected virtual bool BlocksMouse() => false;
     /// <summary>
     /// Whether or not this element should have its bounds included in ChildBounds.
     /// </summary>
     protected virtual bool IncludeInChildbounds() => true;
+
 
     /// <summary>
     /// Gets the global scissor of just this UIElement.
@@ -160,30 +169,46 @@ public class UIElement : SceneObject
         return validScissor;
     }
 
-    private void ReceiveEvent(ref MouseEvent e)
+    private void PassEvent(ref MouseEvent e) 
     {
+        if(ReceiveEvent(ref e)) 
+            e.Use();
+    }
+    private bool ReceiveEvent(ref MouseEvent e)
+    {
+        if(e.Type == MouseEventType.Used)
+            return false;
+
         MouseEvent childEvent = e;
-        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition))
+
+        bool childBlocks = false;
+        if (LastChildrenBounds.ContainsInclusive(e.NDCPosition) || e.Type == MouseEventType.OnEndHover)
         {
             for (_safeIterator = internalUIChildren.Count - 1; _safeIterator >= 0; _safeIterator--)
             {
                 var ch = internalUIChildren[_safeIterator];
-                ch.ReceiveEvent(ref childEvent);
-                if (childEvent.Type == MouseEventType.Used)
+                if(ch.ReceiveEvent(ref childEvent) || (ch.BlocksMouse() && ch.LastGlobalShape.ContainsInclusive(e.NDCPosition)))
                 {
-                    e.Use();
-                    return;
+                    childBlocks = true;
+                    break;
                 }
-                if (childEvent.Type == MouseEventType.Blocked)
+
+                if (childEvent.Type == MouseEventType.Used)
                     break;
             }
         }
 
+        if(childEvent.Type == MouseEventType.Used)
+        {
+            e.Use();
+            return false;
+        } 
         if (LastGlobalShape.ContainsInclusive(e.NDCPosition))
+        {
             HandleEvent(ref e);
+        }
 
-        if(childEvent.Type == MouseEventType.Blocked)
-            e.Block();
+        return childBlocks;
     }
 
     private void UpdateShape(Box2 parentShape, UIRenderer renderer)
@@ -369,5 +394,12 @@ public class UIElement : SceneObject
     {
         Uncontrolled = 0,
         Resolving, Resolved
+    }
+
+    enum HoverState
+    {
+        NotHovered = 0,
+        Hovered,
+        Unhovered
     }
 }
