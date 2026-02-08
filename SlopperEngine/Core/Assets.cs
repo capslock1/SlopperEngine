@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace SlopperEngine.Core;
 
@@ -32,6 +35,25 @@ public class Assets
     volatile static Assets _instance = new();
 
     readonly Dictionary<(string, string?), string> _foundFolderPaths = new();
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static bool TryGetFile(string path, [NotNullWhen(true)] out Stream? file)
+    {
+        file = null;
+        try
+        {
+            var callingAssembly = Assembly.GetCallingAssembly() ?? Assembly.GetExecutingAssembly();
+            
+        }
+        catch{}
+        return false;
+    }
+
+    static bool GetModAssetpath(Assembly mod, out string? assetPath)
+    {
+        assetPath = null;
+        return false;
+    }
 
     /// <summary>
     /// Gets the filepath to an asset relative to a specific assets folder.
