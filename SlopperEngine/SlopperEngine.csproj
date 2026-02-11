@@ -1,16 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.9.3" />
     <PackageReference Include="StbImageSharp" Version="2.27.14" />
     <PackageReference Include="AssimpNet" Version="4.1.0" />
     <PackageReference Include="BepuPhysics" Version="2.4.0" />
+    <PackageReference Include="DouglasDwyer.CasCore" Version="0.2.1" />
   </ItemGroup>
+
 </Project>

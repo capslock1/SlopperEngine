@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using System.Threading;
 
 namespace SlopperEngine.Windowing;
 
@@ -22,15 +23,31 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// <summary>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
     /// </summary>
-    public static bool ThrowIfSevereGLError;
-    public static bool MultithreadedFrameUpdate = true;
-    static MainContext? _instance;
+    public static volatile bool ThrowIfSevereGLError;
+    
+    /// <summary>
+    /// Whether or not the FrameUpdate should be multithreaded. Should be deprecated when this is known not to produce errors.
+    /// </summary>
+    public static volatile bool MultithreadedFrameUpdate = true;
 
-    private List<Task> _frameUpdateQueue = new List<Task>();
-
+    /// <summary>
+    /// The central MainContext instance.
+    /// </summary>
     public static MainContext Instance{
-        get => _instance == null || !_instance.Exists ? new() : _instance;
+        get
+        {
+            if(_instance == null) 
+                InitializeInstance();
+            return _instance!;
+        } 
     }
+
+    static MainContext? _instance;
+    private List<Task> _frameUpdateQueue = new List<Task>();
+    /// <summary>
+    /// 0 when an instance is not currently being created. Used to safely have a 
+    /// </summary>
+    volatile static uint _instanceInCreation = 0;
 
     MainContext() : base(
         new(){
@@ -44,6 +61,15 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     {
         if(_instance == null) _instance = this;
         else throw new Exception("Attempted to make a second MainContext.");
+    }
+
+    /// <summary>
+    /// Starts SlopperEngine.
+    /// </summary>
+    public static void Main()
+    {
+        InitializeInstance();
+        Core.Mods.SlopModInfo.InitializeMods();
     }
 
     // waits for previous threads if any are still running, and cleans them up
@@ -141,6 +167,18 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         base.OnLoad();
         if(ThrowIfSevereGLError)
             GL.Enable(EnableCap.DebugOutputSynchronous); //lower performance but better debugging.
+    }
+
+    static void InitializeInstance()
+    {
+        uint inCreation = Interlocked.Increment(ref _instanceInCreation);
+        if(inCreation > 1)
+        {
+            while(_instance == null || !_instance.Exists)
+                Thread.Yield();
+            return;
+        }
+        _instance = new();
     }
 
     private static DebugProc? DebugMessageDelegate = OnDebugMessage;
