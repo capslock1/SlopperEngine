@@ -19,34 +19,71 @@ public sealed class SlopModInfo
     /// The full file path to this SlopMod.
     /// </summary>
     public readonly string FullFilePath;
-    List<Assembly> _assembliesInMod = new();
 
-    SlopModInfo(string fullFilePath)
+    /// <summary>
+    /// The full file path to this SlopMod's asset folder.
+    /// </summary>
+    public readonly string AssetFolderPath;
+
+    /// <summary>
+    /// The name of this SlopMod
+    /// </summary>
+    public readonly string ShortName;
+
+    /// <summary>
+    /// The permission this SlopMod has.
+    /// </summary>
+    public readonly ModPermissionFlags Permissions;
+
+    readonly List<Assembly> _assembliesInMod = new();
+
+    SlopModInfo(string fullFilePath, ModPermissionFlags permissions, bool overrideLoadAssembly = false)
     {
         FullFilePath = fullFilePath;
+        int fileNameLength = Path.GetFileName(fullFilePath.AsSpan()).Length;
+        AssetFolderPath = fullFilePath.Substring(fullFilePath.Length - fileNameLength, fileNameLength);
         var modSettings = File.ReadAllLines(fullFilePath);
+
+        // before i get proper manual serialization down, 
+        // slopmods are in the following format:
+        // - short name
+        // - version number
+        // - asset folder
+
+        ShortName = modSettings[0];
     }
 
     /// <summary>
     /// Loads a mod at a certain filepath (or just gets the mod that was already loaded).
     /// </summary>
     /// <param name="filePath">The filepath to load the mod at.</param>
+    /// <param name="permissions">The permissions of the mod.</param>
     /// <param name="result">The ModInfo instance. Null if the function returns false.</param>
     /// <returns>Whether or not the mod could be loaded.</returns>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool TryGetInfo(string filePath, [NotNullWhen(true)] SlopModInfo? result)
+    public static bool TryGetInfo(string filePath, ModPermissionFlags permissions, [NotNullWhen(true)] out SlopModInfo? result)
     {
         result = null;
-        // get calling assembly and verify whether it has the permission to load? 
-        // for now, just exclude this from allowed function calls
         try
         {
+            if(TryGetInfo(Assembly.GetCallingAssembly(), out var callingMod))
+            {
+                // if the assembly is not from a sloppermod i guess we don't check for permissions?
+                // this feels wrong though
+
+                if(!ModPermissionHelper.HasPermissions(callingMod.Permissions, permissions))
+                {
+                    System.Console.WriteLine($"Mod {callingMod.ShortName} did not have adequate permissions to get modinfo at {filePath}");
+                    return false;
+                }
+            }
+
             filePath = Path.GetFullPath(filePath);
             lock(_modAtPath)
                 if(_modAtPath.TryGetValue(filePath, out result))
                     return true;
 
-            var info = new SlopModInfo(filePath);
+            var info = new SlopModInfo(filePath, permissions);
 
             lock(_modAtPath)
                 _modAtPath[filePath] = info;
@@ -55,6 +92,7 @@ public sealed class SlopModInfo
                 foreach(var assembly in info._assembliesInMod)
                     _modOfAssembly[assembly] = info;
             
+            result = info;
             return true;
         }
         catch(Exception? e)
@@ -70,7 +108,7 @@ public sealed class SlopModInfo
     /// <param name="assembly">The assembly to get the SlopModInfo of.</param>
     /// <param name="result">The SlopMod from which the assembly originated. Null if this function returns false.</param>
     /// <returns>Whether or not the assembly comes from a SlopMod in the first place.</returns>
-    public static bool TryGetInfo(Assembly assembly, [NotNullWhen(true)] SlopModInfo? result)
+    public static bool TryGetInfo(Assembly assembly, [NotNullWhen(true)] out SlopModInfo? result)
     {
         lock(_modOfAssembly)
             return _modOfAssembly.TryGetValue(assembly, out result);

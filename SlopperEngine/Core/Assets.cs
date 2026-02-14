@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using SlopperEngine.Core.Mods;
 
 namespace SlopperEngine.Core;
 
@@ -36,16 +37,38 @@ public class Assets
 
     readonly Dictionary<(string, string?), string> _foundFolderPaths = new();
 
+    /// <summary>
+    /// Tries to get a file at a certain path, relative to each SlopperMod.
+    /// </summary>
+    /// <param name="path">The path to get the file from. This is relative to the SlopperMod's asset folder.</param>
+    /// <param name="file">The retrieved file. Null if this function returns false - this means the file could not be found.</param>
+    /// <param name="mode">The mode to open the file with. Opens on default.</param>
+    /// <param name="access">The mode to access the file with.</param>
+    /// <param name="share">The mode to share the file with.</param>
+    /// <returns>Whether or not the file could be found.</returns>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool TryGetFile(string path, [NotNullWhen(true)] out Stream? file)
+    public static bool TryGetFile(string path, [NotNullWhen(true)] out Stream? file, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read, FileShare share = FileShare.Read)
     {
         file = null;
         try
         {
             var callingAssembly = Assembly.GetCallingAssembly() ?? Assembly.GetExecutingAssembly();
-            
+            if(SlopModInfo.TryGetInfo(callingAssembly, out var info))
+            {
+                string fullPath = Path.GetFullPath(info.AssetFolderPath, path);
+                if(!fullPath.StartsWith(info.AssetFolderPath))
+                {
+                    System.Console.WriteLine("Assets: didn't load because invalid filepath. Nice try buddy (:");
+                    return false;
+                }
+                file = File.Open(fullPath, mode, access, share);
+                return true;
+            }
         }
-        catch{}
+        catch(Exception e)
+        {
+            System.Console.WriteLine($"Assets: error while trying to load {path} ({mode},{access},{share}) - {e.Message}");
+        }
         return false;
     }
 
