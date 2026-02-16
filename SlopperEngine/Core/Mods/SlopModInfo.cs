@@ -12,8 +12,8 @@ namespace SlopperEngine.Core.Mods;
 /// </summary>
 public sealed class SlopModInfo
 {
-    static Dictionary<string, SlopModInfo> _modAtPath = new();
-    static Dictionary<Assembly, SlopModInfo> _modOfAssembly = new();
+    static readonly Dictionary<string, SlopModInfo> _modAtPath = new();
+    static readonly Dictionary<Assembly, SlopModInfo> _modOfAssembly = new();
 
     /// <summary>
     /// The full file path to this SlopMod.
@@ -31,26 +31,41 @@ public sealed class SlopModInfo
     public readonly string ShortName;
 
     /// <summary>
-    /// The permission this SlopMod has.
+    /// The permissions this SlopMod has.
     /// </summary>
     public readonly ModPermissionFlags Permissions;
 
     readonly List<Assembly> _assembliesInMod = new();
 
-    SlopModInfo(string fullFilePath, ModPermissionFlags permissions, bool overrideLoadAssembly = false)
+    SlopModInfo(string fullFilePath, ModPermissionFlags permissions, Assembly? overridingAssembly = null)
     {
         FullFilePath = fullFilePath;
-        int fileNameLength = Path.GetFileName(fullFilePath.AsSpan()).Length;
-        AssetFolderPath = fullFilePath.Substring(fullFilePath.Length - fileNameLength, fileNameLength);
         var modSettings = File.ReadAllLines(fullFilePath);
+        Permissions = permissions;
 
         // before i get proper manual serialization down, 
         // slopmods are in the following format:
         // - short name
         // - version number
-        // - asset folder
+        // - asset folder name
 
         ShortName = modSettings[0];
+
+        int fileNameLength = Path.GetFileName(fullFilePath.AsSpan()).Length;
+        AssetFolderPath = Path.GetFullPath(fullFilePath.Substring(fullFilePath.Length - fileNameLength, fileNameLength), modSettings[2]);
+        
+        lock(_modAtPath)
+            _modAtPath.Add(fullFilePath, this);
+
+        if(overridingAssembly != null)
+        {
+            lock(_assembliesInMod)
+                _assembliesInMod.Add(overridingAssembly);
+            return;
+        }
+
+        if(permissions == ModPermissionFlags.None) // i... can't do anything!
+            return;
     }
 
     /// <summary>
@@ -61,21 +76,20 @@ public sealed class SlopModInfo
     /// <param name="result">The ModInfo instance. Null if the function returns false.</param>
     /// <returns>Whether or not the mod could be loaded.</returns>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool TryGetInfo(string filePath, ModPermissionFlags permissions, [NotNullWhen(true)] out SlopModInfo? result)
+    public static bool TryGetorLoadMod(string filePath, ModPermissionFlags permissions, [NotNullWhen(true)] out SlopModInfo? result)
     {
         result = null;
         try
         {
-            if(TryGetInfo(Assembly.GetCallingAssembly(), out var callingMod))
+            if(!TryGetInfo(Assembly.GetCallingAssembly(), out var callingMod))
             {
-                // if the assembly is not from a sloppermod i guess we don't check for permissions?
-                // this feels wrong though
-
-                if(!ModPermissionHelper.HasPermissions(callingMod.Permissions, permissions))
-                {
-                    System.Console.WriteLine($"Mod {callingMod.ShortName} did not have adequate permissions to get modinfo at {filePath}");
-                    return false;
-                }
+                System.Console.WriteLine($"SlopModInfo: Unknown assembly {Assembly.GetCallingAssembly()} trying to load modinfo at {filePath}");
+                return false;
+            }
+            if(!ModPermissionHelper.HasPermissions(callingMod.Permissions, permissions))
+            {
+                System.Console.WriteLine($"SlopModInfo: Mod {callingMod.ShortName} did not have adequate permissions to load modinfo at {filePath}");
+                return false;
             }
 
             filePath = Path.GetFullPath(filePath);
@@ -97,7 +111,7 @@ public sealed class SlopModInfo
         }
         catch(Exception? e)
         {
-            System.Console.WriteLine($"Error loading SlopMod at '{filePath}' due to: "+e.Message);
+            System.Console.WriteLine($"SlopModInfo: Error loading SlopMod at '{filePath}' due to: "+e.Message);
         }
         return false;
     }
@@ -119,6 +133,25 @@ public sealed class SlopModInfo
     /// </summary>
     public static void InitializeMods()
     {
-        
+        var startDirectory = Directory.GetCurrentDirectory();
+        while (true)
+        {
+            try
+            {
+                if (startDirectory == null)
+                    throw new Exception($"Catastrophic error! Could not find the SlopperEngine.slopmod file. SlopperEngine will not be able to run.");
+
+                if(File.Exists(Path.Combine(startDirectory, "SlopperEngine.slopmod")))
+                    break;
+
+                startDirectory = Directory.GetParent(startDirectory)?.FullName;
+            }
+            catch(Exception e)
+            {
+                throw new Exception($"Catastrophic error! Could not find the SlopperEngine.slopmod file due to an unexpected error: {e.Message}");
+            }
+        }
+
+        var engineModInfo = new SlopModInfo(Path.Combine(startDirectory, "SlopperEngine.slopmod"), ModPermissionFlags.All, Assembly.GetExecutingAssembly());
     }
 }

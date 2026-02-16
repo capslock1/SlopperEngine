@@ -14,7 +14,6 @@ public static class ModPermissionHelper
     public static bool HasPermissions(ModPermissionFlags modPermissions, ModPermissionFlags permissionToTest)
     {
         if((modPermissions & ModPermissionFlags.Unrestricted) == ModPermissionFlags.Unrestricted) return true;
-        var combinedPermissions = modPermissions | permissionToTest;
-        return combinedPermissions == modPermissions; // if permissionToTest has permissions that the mod does not, this is false
+        return modPermissions.HasFlag(permissionToTest);
     }
 }

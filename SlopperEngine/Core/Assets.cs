@@ -58,7 +58,7 @@ public class Assets
                 string fullPath = Path.GetFullPath(info.AssetFolderPath, path);
                 if(!fullPath.StartsWith(info.AssetFolderPath))
                 {
-                    System.Console.WriteLine("Assets: didn't load because invalid filepath. Nice try buddy (:");
+                    System.Console.WriteLine($"Assets: didn't load '{path}' from {info.ShortName} because it's an invalid filepath. Nice try buddy (:");
                     return false;
                 }
                 file = File.Open(fullPath, mode, access, share);
