@@ -33,21 +33,9 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// <summary>
     /// The central MainContext instance.
     /// </summary>
-    public static MainContext Instance{
-        get
-        {
-            if(_instance == null) 
-                InitializeInstance();
-            return _instance!;
-        } 
-    }
+    public static readonly MainContext Instance = new();
 
-    static MainContext? _instance;
     private List<Task> _frameUpdateQueue = new List<Task>();
-    /// <summary>
-    /// 0 when an instance is not currently being created. Used to safely have a 
-    /// </summary>
-    volatile static uint _instanceInCreation = 0;
 
     MainContext() : base(
         new(){
@@ -59,8 +47,6 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             ClientSize = (1,1),
         })
     {
-        if(_instance == null) _instance = this;
-        else throw new Exception("Attempted to make a second MainContext.");
     }
 
     /// <summary>
@@ -68,8 +54,10 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// </summary>
     public static void Main()
     {
-        InitializeInstance();
-        Core.Mods.SlopModInfo.InitializeMods();
+        // loading screen should really start here
+
+        Core.Mods.SlopModInfo.InitializeMods(); // this should really update the loading screen
+
     }
 
     // waits for previous threads if any are still running, and cleans them up
@@ -167,18 +155,6 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         base.OnLoad();
         if(ThrowIfSevereGLError)
             GL.Enable(EnableCap.DebugOutputSynchronous); //lower performance but better debugging.
-    }
-
-    static void InitializeInstance()
-    {
-        uint inCreation = Interlocked.Increment(ref _instanceInCreation);
-        if(inCreation > 1)
-        {
-            while(_instance == null || !_instance.Exists)
-                Thread.Yield();
-            return;
-        }
-        _instance = new();
     }
 
     private static DebugProc? DebugMessageDelegate = OnDebugMessage;

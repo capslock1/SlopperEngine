@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace SlopperEngine.Core.Mods;
 
@@ -14,6 +15,19 @@ public sealed class SlopModInfo
 {
     static readonly Dictionary<string, SlopModInfo> _modAtPath = new();
     static readonly Dictionary<Assembly, SlopModInfo> _modOfAssembly = new();
+    static SlopModInfo? _engineSlopModInfo;
+
+    /// <summary>
+    /// The SlopModInfo belonging to the engine.
+    /// </summary>
+    public static SlopModInfo EngineInfo
+    {
+        get
+        {
+            InitializeMods();
+            return _engineSlopModInfo!;
+        }
+    }
 
     /// <summary>
     /// The full file path to this SlopMod.
@@ -35,9 +49,14 @@ public sealed class SlopModInfo
     /// </summary>
     public readonly ModPermissionFlags Permissions;
 
+    /// <summary>
+    /// Whether or not this SlopModInfo belongs to SlopperEngine.
+    /// </summary>
+    public bool IsSlopperEngine => this == _engineSlopModInfo;
+
     readonly List<Assembly> _assembliesInMod = new();
 
-    SlopModInfo(string fullFilePath, ModPermissionFlags permissions, Assembly? overridingAssembly = null)
+    SlopModInfo(string fullFilePath, ModPermissionFlags permissions, Assembly? slopperEngineAssembly = null)
     {
         FullFilePath = fullFilePath;
         var modSettings = File.ReadAllLines(fullFilePath);
@@ -52,15 +71,15 @@ public sealed class SlopModInfo
         ShortName = modSettings[0];
 
         int fileNameLength = Path.GetFileName(fullFilePath.AsSpan()).Length;
-        AssetFolderPath = Path.GetFullPath(fullFilePath.Substring(fullFilePath.Length - fileNameLength, fileNameLength), modSettings[2]);
+        var pathToModFolder = fullFilePath.Substring(fullFilePath.Length - fileNameLength, fileNameLength);
+        AssetFolderPath = Path.GetFullPath(pathToModFolder, modSettings[2]);
+        if(!AssetFolderPath.StartsWith(pathToModFolder))
+            throw new Exception($"Slopmod's asset folder ({modSettings[2]}) reaches outside of the mod folder.");
         
-        lock(_modAtPath)
-            _modAtPath.Add(fullFilePath, this);
-
-        if(overridingAssembly != null)
+        // this mod is slopperengine - so it has its assembly hardcoded and does not need to load any code.
+        if(slopperEngineAssembly != null)
         {
-            lock(_assembliesInMod)
-                _assembliesInMod.Add(overridingAssembly);
+            _assembliesInMod.Add(slopperEngineAssembly);
             return;
         }
 
@@ -74,9 +93,9 @@ public sealed class SlopModInfo
     /// <param name="filePath">The filepath to load the mod at.</param>
     /// <param name="permissions">The permissions of the mod.</param>
     /// <param name="result">The ModInfo instance. Null if the function returns false.</param>
-    /// <returns>Whether or not the mod could be loaded.</returns>
+    /// <returns>Whether or not the mod could be loaded. False likely means the caller lacks permissions.</returns>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static bool TryGetorLoadMod(string filePath, ModPermissionFlags permissions, [NotNullWhen(true)] out SlopModInfo? result)
+    public static bool TryGetOrLoadMod(string filePath, ModPermissionFlags permissions, [NotNullWhen(true)] out SlopModInfo? result)
     {
         result = null;
         try
@@ -91,29 +110,34 @@ public sealed class SlopModInfo
                 System.Console.WriteLine($"SlopModInfo: Mod {callingMod.ShortName} did not have adequate permissions to load modinfo at {filePath}");
                 return false;
             }
-
-            filePath = Path.GetFullPath(filePath);
-            lock(_modAtPath)
-                if(_modAtPath.TryGetValue(filePath, out result))
-                    return true;
-
-            var info = new SlopModInfo(filePath, permissions);
-
-            lock(_modAtPath)
-                _modAtPath[filePath] = info;
-
-            lock(_modOfAssembly)
-                foreach(var assembly in info._assembliesInMod)
-                    _modOfAssembly[assembly] = info;
-            
-            result = info;
+            GetOrLoadMod(filePath, permissions, out result);
             return true;
         }
-        catch(Exception? e)
+        catch(Exception e)
         {
             System.Console.WriteLine($"SlopModInfo: Error loading SlopMod at '{filePath}' due to: "+e.Message);
         }
         return false;
+    }
+
+    static void GetOrLoadMod(string filePath, ModPermissionFlags permissions, out SlopModInfo result)
+    {
+        filePath = Path.GetFullPath(filePath);
+        lock(_modAtPath)
+            if(_modAtPath.TryGetValue(filePath, out result!))
+                return;
+
+        var info = new SlopModInfo(filePath, permissions);
+
+        lock(_modAtPath)
+            _modAtPath[filePath] = info;
+
+        lock(_modOfAssembly)
+            foreach(var assembly in info._assembliesInMod)
+                _modOfAssembly[assembly] = info;
+        
+        result = info;
+        return;
     }
 
     /// <summary>
@@ -133,25 +157,56 @@ public sealed class SlopModInfo
     /// </summary>
     public static void InitializeMods()
     {
+        if(_engineSlopModInfo == null) // weird if this function gets called twice, but not a problem at least...
+            return; 
+
         var startDirectory = Directory.GetCurrentDirectory();
         while (true)
         {
+            if (startDirectory == null)
+                throw new Exception($"Could not find the SlopperEngine.slopmod file. SlopperEngine will not be able to run.");
+
+            if(File.Exists(Path.Combine(startDirectory, "SlopperEngine.slopmod")))
+                break;
+
+            startDirectory = Directory.GetParent(startDirectory)?.FullName;
+        }
+        
+        // little jank, but i see no reason not to do this like this
+        // the engine is basically registered as a SlopMod to make life easy
+        GetOrLoadMod(Path.Combine(startDirectory, "SlopperEngine.slopmod"), ModPermissionFlags.All, out _engineSlopModInfo);
+
+        var loadedMods = new List<SlopModInfo>();
+        var trustedMods = File.ReadAllLines(Path.Combine(startDirectory, "TrustedModsDONTREPLACE"), Encoding.UTF8);
+        if(trustedMods.Length < 2)
+            throw new Exception("SlopperEngine won't run, as there were no mods to load.");
+
+        for(int i = 0; i < trustedMods.Length; i += 2)
+        {
             try
             {
-                if (startDirectory == null)
-                    throw new Exception($"Catastrophic error! Could not find the SlopperEngine.slopmod file. SlopperEngine will not be able to run.");
-
-                if(File.Exists(Path.Combine(startDirectory, "SlopperEngine.slopmod")))
-                    break;
-
-                startDirectory = Directory.GetParent(startDirectory)?.FullName;
+                var perm = (ModPermissionFlags)long.Parse(trustedMods[i]);
+                GetOrLoadMod(trustedMods[i+1], perm, out var mod);
+                loadedMods.Add(mod);
             }
             catch(Exception e)
             {
-                throw new Exception($"Catastrophic error! Could not find the SlopperEngine.slopmod file due to an unexpected error: {e.Message}");
+                if(i + 2 >= trustedMods.Length && loadedMods.Count == 0)
+                    throw; // rethrow if not a single mod could load successfully. if ANYTHING loaded, we can trust it to do... uh... something. for sure
+                
+                if(trustedMods.Length < i+1)
+                    System.Console.WriteLine($"Failed to load trusted mod ({trustedMods[i+1]}) due to unexpected error: {e.Message}");
             }
         }
 
-        var engineModInfo = new SlopModInfo(Path.Combine(startDirectory, "SlopperEngine.slopmod"), ModPermissionFlags.All, Assembly.GetExecutingAssembly());
+        foreach(var mod in loadedMods)
+            try
+            {
+                // call IMod.OnLoad here! for every assembly!
+            }
+            catch(Exception e)
+            {
+                System.Console.WriteLine($"'{mod.ShortName}' had an exception while loading: {e.Message}");
+            }
     }
 }
