@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Text;
+using DouglasDwyer.CasCore;
 
 namespace SlopperEngine.Core.Mods;
 
 /// <summary>
 /// Contains important information about a slopmod.
 /// </summary>
+[RequiresPermission(ModPermissionFlags.ManageMods)]
 public sealed class SlopModInfo
 {
     static readonly Dictionary<string, SlopModInfo> _modAtPath = new();
@@ -54,7 +58,18 @@ public sealed class SlopModInfo
     /// </summary>
     public bool IsSlopperEngine => this == _engineSlopModInfo;
 
+    /// <summary>
+    /// The policy this SlopMod is subject to. Null if this SlopMod is fully trusted.
+    /// </summary>
+    public readonly CasPolicy? Policy;
+
+    /// <summary>
+    /// Gets the assemblies in this SlopMod.
+    /// </summary>
+    public ReadOnlyCollection<Assembly> AssembliesInMod => _assembliesInMod.AsReadOnly();
+
     readonly List<Assembly> _assembliesInMod = new();
+    readonly CasAssemblyLoader? _loadContext;
 
     SlopModInfo(string fullFilePath, ModPermissionFlags permissions, Assembly? slopperEngineAssembly = null)
     {
@@ -85,6 +100,34 @@ public sealed class SlopModInfo
 
         if(permissions == ModPermissionFlags.None) // i... can't do anything!
             return;
+
+        var assemblies = Directory.GetFiles(pathToModFolder, "*.dll", SearchOption.AllDirectories);
+        if(permissions.HasFlag(ModPermissionFlags.Unrestricted))
+        {
+            foreach(var assemblyFilepath in assemblies)
+                try
+                {
+                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyFilepath);
+                    _assembliesInMod.Add(assembly);
+                }
+                catch(Exception e)
+                {
+                    System.Console.WriteLine($"SlopModInfo: Exception loading {ShortName}'s assembly ({assemblyFilepath}) due to unexpected error: {e.Message}");
+                }
+        }
+
+        Policy = ModPermissionHelper.GetPolicy(Permissions);
+        _loadContext = new CasAssemblyLoader(Policy, true);
+        foreach(var assemblyFilepath in assemblies)
+            try
+            {
+                var assembly = _loadContext.LoadFromAssemblyPath(assemblyFilepath);
+                _assembliesInMod.Add(assembly);
+            }
+            catch(Exception e)
+            {
+                System.Console.WriteLine($"SlopModInfo: Exception loading {ShortName}'s assembly ({assemblyFilepath}) due to unexpected error: {e.Message}");
+            }
     }
 
     /// <summary>
@@ -208,5 +251,14 @@ public sealed class SlopModInfo
             {
                 System.Console.WriteLine($"'{mod.ShortName}' had an exception while loading: {e.Message}");
             }
+    }
+
+    /// <summary>
+    /// Gets all mods loaded in the program.
+    /// </summary>
+    public static IEnumerable<SlopModInfo> GetAllMods()
+    {
+        foreach(var mod in _modAtPath)
+            yield return mod.Value;
     }
 }

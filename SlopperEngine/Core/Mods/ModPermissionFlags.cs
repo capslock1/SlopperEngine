@@ -5,7 +5,8 @@ namespace SlopperEngine.Core.Mods;
 /// <summary>
 /// Rules for what a SlopperMod's code is allowed to do.
 /// </summary>
-[Flags]
+[RequiresPermission(ManageMods)]
+[Flags] 
 public enum ModPermissionFlags : byte
 {
     /// <summary>
@@ -34,14 +35,19 @@ public enum ModPermissionFlags : byte
     AccessNetwork = 1 << 3,
 
     /// <summary>
+    /// The mod is allowed to access code from mods (with less or equal permissions).
+    /// </summary>
+    AccessOtherMods = 1 << 4,
+
+    /// <summary>
     /// The mod is allowed to load and unload mods (with less or equal permissions).
     /// </summary>
-    ManageMods = 1 << 4,
+    ManageMods = 1 << 5,
 
     /// <summary>
     /// The mod has complete and unrestricted access to any code and the engine.
     /// </summary>
-    Unrestricted = 1 << 5,
+    Unrestricted = 1 << 6,
 
     /// <summary>
     /// All flags set to true.
