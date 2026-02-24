@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using OpenTK.Mathematics;
+using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Meshes;
@@ -17,11 +18,11 @@ public static class MeshLoader
     /// <summary>
     /// Doesn't work.
     /// </summary>
-    /// <param name="filepath">Don't even worry about it.</param>
+    /// <param name="asset">Don't even worry about it.</param>
     /// <returns>Literally nothing.</returns>
-    public static Mesh? GetMesh(string filepath)
+    public static Mesh? GetMesh(Asset asset)
     {
-        Mesh? result = _loadedMeshes.Get(filepath);
+        Mesh? result = _loadedMeshes.Get(asset.FullFilePath!);
         if(result != null)
             return result;
         
@@ -29,16 +30,17 @@ public static class MeshLoader
         try
         {
             Assimp.AssimpContext context = new Assimp.AssimpContext();
-            scene = context.ImportFile(filepath);
+            using var stream = asset.GetStream();
+            scene = context.ImportFileFromStream(stream);
         }
         catch(FileNotFoundException)
         {
-            Console.WriteLine("Meshloader: Could not find file at "+filepath);
+            Console.WriteLine("Meshloader: Could not find file at "+asset);
             return null;
         }
         if(scene.MeshCount <= 0) 
         {
-            Console.WriteLine("Meshloader: could not find any meshes in "+filepath);
+            Console.WriteLine("Meshloader: could not find any meshes in "+asset);
             return null;
         }
 
@@ -51,14 +53,17 @@ public static class MeshLoader
     }
 
     /// <summary>
-    /// Loads a wavefront OBJ mesh from a filepath.
+    /// Loads a wavefront OBJ mesh from a stream object.
     /// </summary>
-    /// <param name="filepath">The path of the file. NOT relative - use Core.Assets to get a full path.</param>
+    /// <param name="asset">The asset to load from. Function throws if this isn't loaded, or not set to read.</param>
     /// <returns>A new Mesh instance, or an instance from the cache.</returns>
     /// <exception cref="Exception"></exception>
-    public static Mesh SimpleFromWavefrontOBJ(string filepath)
+    public static Mesh SimpleFromWavefrontOBJ(Asset asset)
     {
-        Mesh? result = _loadedMeshes.Get(filepath);
+        if(!asset.AssetExists)
+            throw new NullReferenceException("Given asset was not loaded.");
+
+        Mesh? result = _loadedMeshes.Get(asset.FullFilePath!);
         if(result != null)
             return result;
         
@@ -67,13 +72,11 @@ public static class MeshLoader
         List<Vector3> normData = new List<Vector3>();
         List<Vector3i> indices = new List<Vector3i>();
         
-        string filename = filepath;
-        if (!File.Exists(filename))
-            throw new Exception("Model could not be found at filepath " + filename);
-        if (filename.Substring(filename.Length - 4) != ".obj")
+        var filename = asset.FullFilePath!;
+        if (!filename.EndsWith(".obj"))
             throw new Exception("Specified model is not in Wavefront (.obj) format. Model in question: " + filename);
 
-        StreamReader reader = new StreamReader(filename);
+        StreamReader reader = new StreamReader(asset.GetStream());
         string? line = reader.ReadLine();
         while (line != null)
         {
@@ -198,15 +201,14 @@ public static class MeshLoader
         }
         
         result = new OBJMesh(finalVertices.ToArray(), finalIndices.ToArray());
-        _loadedMeshes.Set(filepath, result);
-        result.OverrideOrigin = new OBJMeshOrigin(filepath);
+        _loadedMeshes.Set(filename, result);
+        result.OverrideOrigin = new OBJMeshOrigin(asset);
         return result;
     }
 
-    class OBJMeshOrigin(string filepath) : IGPUResourceOrigin
+    class OBJMeshOrigin(Asset file) : IGPUResourceOrigin
     {
-        string filepath = filepath;
-        public GPUResource CreateResource() => SimpleFromWavefrontOBJ(filepath);
-        public override string ToString() => $"OBJMesh from filepath: '{filepath}'";
+        public GPUResource CreateResource() => SimpleFromWavefrontOBJ(file); // fine if errors. serializer should catch this itself
+        public override string ToString() => $"OBJMesh from asset: '{file}'";
     }
 }

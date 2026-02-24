@@ -133,7 +133,7 @@ public class TextBox : UIElement
 
     void Init()
     {
-        _shader ??= SlopperShader.Create(Assets.GetPath("shaders/UI/TextBox.sesl", "EngineAssets"));
+        _shader ??= SlopperShader.Create(Asset.GetEngineAsset("shaders/UI/TextBox.sesl"));
         _material = Material.Create(_shader);
         if (_materialTexIndex == -1)
         {

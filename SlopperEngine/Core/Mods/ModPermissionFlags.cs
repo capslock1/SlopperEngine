@@ -5,7 +5,6 @@ namespace SlopperEngine.Core.Mods;
 /// <summary>
 /// Rules for what a SlopperMod's code is allowed to do.
 /// </summary>
-[RequiresPermission(ManageMods)]
 [Flags] 
 public enum ModPermissionFlags : byte
 {

@@ -70,7 +70,7 @@ public sealed class ImageRectangle : DisplayElement
 
     void Init()
     {
-        _shader ??= SlopperShader.Create(Assets.GetPath("shaders/UI/Image.sesl", "EngineAssets"));
+        _shader ??= SlopperShader.Create(Asset.GetEngineAsset("shaders/UI/Image.sesl"));
         _material = Material.Create(_shader);
         if (_matTextureIndex == -1)
         {

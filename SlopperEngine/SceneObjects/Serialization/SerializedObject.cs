@@ -163,6 +163,7 @@ public partial class SerializedObject
         if (t == typeof(uint)) return BinaryPrimitives.ReadUInt32LittleEndian(span);
 
         if (t == typeof(char)) return ReadIntLittleEndian<char>(span);
+        if (t.IsEnum) return Enum.ToObject(t, BinaryPrimitives.ReadInt64LittleEndian(_primitiveData.AllValues.Slice(handle.Handle, sizeof(long))));
 
         if (t == typeof(byte)) return span[0];
         if (t == typeof(short)) return BinaryPrimitives.ReadInt16LittleEndian(span);
@@ -173,8 +174,8 @@ public partial class SerializedObject
         if (t == typeof(sbyte)) return (sbyte)span[0];
         if (t == typeof(ushort)) return BinaryPrimitives.ReadUInt16LittleEndian(span);
 
-        if (t == typeof(nint)) return (nint)BinaryPrimitives.ReadInt64LittleEndian(span);
-        if (t == typeof(nuint)) return (nuint)BinaryPrimitives.ReadUInt64LittleEndian(span);
+        if (t == typeof(nint)) return (nint)BinaryPrimitives.ReadInt64LittleEndian(_primitiveData.AllValues.Slice(handle.Handle, sizeof(long)));
+        if (t == typeof(nuint)) return (nuint)BinaryPrimitives.ReadUInt64LittleEndian(_primitiveData.AllValues.Slice(handle.Handle, sizeof(ulong)));
 
         return null;//throw new Exception($"Couldnt deserialize type {t.Name}");
 

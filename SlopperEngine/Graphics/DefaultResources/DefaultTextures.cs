@@ -9,5 +9,11 @@ namespace SlopperEngine.Graphics.DefaultResources;
 /// </summary>
 public static class DefaultTextures
 {
-    public static readonly Texture2D Error = TextureLoader.FromFilepath(Assets.GetPath("defaultTextures/error.png", "EngineAssets"));
+    public static readonly Texture2D Error;
+
+    static DefaultTextures()
+    {
+        Asset.TryGetEngineAsset("defaultTextures/error.png", out var file);
+        Error = TextureLoader.FromAsset(file!.Value);
+    }
 }

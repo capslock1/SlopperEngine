@@ -26,7 +26,13 @@ public class Material
     /// The uniforms contained within the material's shader. 
     /// </summary>
     public readonly UniformDescription[] Uniforms;
-    public static Material MissingMaterial = Create(SlopperShader.Create(Assets.GetPath("shaders/errorShader.sesl", "EngineAssets")));
+    public static Material MissingMaterial;
+
+    static Material()
+    {
+        Asset.TryGetEngineAsset("shaders/errorShader.sesl", out var asset);
+        MissingMaterial = Create(SlopperShader.Create(asset!.Value));
+    }
 
     protected Material(SlopperShader shader, UniformDescription[] uniforms)
     {

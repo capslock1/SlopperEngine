@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using SlopperEngine.Core;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using StbImageSharp;
 
@@ -48,13 +49,13 @@ public class RGBA8Texture
     /// <summary>
     /// Loads a new RGBA8Texture from the disk.
     /// </summary>
-    /// <param name="filepath">The full filepath to the texture.</param>
+    /// <param name="asset">The asset containing the texture.</param>
     /// <returns>A new RGBA8Texture. This is not cached.</returns>
-    public static RGBA8Texture Load(string filepath)
+    public static RGBA8Texture Load(Asset asset)
     {
         StbImage.stbi_set_flip_vertically_on_load(1);
 
-        ImageResult image = ImageResult.FromStream(File.OpenRead(filepath), ColorComponents.RedGreenBlueAlpha);
+        ImageResult image = ImageResult.FromStream(asset.GetStream(), ColorComponents.RedGreenBlueAlpha);
         var res = new RGBA8Texture(image.Width, image.Height, image.Data);
 
         return res;
