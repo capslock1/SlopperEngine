@@ -99,8 +99,8 @@ public sealed class SlopModInfo
             throw new Exception("SlopMod's short name may only be SlopperEngine if it actually *is* SlopperEngine.");
 
         int fileNameLength = Path.GetFileName(fullFilePath.AsSpan()).Length;
-        var pathToModFolder = fullFilePath.Substring(fullFilePath.Length - fileNameLength, fileNameLength);
-        AssetFolderPath = Path.GetFullPath(pathToModFolder, modSettings[2]);
+        var pathToModFolder = fullFilePath.Substring(0, fullFilePath.Length - fileNameLength);
+        AssetFolderPath = Path.GetFullPath(modSettings[2], pathToModFolder);
         if(!AssetFolderPath.StartsWith(pathToModFolder))
             throw new Exception($"Slopmod's asset folder ({modSettings[2]}) reaches outside of the mod folder.");
         
@@ -178,14 +178,14 @@ public sealed class SlopModInfo
         return false;
     }
 
-    static void GetOrLoadMod(string filePath, ModPermissionFlags permissions, out SlopModInfo result)
+    static void GetOrLoadMod(string filePath, ModPermissionFlags permissions, out SlopModInfo result, Assembly? slopperEngineAssembly = null)
     {
         filePath = Path.GetFullPath(filePath);
         lock(_modAtPath)
             if(_modAtPath.TryGetValue(filePath, out result!))
                 return;
 
-        var info = new SlopModInfo(filePath, permissions);
+        var info = new SlopModInfo(filePath, permissions, slopperEngineAssembly);
 
         lock(_modAtPath)
             _modAtPath[filePath] = info;
@@ -242,7 +242,7 @@ public sealed class SlopModInfo
     [RequiresPermission(ModPermissionFlags.ManageMods)]
     public static void InitializeMods()
     {
-        if(_engineSlopModInfo == null) // weird if this function gets called twice, but not a problem at least... unless on other threads. thats a TODO if i've ever heard one.
+        if(_engineSlopModInfo != null) // weird if this function gets called twice, but not a problem at least... unless on other threads. thats a TODO if i've ever heard one.
             return; 
 
         var startDirectory = Directory.GetCurrentDirectory();
@@ -259,30 +259,77 @@ public sealed class SlopModInfo
         
         // little jank, but i see no reason not to do this like this
         // the engine is basically registered as a SlopMod to make life easy
-        GetOrLoadMod(Path.Combine(startDirectory, "SlopperEngine.slopmod"), ModPermissionFlags.All, out _engineSlopModInfo);
+        GetOrLoadMod(Path.Combine(startDirectory, "SlopperEngine.slopmod"), ModPermissionFlags.All, out _engineSlopModInfo, Assembly.GetExecutingAssembly());
 
         var trustedMods = File.ReadAllLines(Path.Combine(startDirectory, "TrustedModsDONTREPLACE"), Encoding.UTF8);
         if(trustedMods.Length < 2)
             throw new Exception("SlopperEngine won't run, as there were no mods to load.");
 
-        int loadedMods = 0;
+        List<SlopModInfo> loadedMods = new();
         for(int i = 0; i < trustedMods.Length; i += 2)
         {
             try
             {
                 var perm = (ModPermissionFlags)long.Parse(trustedMods[i]);
-                GetOrLoadMod(trustedMods[i+1], perm, out var mod);
-                loadedMods++;
+                GetOrLoadMod(Path.Combine(startDirectory, trustedMods[i+1]), perm, out var mod); // only trust relative paths
+                loadedMods.Add(mod);
             }
             catch(Exception e)
             {
-                if(i + 2 >= trustedMods.Length && loadedMods == 0)
+                if(i + 2 >= trustedMods.Length && loadedMods.Count == 0)
                     throw; // rethrow if not a single mod could load successfully. if ANYTHING loaded, we can trust it to do... uh... something. for sure
                 
                 if(trustedMods.Length < i+1)
                     System.Console.WriteLine($"Failed to load trusted mod ({trustedMods[i+1]}) due to unexpected error: {e.Message}");
             }
         }
+
+        foreach(var mod in loadedMods)
+            foreach(var assemb in mod.AssembliesInMod)
+                CallOnModLoad(assemb, mod);
+    }
+
+    static void CallOnModLoad(Assembly assemb, SlopModInfo mod)
+    {
+        try
+        {
+            Type[] types;
+            try
+            {
+                types = assemb.GetTypes();
+            }
+            catch
+            {
+                types = assemb.GetExportedTypes();
+            }
+            foreach(var t in types)
+            {
+                try
+                {
+                    var interfaces = t.GetInterfaces();
+                    if(interfaces.Length == 0) return;
+
+                    foreach(var i in interfaces)
+                    {
+                        //if(i != typeof(ISlopModEvents))
+                        //    continue;
+                        
+                        t.GetMethod("OnModLoad", BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly, Type.EmptyTypes)?.Invoke(null, null);
+                        break;
+                    }
+                }
+                catch(Exception e)
+                {
+                    CatchLoadError(e);
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            CatchLoadError(e);
+        }
+
+        void CatchLoadError(Exception e) => System.Console.WriteLine($"Failed to call assembly OnModLoad event ({assemb}) from ({mod.ShortName}) due to unexpected error: {e.Message}");
     }
 
     /// <summary>

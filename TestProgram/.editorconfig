@@ -1,0 +1,19 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+charset = utf-8
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+dotnet_style_prefer_collection_expression = false
+
+dotnet_diagnostic.CS8602.severity = warning # nullability stuff
+dotnet_diagnostic.CS1591.severity = suggestion # missing xml comment
+dotnet_diagnostic.CS1573.severity = suggestion # missing parameter in xml comment
+dotnet_diagnostic.CS1712.severity = suggestion # missing type parameter in xml comment
