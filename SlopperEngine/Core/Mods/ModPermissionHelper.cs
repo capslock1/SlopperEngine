@@ -90,7 +90,22 @@ public static class ModPermissionHelper
 
                 var memPermission = mem.GetCustomAttribute<RequiresPermissionAttribute>();
                 if(memPermission != null && !permissions.HasFlag(memPermission.RequiredPermissions))
-                    policy.Deny(mem);
+                {
+                    if(mem is FieldInfo || mem is MethodInfo || mem is ConstructorInfo)
+                    {
+                        policy.Deny(mem);
+                        continue;
+                    }
+                    if(mem is PropertyInfo p)
+                    {
+                        if(p.GetMethod != null)
+                            policy.Deny(p.GetMethod);
+                        if(p.SetMethod != null)
+                            policy.Deny(p.SetMethod);
+                        continue;
+                    }
+                    System.Console.WriteLine($"ModPermissionHelper: could not deny member ({t.Name}.{mem.Name}) because its type ({mem.GetType()}) was not implemented.");
+                }
             }
         }
     }

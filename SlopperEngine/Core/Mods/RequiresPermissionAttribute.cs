@@ -8,11 +8,13 @@ namespace SlopperEngine.Core.Mods;
 [AttributeUsage(AttributeTargets.Class | 
                 AttributeTargets.Struct | 
                 AttributeTargets.Enum | 
+                AttributeTargets.Interface |
+
                 AttributeTargets.Constructor | 
                 AttributeTargets.Method | 
                 AttributeTargets.Field | 
-                AttributeTargets.Property |
-                AttributeTargets.Interface, 
+                AttributeTargets.Property,
+                
                 AllowMultiple = false, 
                 Inherited = true)]
 public class RequiresPermissionAttribute : Attribute

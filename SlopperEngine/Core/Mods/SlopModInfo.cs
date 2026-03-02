@@ -83,6 +83,7 @@ public sealed class SlopModInfo
         // - short name
         // - version number
         // - asset folder name
+        // - assembly folder name
 
         if(modSettings[0].All(c => char.IsLetterOrDigit(c) || c == '_' || c == '.'))
             ShortName = modSettings[0];
@@ -104,9 +105,9 @@ public sealed class SlopModInfo
         if(!AssetFolderPath.StartsWith(pathToModFolder))
             throw new Exception($"Slopmod's asset folder ({modSettings[2]}) reaches outside of the mod folder.");
         
-        // this mod is slopperengine - so it has its assembly hardcoded and does not need to load any code.
         if(slopperEngineAssembly != null)
         {
+            // this mod is slopperengine - so it has its assembly hardcoded and does not need to load any code.
             _assembliesInMod.Add(slopperEngineAssembly);
             return;
         }
@@ -114,7 +115,11 @@ public sealed class SlopModInfo
         if(permissions == ModPermissionFlags.None) // i... can't do anything!
             return;
 
-        var assemblies = Directory.GetFiles(pathToModFolder, "*.dll", SearchOption.AllDirectories);
+        var assemblyFolderPath = Path.Combine(pathToModFolder, modSettings[3]);
+        if(!assemblyFolderPath.StartsWith(pathToModFolder))
+            throw new Exception($"Slopmod's assembly folder ({modSettings[3]}) reaches outside of the mod folder.");
+
+        var assemblies = Directory.GetFiles(assemblyFolderPath, "*.dll", SearchOption.AllDirectories);
 
         if(permissions.HasFlag(ModPermissionFlags.Unrestricted))
         {
@@ -311,10 +316,13 @@ public sealed class SlopModInfo
 
                     foreach(var i in interfaces)
                     {
-                        //if(i != typeof(ISlopModEvents))
-                        //    continue;
+                        if(i != typeof(ISlopModEvents))
+                            continue;
                         
-                        t.GetMethod("OnModLoad", BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly, Type.EmptyTypes)?.Invoke(null, null);
+                        var map = t.GetInterfaceMap(i);
+                        foreach(var method in map.TargetMethods)
+                            if(method.Name == "OnModLoad")
+                                method.Invoke(null, null);
                         break;
                     }
                 }

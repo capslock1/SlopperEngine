@@ -1,15 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\SlopperEngine\SlopperEngine.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\SlopperEngine\SlopperEngine.csproj" />
+    </ItemGroup>
+
+    <Target Name="IsolateAssembly" AfterTargets = "Build">
+        <MakeDir Directories = "$(MSBuildProjectDirectory)\LatestOutput"/>
+
+        <Copy
+            SourceFiles = "$(OutputPath)\TestProgram.dll"
+            DestinationFolder = "$(MSBuildProjectDirectory)\LatestOutput"
+        />
+    </Target>
 
 </Project>
