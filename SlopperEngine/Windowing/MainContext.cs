@@ -57,7 +57,7 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         // loading screen should really start here
 
         Core.Mods.SlopModInfo.InitializeMods(); // this should really update the loading screen
-
+        Instance.Run();
     }
 
     // waits for previous threads if any are still running, and cleans them up

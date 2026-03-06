@@ -133,6 +133,7 @@ public sealed class SlopModInfo
                 {
                     System.Console.WriteLine($"SlopModInfo: Exception loading {ShortName}'s assembly ({assemblyFilepath}) due to unexpected error: {e.Message}");
                 }
+            return;
         }
 
         Policy = ModPermissionHelper.GetPolicy(Permissions);

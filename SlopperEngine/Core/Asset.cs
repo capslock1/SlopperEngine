@@ -102,9 +102,11 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
     /// <param name="mode">The mode to open the file with. Opens on default.</param>
     /// <param name="access">The mode to access the file with.</param>
     /// <param name="share">The mode to share the file with.</param>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static Asset GetFile(string path, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read, FileShare share = FileShare.Read)
     {
-        TryGetFile(path, out var res, mode, access, share);
+        SlopModInfo.TryGetInfo(Assembly.GetCallingAssembly(), out var mod);
+        TryGetFileFromMod(path, mod!, out var res, mode, access, share);
         return res.GetValueOrDefault();
     }
 
@@ -150,7 +152,7 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
         file = null;
         try
         {
-            string fullPath = Path.GetFullPath(mod.AssetFolderPath, path);
+            string fullPath = Path.GetFullPath(path, mod.AssetFolderPath);
             if(!fullPath.StartsWith(mod.AssetFolderPath))
             {
                 System.Console.WriteLine($"Assets: didn't load '{path}' from {mod.ShortName} because it's an invalid filepath. Nice try buddy (:");

@@ -45,7 +45,14 @@ public static class ModPermissionHelper
             DenyMissingPermissionsOfMembers(policy, slopperEngine, permissions);
 
             // i think all of these are fairly safe. assimp and cas are really not necessary to allow because they get abstracted away
+            // OpenTK splits itself up into a BUNCH of assemblies, so im giving it the ones i know are useful. 
             policy.Allow(new AssemblyBinding(typeof(OpenTK.IBindingsContext).Assembly, Accessibility.Protected));
+            policy.Allow(new AssemblyBinding(typeof(OpenTK.Mathematics.Vector2).Assembly, Accessibility.Protected));
+            policy.Allow(new AssemblyBinding(typeof(OpenTK.Core.Utils).Assembly, Accessibility.Protected));
+            policy.Allow(new AssemblyBinding(typeof(OpenTK.Windowing.Common.WindowPositionEventArgs).Assembly, Accessibility.Protected));
+            policy.Allow(new AssemblyBinding(typeof(OpenTK.Windowing.Desktop.GameWindow).Assembly, Accessibility.Protected));
+            policy.Allow(new AssemblyBinding(typeof(OpenTK.Windowing.GraphicsLibraryFramework.Cursor).Assembly, Accessibility.Protected));
+
             policy.Allow(new AssemblyBinding(typeof(BepuPhysics.ActiveConstraintBodyHandleCollector).Assembly, Accessibility.Protected));
         }
 
