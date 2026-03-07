@@ -26,9 +26,9 @@ public class Demos : UIElement
     Vector2i _maxWindowSize = new(500,375); // 4:3 ratio because im so retro
     float _deltatime;
 
-    // in this setup, we let the maincontext create this demos object and add it to a new scene immediately
+    // in this setup, Program.Main() creates this Demos object, and then the Demos object creates a new Scene and adds itself to it
     // this is a little cursed but its fairly easy for these hardcoded demos
-    // eventually when this engine has an actual editor, this will be phased out for just letting the maincontext load a scene from disk instead
+    // eventually when this engine has an actual editor, this will be phased out for just letting Program.Main() load a scene from disk instead
     public Demos()
     {
         // throwing on severe errors for easier debugging
@@ -53,13 +53,13 @@ public class Demos : UIElement
         }
 
         _mainWindow = CreateWindow<UIRenderer>(mainScene, (256, 256), true);
-        System.Console.WriteLine("sillydemos initialized - press 'K' to summon bonus windows");
+        System.Console.WriteLine("sillydemos initialized - press 'K' to summon bonus windows, or 'ESC' to quit!");
     }
 
     // creates a simple undecorated window and attaches the scene's renderer's texture.
     Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : SceneRenderer
     {
-        var window = Window.Create(new(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: new(_image)));
+        var window = Window.Create(new(size, StartVisible:false, Border: WindowBorder.Hidden, Icon: _image == null ? null : new(_image)));
         window.Scene = scene;
         window.WindowTexture = scene.Renderers.FirstOfType<TRenderer>()!.GetOutputTexture();
         window.CenterWindow();
@@ -140,7 +140,7 @@ public class Demos : UIElement
                 sc.Children.Add(light);
 
                 var plimboModel = new Plimbo();
-                plimboModel.Rotation = Quaternion.FromAxisAngle(Vector3.UnitY, 3.1415f);
+                plimboModel.Rotation = Quaternion.FromAxisAngle(Vector3.UnitY, MathF.PI);
                 sc.Children.Add(plimboModel);
                 sub.Player = plimboModel;
 

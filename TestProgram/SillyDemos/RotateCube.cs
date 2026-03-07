@@ -10,7 +10,7 @@ using System;
 namespace TestProgram.SillyDemos;
 
 /// <summary>
-/// A cube that slowly spins in a chaotic fashion.
+/// A cube that slowly spins in a chaotic fashion. Ancient relic of a time where code quality mattered less.
 /// </summary>
 public class RotateCube : MeshRenderer
 {
