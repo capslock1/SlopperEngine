@@ -77,7 +77,7 @@ public sealed class ToggleButton : BaseButton
     public ToggleButton(Texture2D texture) : this(texture, null) { }
     
     public ToggleButton() : this(
-        TextureLoader.FromFilepath(Assets.GetPath("defaultTextures/checkmark.png", "EngineAssets"))
+        TextureLoader.FromAsset(Asset.GetEngineAsset("defaultTextures/checkmark.png"))
     )
     { }
 

@@ -5,6 +5,7 @@ using SlopperEngine.Core.Collections;
 using SlopperEngine.Core.SceneComponents;
 using SlopperEngine.Core.SceneData;
 using SlopperEngine.Core.Serialization;
+using SlopperEngine.Core.Mods;
 using SlopperEngine.Rendering;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.SceneObjects.ChildContainers;
@@ -22,7 +23,7 @@ public sealed class Scene : SceneObject
     /// <summary>
     /// Whether or not the scene receives updates from the main context. Inactive scenes can still manually be updated.
     /// </summary>
-    [EditorIntegration.HideInInspector]
+    [EditorIntegration.HideInInspector, RequiresPermission(ModPermissionFlags.ManageScenes)]
     public bool Active
     {
         get => _active;
@@ -97,6 +98,7 @@ public sealed class Scene : SceneObject
     /// Creates a scene with several useful components pre-added.
     /// </summary>
     /// <returns>A scene with a DebugRenderer, UpdateHandler, and a PhysicsHandler.</returns>
+    [RequiresPermission(ModPermissionFlags.ManageScenes)]
     public static Scene CreateDefault()
     {
         Scene res = new();
@@ -110,6 +112,7 @@ public sealed class Scene : SceneObject
     /// <summary>
     /// Creates a scene with no attached components. It will not update or render its children.
     /// </summary>
+    [RequiresPermission(ModPermissionFlags.ManageScenes)]
     public static Scene CreateEmpty()
     {
         return new Scene();
@@ -119,6 +122,7 @@ public sealed class Scene : SceneObject
     /// Updates the scene.
     /// </summary>
     /// <param name="update">Arguments for the update.</param>
+    [RequiresPermission(ModPermissionFlags.ManageScenes)]
     public void FrameUpdate(FrameUpdateArgs update)
     {
         UpdateRegister();
@@ -133,6 +137,7 @@ public sealed class Scene : SceneObject
     /// Updates the scene's inputs.
     /// </summary>
     /// <param name="update">Arguments for the update.</param>
+    [RequiresPermission(ModPermissionFlags.ManageScenes)]
     public void InputUpdate(InputUpdateArgs update)
     {
         UpdateRegister();
@@ -148,6 +153,7 @@ public sealed class Scene : SceneObject
     /// <summary>
     /// Renders the scene.
     /// </summary>
+    [RequiresPermission(ModPermissionFlags.ManageScenes)]
     public void Render(FrameUpdateArgs args)
     {
         UpdateRegister();
@@ -246,6 +252,7 @@ public sealed class Scene : SceneObject
     /// <summary>
     /// Sets the cached components (Scene.SceneRenderer, Scene.UpdateHandler, etc).
     /// </summary>
+    [RequiresPermission(ModPermissionFlags.ManageScenes)]
     public void CheckCachedComponents()
     {
         SceneRenderer = Renderers.FirstOfType<SceneRenderer>();

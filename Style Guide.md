@@ -275,8 +275,8 @@ seriously improve performance over using classes or copying structs, and is thus
 **LINQ**
 
 LINQ is quite handy for creating algorithms that apply well to any situation. However, LINQ methods 
-can generate quite a lot of memory garbage. Avoid LINQ and IEnumerable extension method calls for any part 
-of the engine.
+can generate quite a lot of memory garbage. Avoid LINQ and IEnumerable extension method calls for any 
+high frequency part of the engine.
 
 **Namespaces**
 
@@ -286,6 +286,8 @@ Namespaces match folder structure, for example `SlopperEngine.MyStuff.IMyInterfa
 **Nesting**
 
 Avoid nesting as much as possible. 
+When you find yourself several tabs deep, try splitting your code up in multiple methods, or when applicable,
+use early returns instead of `if` and `else`.
 
 **Var**
 
@@ -294,7 +296,7 @@ Use the `var` keyword when it aids readability, or if the variable is obvious or
 **Exceptions**
 
 Avoid throwing exceptions. Methods like `bool TryXYZ(out T success)` are much preferred.
-Once a more advanced logging system is in place, use this instead.
+Once a more advanced logging system is in place, use this instead of `Console.WriteLine`.
 
 **Lambdas vs named methods**
 
@@ -303,9 +305,10 @@ This named method may be nested at your discretion.
 
 **Field initializers**
 
-Try adding field initializers, even if it's the default value.
+Try adding field initializers, even if it's `default` or `null`.
 If the value is irrelevant when default, it may be omitted.
 
 **Summaries**
 
 Add a summary to every `public` or `protected` member.
+This is done with `///` - your IDE should automatically add the correct XML tags.

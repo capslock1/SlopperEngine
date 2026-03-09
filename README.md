@@ -4,8 +4,9 @@ It supports 3D rendering, physics, basic 2D UI, serialization, and clean "script
 Planned features are a fully custom shading language, an editor, scalable multithreading, and builtin modding support.
 
 For more information about the design, check out the "Design Justification.md" file.
-If you're interested in contributing, check out "Style Guide.md" instead.
+If you're interested in contributing, check out "Style Guide.md" and "CONTRIBUTING.md" instead.
 
-Compile instructions: click the build button on your IDE
+Build instructions:
+First, build `TestProgram/TestProgram.csproj`. Afterwards, build and run `SlopperEngine/SlopperEngine.csproj`.
 
 SlopperEngine uses brazilnut2000's C# gitignore template: https://gist.github.com/brazilnut2000/8226958

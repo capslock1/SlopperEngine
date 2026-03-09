@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using SlopperEngine.Core;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Core.Serialization;
 
@@ -16,10 +17,14 @@ public partial class SerializedObject
     /// <summary>
     /// Loads a BinaryUncompressed format SerializedObject.
     /// </summary>
-    /// <param name="filepath">Path to the file. NOT relative - use Core.Assets to get a full path.</param>
-    public static SerializedObject? LoadBinaryUncompressed(string filepath)
+    /// <param name="asset">The asset to load from.</param>
+    public static SerializedObject? LoadBinaryUncompressed(Asset asset)
     {
-        using var stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+        if(!asset.AssetExists)
+            return null;
+        using var stream = asset.GetStream();
+        if(!stream.CanRead)
+            return null;
         return LoadBinaryUncompressed(stream);
     }
 
@@ -147,11 +152,17 @@ public partial class SerializedObject
     /// <summary>
     /// Saves this SerializedObject to a file in the BinaryUncompressed format.
     /// </summary>
-    /// <param name="filepath">The path to save to. NOT relative - use Core.Assets to get a full path.</param>
-    public void SaveBinaryUncompressed(string filepath)
+    /// <param name="asset">The asset to save to.</param>
+    /// <returns>Whether or not the SerializedObject was saved successfully.</returns>
+    public bool SaveBinaryUncompressed(Asset asset)
     {
-        using var stream = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+        if(!asset.AssetExists)
+            return false;
+        using var stream = asset.GetStream();
+        if(!stream.CanWrite)
+            return false;
         SaveBinaryUncompressed(stream);
+        return true;
     }
 
     /// <summary>

@@ -136,7 +136,7 @@ public partial class SerializedObject
     {
         newReference = false; // dont save a primitive's reference because its probably not worth the lookup time
         var type = obj.GetType();
-        if(type.IsPrimitive)
+        if(type.IsPrimitive || type.IsEnum)
             return WritePrimitive(obj, refs);
         
         SerialHandle res = default;
@@ -272,6 +272,8 @@ public partial class SerializedObject
 
         if(obj is byte by) {WriteInt(by, refs); return res;}
         if(obj is short s) {WriteInt(s, refs); return res;}
+
+        if(obj is Enum) {WriteInt((long)obj, refs);}
 
         if(obj is long l) {WriteInt(l, refs); return res;}
         if(obj is ulong ul) {WriteInt(ul, refs); return res;}

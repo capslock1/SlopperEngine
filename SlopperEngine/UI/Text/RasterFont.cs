@@ -13,22 +13,31 @@ namespace SlopperEngine.UI.Text;
 /// </summary>
 public class RasterFont
 {
-    public static readonly RasterFont FourXEight = new("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-+_=`~[]{}/|;:'\".,\\<>? ", new(4,8), Assets.GetPath("defaultTextures/monospace.png", "EngineAssets"), new(18,3));
-    public static readonly RasterFont EightXSixteen = new("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-+_=`~[]{}/|;:'\".,\\<>? ", new(8,16), Assets.GetPath("defaultTextures/monospace2x.png", "EngineAssets"), new(18,3));
+    /// <summary>
+    /// Four by eight pixel size font.
+    /// </summary>
+    public static readonly RasterFont FourXEight = new("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-+_=`~[]{}/|;:'\".,\\<>? ", 
+        new(4,8), Asset.GetEngineAsset("defaultTextures/monospace.png"), new(18,3));
+
+    /// <summary>
+    /// Eight by sixteen pixel size font.
+    /// </summary>
+    public static readonly RasterFont EightXSixteen = new("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-+_=`~[]{}/|;:'\".,\\<>? ", 
+        new(8,16), Asset.GetEngineAsset("defaultTextures/monospace2x.png"), new(18,3));
 
     public readonly Vector2i CharacterSize;
     readonly FrozenDictionary<char, Vector2i> _characterPosSheet;
     readonly Vector2i _missingCharacterPos;
     readonly byte[,] _characterValues;
 
-    private RasterFont(string characters, Vector2i characterSize, string fontImageFilepath, Vector2i missingCharPos)
+    private RasterFont(string characters, Vector2i characterSize, Asset fontImageFile, Vector2i missingCharPos)
     {
         CharacterSize = characterSize;
         _missingCharacterPos = missingCharPos * characterSize;
         Dictionary<char, Vector2i> characterPosSheet = new();
 
         StbImage.stbi_set_flip_vertically_on_load(0);
-        ImageResult image = ImageResult.FromStream(File.OpenRead(fontImageFilepath), ColorComponents.Grey);
+        ImageResult image = ImageResult.FromStream(fontImageFile.GetStream(), ColorComponents.Grey);
         
         Vector2i characterSheetSize = (image.Width / characterSize.X, image.Height / characterSize.Y);
 

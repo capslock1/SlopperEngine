@@ -9,16 +9,16 @@ using SlopperEngine.Rendering;
 using System.IO;
 using System;
 using System.Collections.Generic;
+using SlopperEngine.Core;
 
 namespace SlopperEngine.Graphics;
 
 /// <summary>
 /// A dynamically recompiled shader, conforming to the needs of a Mesh's format and the renderer.
 /// </summary>
-public class SlopperShader : ISerializableFromKey<string>
+public class SlopperShader : ISerializableFromKey<Asset>
 {
-    string? _name;
-    string _filePath;
+    Asset _originFile;
     static Cache<string, SlopperShader> _shaderCache = new();
     Dictionary<(Type, MeshInfo), DrawShader> _drawCache = new(); 
     //VertexShaders do not get cached because they are unique to DrawShader's cache
@@ -27,34 +27,32 @@ public class SlopperShader : ISerializableFromKey<string>
     //neither of these are using the actual Cache object, because the sloppershader instance itself should be collected
 
     public SyntaxTree? Scope {get; private set;}
-    protected SlopperShader(SyntaxTree scope, string filePath)
+    protected SlopperShader(SyntaxTree scope, Asset asset)
     {
         Scope = scope;
-        _filePath = filePath;
+        _originFile = asset;
     }
 
     /// <summary>
     /// Creates a SlopperShader.
     /// </summary>
-    /// <param name="filepath">The path to the .sesl file. NOT relative - use Core.Assets to get a full path.</param>
+    /// <param name="asset">The .sesl file to load the shader from.</param>
     /// <exception cref="FileNotFoundException"></exception>
-    public static SlopperShader Create(string filepath)
+    public static SlopperShader Create(Asset asset)
     {
-        string path = filepath;
-        if(!File.Exists(path)) 
-            throw new FileNotFoundException($"Couldnt find shader file at {filepath}");
+        if(!asset.AssetExists) 
+            throw new FileNotFoundException($"Couldnt find shader file at {asset}");
 
-        SlopperShader? res = _shaderCache.Get(filepath);
+        SlopperShader? res = _shaderCache.Get(asset.FullFilePath!);
         if(res != null)
             return res;
 
-        string source = File.ReadAllText(path);
+        string source = asset.ReadAllText();
 
         SyntaxTree scope = Transpiler.Parse(source);
 
-        res = new(scope, filepath);
-        _shaderCache.Set(filepath, res);
-        res._name = filepath;
+        res = new(scope, asset);
+        _shaderCache.Set(asset.FullFilePath!, res);
         return res;
     }
 
@@ -226,7 +224,7 @@ void vertIn_Initialize();
         scope.pixel.Write(writer);
     }
 
-    string ISerializableFromKey<string>.Serialize() => _filePath;
+    Asset ISerializableFromKey<Asset>.Serialize() => _originFile;
 
-    static object? ISerializableFromKey<string>.Deserialize(string key) => Create(key);
+    static object? ISerializableFromKey<Asset>.Deserialize(Asset key) => Create(key);
 }

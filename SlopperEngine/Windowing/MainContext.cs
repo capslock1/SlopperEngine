@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using System.Threading;
 
 namespace SlopperEngine.Windowing;
 
@@ -22,15 +23,19 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
     /// <summary>
     /// If GL throws an error, the MainContext will shut down. This can make it significantly easier to track down GL errors, but does crash the engine.
     /// </summary>
-    public static bool ThrowIfSevereGLError;
-    public static bool MultithreadedFrameUpdate = true;
-    static MainContext? _instance;
+    public static volatile bool ThrowIfSevereGLError;
+    
+    /// <summary>
+    /// Whether or not the FrameUpdate should be multithreaded. Should be deprecated when this is known not to produce errors.
+    /// </summary>
+    public static volatile bool MultithreadedFrameUpdate = true;
+
+    /// <summary>
+    /// The central MainContext instance.
+    /// </summary>
+    public static readonly MainContext Instance = new();
 
     private List<Task> _frameUpdateQueue = new List<Task>();
-
-    public static MainContext Instance{
-        get => _instance == null || !_instance.Exists ? new() : _instance;
-    }
 
     MainContext() : base(
         new(){
@@ -42,8 +47,17 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
             ClientSize = (1,1),
         })
     {
-        if(_instance == null) _instance = this;
-        else throw new Exception("Attempted to make a second MainContext.");
+    }
+
+    /// <summary>
+    /// Starts SlopperEngine.
+    /// </summary>
+    public static void Main()
+    {
+        // loading screen should really start here
+
+        Core.Mods.SlopModInfo.InitializeMods(); // this should really update the loading screen
+        Instance.Run();
     }
 
     // waits for previous threads if any are still running, and cleans them up

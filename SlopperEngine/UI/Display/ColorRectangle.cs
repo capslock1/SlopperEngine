@@ -51,7 +51,7 @@ public sealed class ColorRectangle : DisplayElement
 
     void Init()
     {
-        _shader ??= SlopperShader.Create(Assets.GetPath("shaders/UI/Color.sesl", "EngineAssets"));
+        _shader ??= SlopperShader.Create(Asset.GetEngineAsset("shaders/UI/Color.sesl"));
         _material = Material.Create(_shader);
         if (_matTextureIndex == -1)
             _matTextureIndex = _material.GetUniformIndexFromName("mainColor");
