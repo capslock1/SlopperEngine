@@ -54,12 +54,6 @@ public static class ModPermissionHelper
             policy.Allow(new AssemblyBinding(typeof(OpenTK.Windowing.GraphicsLibraryFramework.Cursor).Assembly, Accessibility.Protected));
 
             policy.Allow(new AssemblyBinding(typeof(BepuPhysics.ActiveConstraintBodyHandleCollector).Assembly, Accessibility.Protected));
-
-            // add in missing function for Action manually for now
-            var type = typeof(System.Threading.Interlocked);
-            var methods = type.GetMethods();
-            foreach(var m in methods)
-                if(m.Name == "CompareExchange" && m.IsGenericMethod) policy.Allow(m);
         }
 
         if(permissions.HasFlag(ModPermissionFlags.AccessNetwork))

@@ -14,7 +14,7 @@
         <PackageReference Include="StbImageSharp" Version="2.27.14" />
         <PackageReference Include="AssimpNet" Version="4.1.0" />
         <PackageReference Include="BepuPhysics" Version="2.4.0" />
-        <PackageReference Include="DouglasDwyer.CasCore" Version="0.2.1" />
+        <PackageReference Include="DouglasDwyer.CasCore" Version="0.2.2" />
     </ItemGroup>
 
 </Project>
