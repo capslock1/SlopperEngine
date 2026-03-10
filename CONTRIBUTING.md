@@ -10,18 +10,20 @@ Not many rules to speak of here. I am not experienced in receiving code from oth
 - Make sure all public and protected members and classes have documentation! (using `///` type comments)
 - Try keeping commit names below 50 characters
 - Make sure that when you PR, the project actually compiles and runs.
+- Code clearly written entirely or in large part by large language models will be rejected. 
 
 # To do
 Lots of things need doing in SlopperEngine. Points marked with (WIP) are ones I am currently working on and I would be mildly bothered if anyone else contributed in those areas.
 - Mod safety
 	- SerializedObject can safely be used by mods (what to do when a mod ships with or writes a `.slsc` file containing forbidden objects?) (high priority, but I don't feel like doing this rn).
 	- Unloading mods (required for feature complete editor)
+	- Mods can indicate dependencies (which will be loaded / given access to)
 - Sound implementation
 	- SceneObjects that play audio
 	- Replaceable audio managers
 - Rendering reworks
-	- Models can be loaded through Assimp (WIP)
-	- OpenGL functions can be batched on Scene threads, and then *those* will be executed by the render thread
+	- Models can be loaded through Assimp (WIP but gave up)
+	- Scenes fill a render command buffer in FrameUpdate instead of being called to render on the main thread
 	- GPUResources need a clear divide between "being created" and "being created on the GPU"
 	- Actual shadows and different types of lights
 	- Normal map implementation
@@ -39,8 +41,9 @@ Lots of things need doing in SlopperEngine. Points marked with (WIP) are ones I 
 - Windowing rework
 	- SlopperEngine.Windowing.Window *contains* a NativeWindow instead of inheriting from it
 	- MainContext can be used as a window (for significant performance improvements)
-	- MainContext has loading screen and start splash
+	- MainContext has loading screen and start splash (which can be skipped by sloppermods *without* them running IMod.OnLoad)
 - UI improvements
+	- Layout rework (WIP)
 	- Actual font loading
 	- Fallback font does not need to load assets to work (and is hardcoded in the engine)
 - Default assets are procedural instead of loaded from EngineAssets
@@ -48,3 +51,8 @@ Lots of things need doing in SlopperEngine. Points marked with (WIP) are ones I 
 	- The logger has generic log functions so logs can be sorted by type
 	- The logger can collapse similar logs into a single item
 	- The logger can output into files
+- Pathfinding
+	- Baking navmeshes (navvolumes?)
+		- Navmesh/volume agent
+	- Generic pathfinder and pathfindable interface
+- Quick access system for singletons (using generic nonsense)

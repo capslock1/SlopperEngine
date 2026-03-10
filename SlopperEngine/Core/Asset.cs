@@ -28,6 +28,15 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
     /// </summary>
     public readonly SlopModInfo? ModOfOrigin;
 
+    /// <summary>
+    /// Whether or not this Asset can read the file it points to.
+    /// </summary>
+    public bool CanRead => _access.Access == FileAccess.Read || _access.Access == FileAccess.ReadWrite;
+    /// <summary>
+    /// Whether or not this Asset can write the file it points to.
+    /// </summary>
+    public bool CanWrite => _access.Access == FileAccess.Write || _access.Access == FileAccess.ReadWrite;
+
     readonly AssetLoadSettings _access;
 
     Asset(AssetLoadSettings access, string? fullFilePath, string? relativeFilePath, SlopModInfo? modInfo)
@@ -83,17 +92,6 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
             return File.ReadAllText(FullFilePath!);
         return File.ReadAllText(FullFilePath!, encoding);
     }
-    public override int GetHashCode()
-    {
-        return FullFilePath?.GetHashCode() ?? 0;
-    }
-
-    public override bool Equals([NotNullWhen(true)] object? obj)
-    {
-        if(obj is Asset asset)
-            return asset.FullFilePath == FullFilePath;
-        return false;
-    }
 
     /// <summary>
     /// Gets an asset at a certain pat. Returns default if the file did not load successfully.
@@ -105,7 +103,8 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static Asset GetFile(string path, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read, FileShare share = FileShare.Read)
     {
-        SlopModInfo.TryGetInfo(Assembly.GetCallingAssembly(), out var mod);
+        if(!SlopModInfo.TryGetInfo(Assembly.GetCallingAssembly(), out var mod))
+            return default;
         TryGetFileFromMod(path, mod!, out var res, mode, access, share);
         return res.GetValueOrDefault();
     }
@@ -186,6 +185,7 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
     /// <param name="path">The path to get the file from. This is relative to the "EngineAssets" folder.</param>
     /// <param name="file">The retrieved file. Null if this function returns false - this means the file could not be found.</param>
     /// <returns>Whether or not the file could be found.</returns>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static bool TryGetEngineAsset(string path, [NotNullWhen(true)] out Asset? file)
     {
         return TryGetFile(path, out file);
@@ -207,9 +207,22 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
         return res;
     }
 
+    public override int GetHashCode()
+    {
+        if(FullFilePath == null) return 0;
+        return HashCode.Combine(FullFilePath.GetHashCode(), _access.Access);
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        if(obj is Asset asset)
+            return this == asset;
+        return false;
+    }
+
     public static bool operator ==(Asset left, Asset right)
     {
-        return left.FullFilePath == right.FullFilePath;
+        return left.FullFilePath == right.FullFilePath && left._access.Access == right._access.Access;
     }
 
     public static bool operator !=(Asset left, Asset right)

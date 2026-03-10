@@ -16,7 +16,7 @@
         <MakeDir Directories = "$(MSBuildProjectDirectory)\LatestOutput"/>
 
         <Copy
-            SourceFiles = "$(OutputPath)\TestProgram.dll"
+            SourceFiles = "$(OutputPath)\TestProgram.dll;$(OutputPath)\TestProgram.pdb"
             DestinationFolder = "$(MSBuildProjectDirectory)\LatestOutput"
         />
     </Target>
