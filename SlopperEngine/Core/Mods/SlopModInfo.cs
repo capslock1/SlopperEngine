@@ -283,7 +283,10 @@ public sealed class SlopModInfo
             catch(Exception e)
             {
                 if(i + 2 >= trustedMods.Length && loadedMods.Count == 0)
+                {
+                    System.Console.WriteLine("Catastrophic error! Not a single mod was successfully loaded. Engine will give up now.");
                     throw; // rethrow if not a single mod could load successfully. if ANYTHING loaded, we can trust it to do... uh... something. for sure
+                }
                 
                 if(trustedMods.Length < i+1)
                     System.Console.WriteLine($"Failed to load trusted mod ({trustedMods[i+1]}) due to unexpected error: {e.Message}");
@@ -313,7 +316,7 @@ public sealed class SlopModInfo
                 try
                 {
                     var interfaces = t.GetInterfaces();
-                    if(interfaces.Length == 0) return;
+                    if(interfaces.Length == 0) continue;
 
                     foreach(var i in interfaces)
                     {
@@ -322,7 +325,7 @@ public sealed class SlopModInfo
                         
                         var map = t.GetInterfaceMap(i);
                         foreach(var method in map.TargetMethods)
-                            if(method.Name == "OnModLoad")
+                            if(method.Name.EndsWith(nameof(ISlopModEvents.OnModLoad))) // using endswith because when explicitly implemented a different name is returned
                                 method.Invoke(null, null);
                         break;
                     }

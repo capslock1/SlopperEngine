@@ -18,26 +18,25 @@ namespace TestProgram.SillyDemos;
 /// <summary>
 /// Creates a new scene and window for the demos on constructor call.
 /// </summary>
-public class Demos : UIElement
+public class SillyDemos : UIElement, IDemo
 {
     List<(Window window, Vector2 size, Vector2 position, float delay)> _additionalWindows = new();
     OpenTK.Windowing.Common.Input.Image? _image;
-    Window _mainWindow;
+    Window? _mainWindow;
     Vector2i _maxWindowSize = new(500,375); // 4:3 ratio because im so retro
     float _deltatime;
 
-    // in this setup, Program.Main() creates this Demos object, and then the Demos object creates a new Scene and adds itself to it
-    // this is a little cursed but its fairly easy for these hardcoded demos
-    // eventually when this engine has an actual editor, this will be phased out for just letting Program.Main() load a scene from disk instead
-    public Demos()
+    // Program.OnModLoad() calls this function when the button is clicked - from here, we create the silly demos scenes.
+    public static Scene CreateDemoScene()
     {
+        SillyDemos demoController = new();
+
         // throwing on severe errors for easier debugging
         MainContext.ThrowIfSevereGLError = true;
-        UIChildren.Add(new ImageRectangle(new(0, 0, 1, 1), TextureLoader.FromAsset(Asset.GetEngineAsset("defaultTextures/logo.png"))));
+        demoController.UIChildren.Add(new ImageRectangle(new(0, 0, 1, 1), TextureLoader.FromAsset(Asset.GetEngineAsset("defaultTextures/logo.png"))));
 
         // simple scene with just the logo in there
         var mainScene = Scene.CreateEmpty();
-        mainScene.Children.Add(this);
         mainScene.Renderers.Add(new UIRenderer());
         mainScene.Components.Add(new UpdateHandler());
 
@@ -45,16 +44,22 @@ public class Demos : UIElement
         {
             StbImage.stbi_set_flip_vertically_on_load(0);
             using var windowIconStream = Asset.GetEngineAsset("defaultTextures/logo.png").GetStream();
-            _image = new OpenTK.Windowing.Common.Input.Image(32, 32, ImageResult.FromStream(windowIconStream, ColorComponents.RedGreenBlueAlpha).Data);
+            demoController._image = new OpenTK.Windowing.Common.Input.Image(32, 32, ImageResult.FromStream(windowIconStream, ColorComponents.RedGreenBlueAlpha).Data);
         }
         catch
         {
-            System.Console.WriteLine("No permission to use STB given (couldn't create window icon)");
+            System.Console.WriteLine("No permission to use STB given (thus silly demos couldn't create window icon)");
         }
 
-        _mainWindow = CreateWindow<UIRenderer>(mainScene, (256, 256), true);
+        demoController._mainWindow = demoController.CreateWindow<UIRenderer>(mainScene, (256, 256), true);
         System.Console.WriteLine("sillydemos initialized - press 'K' to summon bonus windows, or 'ESC' to quit!");
+        
+        mainScene.Children.Add(demoController);
+        return mainScene;
     }
+
+    static string? IDemo.GetDescription() => "The SillyDemos as seen in Capsloughe's second slopperengine video. \nPress 'K' to summon extra windows, or 'ESC' to quit!";
+    static string? IDemo.GetName() => "Silly demos";
 
     // creates a simple undecorated window and attaches the scene's renderer's texture.
     Window CreateWindow<TRenderer>(Scene scene, Vector2i size, bool keepalive = false) where TRenderer : SceneRenderer
@@ -99,7 +104,7 @@ public class Demos : UIElement
             location *= 400;
             win.position -= (win.position - location) * (1 - MathF.Exp(-1 * _deltatime));
             Vector2i realLocation = (Vector2i)win.position - realSize / 2;
-            win.window.ClientLocation = realLocation + _mainWindow.ClientLocation + _mainWindow.Size / 2;
+            win.window.ClientLocation = realLocation + _mainWindow!.ClientLocation + _mainWindow.Size / 2;
 
             _additionalWindows[w] = win;
         }
@@ -197,12 +202,14 @@ public class Demos : UIElement
                 _additionalWindows.Add((CreateWindow<UIRenderer>(sc, (1, 1)), (1, 1), (0, 0), 0.4f));
             }
 
-            _mainWindow.Focus();
+            _mainWindow!.Focus();
         }
         // because the windows are undecorated, they should be manually closed using escape
         if(args.KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape))
         {
-            _mainWindow.Close();
+            _mainWindow!.Close();
+            foreach(var w in _additionalWindows)
+                w.window.Close();
             Scene?.Destroy();
         }
     }
