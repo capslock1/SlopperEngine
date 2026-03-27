@@ -48,11 +48,10 @@ public class SillyDemos : UIElement, IDemo
         }
         catch
         {
-            System.Console.WriteLine("No permission to use STB given (thus silly demos couldn't create window icon)");
+            System.Console.WriteLine("Silly demos had no permission to use STB - hence, no window icon");
         }
 
         demoController._mainWindow = demoController.CreateWindow<UIRenderer>(mainScene, (256, 256), true);
-        System.Console.WriteLine("sillydemos initialized - press 'K' to summon bonus windows, or 'ESC' to quit!");
         
         mainScene.Children.Add(demoController);
         return mainScene;

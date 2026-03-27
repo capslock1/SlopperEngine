@@ -6,6 +6,7 @@ using SlopperEngine.SceneObjects;
 using SlopperEngine.UI.Base;
 using SlopperEngine.UI.Interaction;
 using SlopperEngine.UI.Layout;
+using SlopperEngine.UI.Text;
 using SlopperEngine.Windowing;
 
 namespace TestProgram;
@@ -53,6 +54,24 @@ public class Program : SlopperEngine.Core.Mods.ISlopModEvents
                 StartAtMax = true,
                 IsLayoutHorizontal = false,
             };
+
+            UIElement header = new(new(0,0,0.95f,0.4f));
+            header.UIChildren.Add(new TextBox("Welcome to the"){
+                Scale = 1, 
+                Vertical = Alignment.Max,
+                LocalShape = new(0,1,0,1)
+                });
+            header.UIChildren.Add(new TextBox("SlopperEngine", textColor: header.Style.ForegroundStrong){
+                Scale = 3,
+                LocalShape = new(0,1,0,1),
+                });
+            header.UIChildren.Add(new TextBox("TestProgram"){
+                Scale = 4, 
+                LocalShape = new(1,0.2f,1,0.2f),
+                Horizontal = Alignment.Min,
+                Vertical = Alignment.Max,
+                });
+            buttonContainer.UIChildren.Add(header);
 
             foreach(var t in Assembly.GetExecutingAssembly().GetTypes())
             {
