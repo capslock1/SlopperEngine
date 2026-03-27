@@ -33,6 +33,15 @@ public class Program : SlopperEngine.Core.Mods.ISlopModEvents
             w.CenterWindow();
             w.Scene = mainScene;
             w.WindowTexture = mainScene.Renderers.FirstOfType<UIRenderer>()!.GetOutputTexture();
+            w.Closing += c =>
+            {
+                // just nuke the whole program if main gets closed to be honest
+                for(int i = Scene.ActiveScenes.Count-1; i >= 0; i--)
+                    Scene.ActiveScenes[i].Destroy();
+                for(int i = Window.AllWindows.Count-1; i >= 0; i--)
+                    if(Window.AllWindows[i] != w)
+                        Window.AllWindows[i].Close();
+            };
 
             var uiContainer = new Spacer();
             mainScene.Children.Add(uiContainer);
@@ -60,7 +69,7 @@ public class Program : SlopperEngine.Core.Mods.ISlopModEvents
                     string demoDescription = "No description.";
                     foreach(var m in map.TargetMethods)
                     {
-                        if(m.Name == nameof(IDemo.CreateDemoScene))
+                        if(m.Name.EndsWith(nameof(IDemo.CreateDemoScene)))
                             createScene = m;
                         if(m.Name.EndsWith(nameof(IDemo.GetName)))
                             demoName = m.Invoke(null, null) as string ?? demoName;

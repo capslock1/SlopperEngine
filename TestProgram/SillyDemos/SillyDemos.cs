@@ -58,7 +58,7 @@ public class SillyDemos : UIElement, IDemo
         return mainScene;
     }
 
-    static string? IDemo.GetDescription() => "The SillyDemos as seen in Capsloughe's second slopperengine video. \nPress 'K' to summon extra windows, or 'ESC' to quit!";
+    static string? IDemo.GetDescription() => "The SillyDemos as seen in Capsloughe's second \nslopperengine video. \nPress 'K' to summon extra windows, or 'ESC' to quit!";
     static string? IDemo.GetName() => "Silly demos";
 
     // creates a simple undecorated window and attaches the scene's renderer's texture.
