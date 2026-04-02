@@ -255,7 +255,7 @@ public sealed class SlopModInfo
         while (true)
         {
             if (startDirectory == null)
-                throw new Exception($"Could not find the SlopperEngine.slopmod file. SlopperEngine will not be able to run.");
+                throw new Exception($"Could not find the SlopperEngine.slopmod file. SlopperEngine will not be able to run. In case you are compiling SlopperEngine for the first time, check out the test program linked in the README.");
 
             if(File.Exists(Path.Combine(startDirectory, "SlopperEngine.slopmod")))
                 break;
@@ -284,7 +284,7 @@ public sealed class SlopModInfo
             {
                 if(i + 2 >= trustedMods.Length && loadedMods.Count == 0)
                 {
-                    System.Console.WriteLine("Catastrophic error! Not a single mod was successfully loaded. Engine will give up now.");
+                    System.Console.WriteLine($"Catastrophic error! Not a single mod was successfully loaded. Exception from last mod will be rethrown.");
                     throw; // rethrow if not a single mod could load successfully. if ANYTHING loaded, we can trust it to do... uh... something. for sure
                 }
                 
