@@ -38,9 +38,20 @@ public sealed class Scene : SceneObject
             if (value)
                 _activeScenes.Add(this);
             else _activeScenes.Remove(this);
+            OnActiveToggled?.Invoke(value);
         }
     }
     bool _active;
+
+    /// <summary>
+    /// Gets called when the scene gets set to active or inactive.
+    /// </summary>
+    public event Action<bool>? OnActiveToggled;
+
+    /// <summary>
+    /// Gets called when the scene gets destroyed.
+    /// </summary>
+    public event Action? OnDestroy;
 
     /// <summary>
     /// All scenes will be updated by the main context.
@@ -277,5 +288,6 @@ public sealed class Scene : SceneObject
     protected override void OnDestroyed()
     {
         Active = false;
+        OnDestroy?.Invoke();
     }
 }

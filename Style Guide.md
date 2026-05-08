@@ -313,3 +313,7 @@ If the value is irrelevant when default, it may be omitted.
 
 Add a summary to every `public` or `protected` member.
 This is done with `///` - your IDE should automatically add the correct XML tags.
+
+**Banned namespaces**
+
+The `System.Drawing` namespace is not cross platform, and is hence banned from use entirely.
