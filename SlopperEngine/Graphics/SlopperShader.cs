@@ -5,11 +5,11 @@ using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.Graphics.GPUResources.Shaders;
 using SlopperEngine.Graphics.GPUResources.Meshes;
 using SlopperEngine.Core.Serialization;
-using SlopperEngine.Rendering;
 using System.IO;
 using System;
 using System.Collections.Generic;
 using SlopperEngine.Core;
+using SlopperEngine.Rendering.Passes;
 
 namespace SlopperEngine.Graphics;
 
@@ -20,9 +20,9 @@ public class SlopperShader : ISerializableFromKey<Asset>
 {
     Asset _originFile;
     static Cache<string, SlopperShader> _shaderCache = new();
-    Dictionary<(Type, MeshInfo), DrawShader> _drawCache = new(); 
+    Dictionary<(RenderPass, MeshInfo), DrawShader> _drawCache = new(); 
     //VertexShaders do not get cached because they are unique to DrawShader's cache
-    Dictionary<Type, FragmentShader> _fragmentCache = new(); 
+    Dictionary<RenderPass, FragmentShader> _fragmentCache = new(); 
     //can be cached and reused for unique VertexShaders
     //neither of these are using the actual Cache object, because the sloppershader instance itself should be collected
 
@@ -56,16 +56,15 @@ public class SlopperShader : ISerializableFromKey<Asset>
         return res;
     }
 
-    public DrawShader GetDrawShader(MeshInfo modelFormat, SceneRenderer renderer) 
+    public DrawShader GetDrawShader(MeshInfo modelFormat, RenderPass renderPass) 
     {
         if(Scope == null) 
             throw new NullReferenceException("Sloppershader had no syntaxtree associated.");
 
-        Type rendererType = renderer.GetType();
-        if(_drawCache.TryGetValue((rendererType, modelFormat), out DrawShader? result))
+        if(_drawCache.TryGetValue((renderPass, modelFormat), out DrawShader? result))
             return result;
         
-        if(!_fragmentCache.TryGetValue(rendererType, out FragmentShader? frag))
+        if(!_fragmentCache.TryGetValue(renderPass, out FragmentShader? frag))
         {
             //create frag here
             
@@ -76,7 +75,7 @@ public class SlopperShader : ISerializableFromKey<Asset>
                 
                 WriteFragment(txtWriter, Scope);
                 
-                renderer.AddFragmentMain(Scope, txtWriter);
+                renderPass.AddFragmentMain(Scope, txtWriter);
                 fragSource = writer.ToString();
             }
 
@@ -84,7 +83,7 @@ public class SlopperShader : ISerializableFromKey<Asset>
 
             frag = FragmentShader.Create(fragSource);
 
-            _fragmentCache.Add(rendererType, frag);
+            _fragmentCache.Add(renderPass, frag);
         }
 
         //create vert here
@@ -94,7 +93,7 @@ public class SlopperShader : ISerializableFromKey<Asset>
         {
             using IndentedTextWriter txtWriter = new(writer);
             WriteVertex(txtWriter, Scope, modelFormat);
-            renderer.AddVertexMain(Scope, txtWriter);
+            renderPass.AddVertexMain(Scope, txtWriter);
             vertSource = writer.ToString();
         }
         
@@ -104,7 +103,7 @@ public class SlopperShader : ISerializableFromKey<Asset>
 
         var res = DrawShader.Create(vert, frag);
         vert.Dispose();
-        _drawCache.Add((rendererType, modelFormat), res);
+        _drawCache.Add((renderPass, modelFormat), res);
         return res;
     }
     

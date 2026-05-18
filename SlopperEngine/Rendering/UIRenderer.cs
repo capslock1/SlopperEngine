@@ -11,6 +11,7 @@ using SlopperEngine.UI.Base;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using SlopperEngine.Core.Collections;
 using System.Collections.Generic;
+using SlopperEngine.Rendering.Passes;
 
 namespace SlopperEngine.Rendering;
 
@@ -89,7 +90,7 @@ public class UIRenderer : SceneRenderer
             var sh = shape;
             sh.Center += pixelFix;
             _drawMesh.SetShape(sh);
-            mat.Use(_drawMesh.GetMeshInfo(), this);
+            mat.Use(_drawMesh.GetMeshInfo(), UIPass.Instance);
             _drawMesh.Draw();
         }
         _UIElementRenderQueue.Clear();
@@ -175,38 +176,5 @@ public class UIRenderer : SceneRenderer
     {
         Buffer.DisposeAndTextures();
         globals.Dispose();
-    }
-
-    public override void AddVertexMain(SyntaxTree scope, IndentedTextWriter writer)
-    {
-        writer.Write(
-@"void main()
-{
-    vertIn_Initialize();
-    vertex();
-    gl_Position = vertOut.position;
-}"
-        );
-    }
-    public override void AddFragmentMain(SyntaxTree scope, IndentedTextWriter writer)
-    {
-        bool writesAlbedo = false;
-        bool writesAlpha = false;
-        foreach (var v in scope.pixOut)
-        {
-            if (v.Name == "Albedo")
-                writesAlbedo = true;
-            if (v.Name == "Transparency")
-                writesAlpha = true;
-        }
-        writer.Write(
-@$"
-out vec4 SL_FragColor;
-void main()
-{{
-    pixel();
-    SL_FragColor = vec4({(writesAlbedo ? "pixOut.Albedo" : "1.0,1.0,1.0")},{(writesAlpha ? "pixOut.Transparency" : "1.0")});
-}}"
-        );
     }
 }

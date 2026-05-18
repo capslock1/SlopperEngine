@@ -8,6 +8,7 @@ using SlopperEngine.Rendering;
 using SlopperEngine.Core;
 using System.Collections.Generic;
 using System;
+using SlopperEngine.Rendering.Passes;
 
 namespace SlopperEngine.Graphics;
 
@@ -16,8 +17,6 @@ namespace SlopperEngine.Graphics;
 /// </summary>
 public class Material
 {
-    static SceneRenderer? _grossDisgustingFix;
-
     /// <summary>
     /// The shader the material uses.
     /// </summary>
@@ -50,14 +49,13 @@ public class Material
     /// <returns>A new Material instance.</returns>
     public static Material Create(SlopperShader shader)
     {
-        if(_grossDisgustingFix == null) _grossDisgustingFix = new DebugRenderer();
         if(shader.Scope == null)
         {
             return new(shader, []);
         }
         //this SUCKS.
         //getting the settable uniforms should 100% be fixed up at some point.
-        DrawShader sh = shader.GetDrawShader(DefaultMeshes.Cube.GetMeshInfo(), _grossDisgustingFix);
+        DrawShader sh = shader.GetDrawShader(DefaultMeshes.Cube.GetMeshInfo(), DebugPass.Instance);
         return new Material(shader, sh.GetSettableUniforms().ToArray());
     }
 
@@ -89,7 +87,7 @@ public class Material
     /// <summary>
     /// Uses the shader and sets the uniforms, preparing for a DrawShader call.
     /// </summary>
-    public void Use(MeshInfo info, SceneRenderer renderer)
+    public void Use(MeshInfo info, RenderPass renderer)
     {
         if(Shader.Scope == null)
         {

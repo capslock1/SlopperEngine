@@ -1,7 +1,5 @@
 using SlopperEngine.Graphics;
-using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.SceneObjects;
-using System.CodeDom.Compiler;
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using OpenTK.Graphics.OpenGL4;
@@ -65,9 +63,6 @@ public abstract class SceneRenderer : SceneObject
     public abstract void Resize(Vector2i newSize);
     public abstract Vector2i GetScreenSize();
     public abstract Texture2D GetOutputTexture();
-
-    public abstract void AddVertexMain(SyntaxTree scope, IndentedTextWriter writer);
-    public abstract void AddFragmentMain(SyntaxTree scope, IndentedTextWriter writer);
     
     [OnRegister] void Register() => Scene!.CheckCachedComponents();
     [OnUnregister] void Unregister(Scene scene) => scene.CheckCachedComponents();
