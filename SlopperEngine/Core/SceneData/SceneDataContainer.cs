@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
 
@@ -28,6 +29,8 @@ public abstract class SceneDataContainer<T> : IRefEnumerable<T>, ISceneDataConta
     public virtual void OnAddedToScene(Scene scene){}
 
     public abstract void Enumerate<TEnumerator>(ref TEnumerator enumerator) where TEnumerator : IRefEnumerator<T>, allows ref struct;
+
+    public abstract IEnumerable<T> EnumerateReadonly();
 }
 
 /// <summary>

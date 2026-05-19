@@ -25,21 +25,11 @@ public abstract class SceneRenderer : SceneObject
 
     float _time;
 
-    protected List<Camera> cameras = new();
     protected ShaderGlobals globals;
 
     public SceneRenderer()
     {
         globals = new();
-    }
-
-    public void AddCamera(Camera cam)
-    {
-        cameras.Add(cam);
-    }
-    public void RemoveCamera(Camera cam)
-    {
-        cameras.Remove(cam);
     }
 
 	/// <summary>

@@ -1,8 +1,6 @@
-using System.CodeDom.Compiler;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.PostProcessing;
-using SlopperEngine.Graphics.ShadingLanguage;
 using SlopperEngine.SceneObjects;
 using SlopperEngine.Graphics.Lighting;
 using SlopperEngine.Graphics.GPUResources;
@@ -12,6 +10,7 @@ using SlopperEngine.Core;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Rendering.Passes;
+using SlopperEngine.Graphics;
 
 namespace SlopperEngine.Rendering;
 
@@ -60,15 +59,15 @@ public class DebugRenderer : SceneRenderer
         
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        foreach (Camera cam in cameras)
+        foreach (Camera cam in Scene.GetDataContainerEnumerable<Camera>().EnumerateReadonly())
         {
             globals.Use();
             globals.CameraProjection = cam.Projection;
             var camTransform = cam.GetGlobalTransform();
             globals.CameraView = camTransform.Inverted();
             globals.CameraPosition = new(camTransform.ExtractTranslation(), 1.0f);
-            DrawcallUpdater updater = new(this, DebugPass.Instance);
-            Scene.GetDataContainerEnumerable<Drawcall>().Enumerate(ref updater);
+            DrawcallDrawer drawer = new(globals, DebugPass.Instance);
+            Scene.GetDataContainerEnumerable<Drawcall>().Enumerate(ref drawer);
         }
         FrameBuffer.Unuse();
         _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
@@ -87,12 +86,12 @@ public class DebugRenderer : SceneRenderer
             buffer.AddLight(value);
         }
     }
-    struct DrawcallUpdater(DebugRenderer renderer, DebugPass pass) : IRefEnumerator<Drawcall>
+    struct DrawcallDrawer(ShaderGlobals globals, DebugPass pass) : IRefEnumerator<Drawcall>
     {
         public void Next(ref Drawcall call)
         {
             call.Material.Use(call.Model.GetMeshInfo(), pass);
-            renderer.globals.Model = call.Owner.GetGlobalTransform();
+            globals.Model = call.Owner.GetGlobalTransform();
             call.Model.Draw();
         }
     }

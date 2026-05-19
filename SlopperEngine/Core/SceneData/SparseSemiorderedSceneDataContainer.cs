@@ -84,6 +84,13 @@ public sealed class SparseSemiorderedSceneDataContainer<T> : SceneDataContainer<
                 enumerator.Next(ref _data[i].Item1);
     }
 
+    public override IEnumerable<T> EnumerateReadonly()
+    {
+        for(int i = 0; i<_data.Count; i++)
+            if(_data[i].Item2 == DataState.Used)
+                yield return _data[i].Item1;
+    }
+
     enum DataState : byte
     {
         Empty = 0,

@@ -46,7 +46,8 @@ public class RegisterHandler
         public override void FinalizeQueue(){}
         public override SceneDataHandle QueueAdd(OnUnregister Data) => new(0);
         public override void QueueRemove(SceneDataHandle Handle, OnUnregister Data) => owner._registryQueue.Add((new(), Data));
-        public override void Enumerate<TEnumerator>(ref TEnumerator enumerator){}
+        public override void Enumerate<TEnumerator>(ref TEnumerator enumerator) => throw new System.NotImplementedException();
+        public override IEnumerable<OnUnregister> EnumerateReadonly() => throw new System.NotImplementedException();
     }
     private class RegisterContainer : SceneDataContainer<OnRegister>
     {
@@ -62,6 +63,7 @@ public class RegisterHandler
             return new(0);
         }
         public override void QueueRemove(SceneDataHandle Handle, OnRegister Data) {}
-        public override void Enumerate<TEnumerator>(ref TEnumerator enumerator){}
+        public override void Enumerate<TEnumerator>(ref TEnumerator enumerator) => throw new System.NotImplementedException();
+        public override IEnumerable<OnRegister> EnumerateReadonly() => throw new System.NotImplementedException();
     }
 }
