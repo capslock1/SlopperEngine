@@ -1,6 +1,6 @@
 using SlopperEngine.Graphics.ShadingLanguage;
 using System.CodeDom.Compiler;
-using SlopperEngine.Graphics.Lighting;
+using SlopperEngine.Rendering.Lighting;
 
 namespace SlopperEngine.Rendering.Passes;
 

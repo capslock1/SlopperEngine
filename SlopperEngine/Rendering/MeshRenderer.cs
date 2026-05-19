@@ -15,51 +15,27 @@ public class MeshRenderer : SceneObject3D
 {
     [DontSerialize] SceneDataHandle _drawcallIndex;
 
-    Mesh? _mesh;
-    public Mesh? Mesh{
-        get{return _mesh;}
-        set{
-            _mesh = value;
-            if(InScene && _drawcallIndex.IsRegistered)
-            {
-                RemoveDrawcall(Scene);
-                CreateDrawcall();
-            }
-        }
-    }
+    /// <summary>
+    /// The mesh to render.
+    /// </summary>
+    public Mesh? Mesh;
 
-    Material? _mat;
-    public Material? Material {
-        get{return _mat;} 
-        set{
-            _mat = value;
-            if(InScene && _drawcallIndex.IsRegistered)
-            {
-                RemoveDrawcall(Scene);
-                CreateDrawcall();
-            }
-        }
-    }
+    /// <summary>
+    /// The material to render the mesh with.
+    /// </summary>
+    public Material? Material;
 
 
     [OnRegister]
     void CreateDrawcall()
     {
-        Drawcall res = new(this, DefaultMeshes.Error, Material.MissingMaterial);
-
-        if(_mesh != null)
-            res.Model = _mesh;
-        
-        if(_mat != null) 
-            res.Material = _mat;
-
-        _drawcallIndex = Scene!.RegisterSceneData(res);
+        _drawcallIndex = Scene!.RegisterSceneData(this);
     }
 
     [OnUnregister]
     void RemoveDrawcall(Scene? scene)
     {
-        scene?.UnregisterSceneData<Drawcall>(_drawcallIndex, new());
+        scene?.UnregisterSceneData<MeshRenderer>(_drawcallIndex, this);
         _drawcallIndex = default;
     }
 }

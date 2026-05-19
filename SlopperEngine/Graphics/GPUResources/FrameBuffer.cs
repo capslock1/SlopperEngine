@@ -50,10 +50,16 @@ public class FrameBuffer : GPUResource
     /// <summary>
     /// Makes the buffer active, resulting in all following drawcalls writing to it.
     /// </summary>
-    public void Use()
+    /// <param name="viewportX">The horizontal top left corner position of the viewport, in pixels.</param>
+    /// <param name="viewportY">The vertical top left corner position of the viewport, in pixels.</param>
+    /// <param name="viewportWidth">The width of the viewport in pixels. `-1` to use the width of the frame buffer instead.</param>
+    /// <param name="viewportHeight">The height of the viewport in pixels. `-1` to use the height of the frame buffer instead.</param>
+    public void Use(int viewportX = 0, int viewportY = 0, int viewportWidth = -1, int viewportHeight = -1)
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, FBO);
-        GL.Viewport(0, 0, Width, Height);
+        GL.Viewport(viewportX, viewportY, 
+            viewportWidth < 0 ? Width : viewportWidth, 
+            viewportHeight < 0 ? Height : viewportHeight); 
     }
 
     public void DisposeAndTextures()

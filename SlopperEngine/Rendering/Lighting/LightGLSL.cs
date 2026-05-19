@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
 
-namespace SlopperEngine.Graphics.Lighting;
+namespace SlopperEngine.Rendering.Lighting;
 
 /// <summary>
 /// Struct for how shadowless lights are represented in SlopperEngine.

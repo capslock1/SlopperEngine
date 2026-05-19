@@ -5,8 +5,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.GPUResources;
+using SlopperEngine.Core.Collections;
+using SlopperEngine.SceneObjects;
 
-namespace SlopperEngine.Graphics.Lighting;
+namespace SlopperEngine.Rendering.Lighting;
 
 /// <summary>
 /// Worst lighting buffer on television.
@@ -41,15 +43,28 @@ layout(binding = 1, std140) buffer SL_Lights
         _buffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
     }
 
+    /// <summary>
+    /// Clears ONLY THE CPU SIDE!! of the light buffer.
+    /// </summary>
     public void ClearBuffer() => _lights.Clear();
-    public void AddLight(in PointLightData dat) => _lights.Add(new(){
+
+    /// <summary>
+    /// Adds a point light to the CPU side of the light buffer.
+    /// </summary>
+    public void AddLight(in PointLight dat) => _lights.Add(new(){
         ColorRange = new(dat.Color, float.Max(dat.Radius, 0)), // ensure range >= 0 so point light is always a point light 
-        PositionSharp = new(dat.Object.GetGlobalTransform().ExtractTranslation(), dat.Sharpness)});
+        PositionSharp = new(dat.GetGlobalTransform().ExtractTranslation(), dat.Sharpness)});
 
-    public void AddLight(in DirectionalLightData dat) =>_lights.Add(new(){
+    /// <summary>
+    /// Adds a directional light to the CPU side of the light buffer.
+    /// </summary>
+    public void AddLight(in DirectionalLight dat) =>_lights.Add(new(){
         ColorRange = new(dat.Color, -1), 
-        PositionSharp = new(dat.Object.GetGlobalTransform().Column2.Xyz, 0)}); // position in directional lights is actually direction
+        PositionSharp = new(dat.GetGlobalTransform().Column2.Xyz, 0)}); // position in directional lights is actually direction
 
+    /// <summary>
+    /// Updates the buffer on the CPU side and binds it to buffer 1.
+    /// </summary>
     public void UseBuffer()
     {
         if(_lights.Count > _currentBufferLength)
@@ -66,11 +81,39 @@ layout(binding = 1, std140) buffer SL_Lights
         _buffer.Bind(1);
     }
 
+    /// <summary>
+    /// Updates the light buffer according to a scene's lights and uses it immediately.
+    /// </summary>
+    public void UseAndUpdateFromScene(Scene sceneToUse)
+    {
+        ClearBuffer();
+        PointLightBufferUpdater lightUpdater = new(this);
+        sceneToUse.GetDataContainerEnumerable<PointLight>().Enumerate(ref lightUpdater);
+        DirectionalLightBufferUpdater lightUpdater2 = new(this);
+        sceneToUse.GetDataContainerEnumerable<DirectionalLight>().Enumerate(ref lightUpdater2);
+        UseBuffer();
+    }
+
     bool _alreadyDisposed;
     public void Dispose()
     {
         if(!_alreadyDisposed)
             _buffer.Dispose();
         _alreadyDisposed = true;
+    }
+
+    struct PointLightBufferUpdater(LightBuffer buffer) : IRefEnumerator<PointLight>
+    {
+        public void Next(ref PointLight value)
+        {
+            buffer.AddLight(value);
+        }
+    }
+    struct DirectionalLightBufferUpdater(LightBuffer buffer) : IRefEnumerator<DirectionalLight>
+    {
+        public void Next(ref DirectionalLight value)
+        {
+            buffer.AddLight(value);
+        }
     }
 }

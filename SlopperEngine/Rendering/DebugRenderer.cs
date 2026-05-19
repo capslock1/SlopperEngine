@@ -2,7 +2,6 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using SlopperEngine.Graphics.PostProcessing;
 using SlopperEngine.SceneObjects;
-using SlopperEngine.Graphics.Lighting;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Graphics.GPUResources.Textures;
 using SlopperEngine.Core.Serialization;
@@ -10,7 +9,9 @@ using SlopperEngine.Core;
 using SlopperEngine.SceneObjects.Serialization;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.Rendering.Passes;
+using SlopperEngine.Rendering.Lighting;
 using SlopperEngine.Graphics;
+using SlopperEngine.Graphics.DefaultResources;
 
 namespace SlopperEngine.Rendering;
 
@@ -50,12 +51,7 @@ public class DebugRenderer : SceneRenderer
     {
         if (Scene == null) return;
 
-        _lights.ClearBuffer();
-        PointLightBufferUpdater lightUpdater = new(_lights);
-        Scene.GetDataContainerEnumerable<PointLightData>().Enumerate(ref lightUpdater);
-        DirectionalLightBufferUpdater lightUpdater2 = new(_lights);
-        Scene.GetDataContainerEnumerable<DirectionalLightData>().Enumerate(ref lightUpdater2);
-        _lights.UseBuffer();
+        _lights.UseAndUpdateFromScene(Scene);
         
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -67,32 +63,19 @@ public class DebugRenderer : SceneRenderer
             globals.CameraView = camTransform.Inverted();
             globals.CameraPosition = new(camTransform.ExtractTranslation(), 1.0f);
             DrawcallDrawer drawer = new(globals, DebugPass.Instance);
-            Scene.GetDataContainerEnumerable<Drawcall>().Enumerate(ref drawer);
+            Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
         }
         FrameBuffer.Unuse();
         _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
     }
-    struct PointLightBufferUpdater(LightBuffer buffer) : IRefEnumerator<PointLightData>
+    struct DrawcallDrawer(ShaderGlobals globals, DebugPass pass) : IRefEnumerator<MeshRenderer>
     {
-        public void Next(ref PointLightData value)
+        public void Next(ref MeshRenderer call)
         {
-            buffer.AddLight(value);
-        }
-    }
-    struct DirectionalLightBufferUpdater(LightBuffer buffer) : IRefEnumerator<DirectionalLightData>
-    {
-        public void Next(ref DirectionalLightData value)
-        {
-            buffer.AddLight(value);
-        }
-    }
-    struct DrawcallDrawer(ShaderGlobals globals, DebugPass pass) : IRefEnumerator<Drawcall>
-    {
-        public void Next(ref Drawcall call)
-        {
-            call.Material.Use(call.Model.GetMeshInfo(), pass);
-            globals.Model = call.Owner.GetGlobalTransform();
-            call.Model.Draw();
+            var mesh = call.Mesh ?? DefaultMeshes.Error;
+            (call.Material ?? Material.MissingMaterial).Use(mesh.GetMeshInfo(), pass);
+            globals.Model = call.GetGlobalTransform();
+            mesh.Draw();
         }
     }
 
