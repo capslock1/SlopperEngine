@@ -47,6 +47,31 @@ public class FrameBuffer : GPUResource
             Console.WriteLine("WHOOPS! frame buffer did NOT complete: "+error);
     }
 
+    FrameBuffer(int width, int height, int FBO, int RBO, ReadOnlyCollection<Texture2D> colorAtt)
+    {
+        Width = width;
+        Height = height;
+        this.FBO = FBO;
+        this.RBO = RBO;
+        ColorAttachments = colorAtt;
+    }
+
+    public static FrameBuffer CreateShadowBuffer(int width, int height)
+    {
+        Texture2D depth = Texture2D.Create(width, height, SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null);
+        int fbo = GL.GenFramebuffer();
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, depth.Handle, 0);
+        GL.DrawBuffer(DrawBufferMode.None);
+        GL.ReadBuffer(ReadBufferMode.None);
+        var error = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+        if(error != FramebufferErrorCode.FramebufferComplete)
+            Console.WriteLine("WHOOPS! frame buffer did NOT complete: "+error);
+        Unuse();
+
+        return new(width, height, fbo, -1, new([depth]));
+    }
+
     /// <summary>
     /// Makes the buffer active, resulting in all following drawcalls writing to it.
     /// </summary>

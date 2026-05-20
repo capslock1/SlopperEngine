@@ -21,6 +21,7 @@ namespace SlopperEngine.Rendering;
 public class DebugRenderer : SceneRenderer
 {
     [field: DontSerialize] public FrameBuffer Buffer { get; private set; }
+    [field: DontSerialize] public FrameBuffer ShadowBuffer {get; private set; }
     [DontSerialize] LightBuffer _lights;
     [DontSerialize] Bloom _coolBloom;
     Vector2i _screenSize = (400, 300);
@@ -29,6 +30,7 @@ public class DebugRenderer : SceneRenderer
     public DebugRenderer() : base()
     {
         Buffer = new(400, 300);
+        ShadowBuffer = FrameBuffer.CreateShadowBuffer(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels);
         _coolBloom = new(new(400, 300));
         _lights = new();
     }
@@ -39,6 +41,7 @@ public class DebugRenderer : SceneRenderer
         if (serializer.IsWriter)
         {
             Buffer = new(_screenSize.X, _screenSize.Y, 1);
+            ShadowBuffer = FrameBuffer.CreateShadowBuffer(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels);
             _coolBloom = new(_screenSize);
             _lights = new();
         }
@@ -50,6 +53,30 @@ public class DebugRenderer : SceneRenderer
     protected override void RenderInternal()
     {
         if (Scene == null) return;
+        
+        foreach (DirectionalLight light in Scene.GetDataContainerEnumerable<DirectionalLight>().EnumerateReadonly())
+        {
+            if(!light.CastsShadows) continue;
+            
+            float size = 32;
+            var cascades = light.Cascades ?? DirectionalLight.DefaultCascades;
+            if(cascades.Length >= 1)
+                size = cascades.Span[0];
+
+            ShadowBuffer.Use();
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+
+            globals.Use();
+            globals.CameraProjection = Matrix4.CreateOrthographic(size, size, -light.PlaneDistance, light.PlaneDistance);
+            var lightTransform = light.GetGlobalTransform();
+            globals.CameraView = lightTransform.Inverted();
+            globals.CameraPosition = new(lightTransform.ExtractTranslation(), 1.0f);
+            DrawcallDrawer drawer = new(globals, ShadowPass.Instance);
+            Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
+            
+            FrameBuffer.Unuse();
+            break; // just do one for now
+        }
 
         _lights.UseAndUpdateFromScene(Scene);
         
@@ -68,7 +95,7 @@ public class DebugRenderer : SceneRenderer
         FrameBuffer.Unuse();
         _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
     }
-    struct DrawcallDrawer(ShaderGlobals globals, DebugPass pass) : IRefEnumerator<MeshRenderer>
+    struct DrawcallDrawer(ShaderGlobals globals, RenderPass pass) : IRefEnumerator<MeshRenderer>
     {
         public void Next(ref MeshRenderer call)
         {

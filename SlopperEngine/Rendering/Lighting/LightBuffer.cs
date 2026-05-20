@@ -7,6 +7,7 @@ using OpenTK.Graphics.OpenGL4;
 using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
+using OpenTK.Mathematics;
 
 namespace SlopperEngine.Rendering.Lighting;
 
@@ -16,11 +17,14 @@ namespace SlopperEngine.Rendering.Lighting;
 public class LightBuffer : IDisposable
 {
     List<LightGLSL> _lights = new();
+    List<ShadowCasterGLSL> _shadowCasters = new();
     BufferObject _buffer;
     int _currentBufferLength;
+    BufferObject _shadowBuffer;
+    int _currentShadowBufferLength;
     
     /// <summary>
-    /// Inserts the light buffer as GLSL. The lights are laid out: colorRange (vec4), positionSharpness (vec4), type3xNull (ivec4). type.x means 0 for point and 1 for directional.
+    /// Inserts the light buffers as GLSL. The layout is complicated, so please just look at the source to see for yourself.
     /// </summary>
     public const string GLSLString =
 @"
@@ -29,18 +33,33 @@ struct SL_LightData
     vec4 colorRange;
     vec4 positionSharpness;
 };
+struct SL_ShadowData
+{
+    mat4 viewProj;
+    vec4 color;
+    ivec4 cascadeIndices;
+    vec4 cascadeSizes;
+    ivec4 padding;
+};
 layout(binding = 1, std140) buffer SL_Lights
 {
     int count;
     int pad1; int pad2; int pad3;
     SL_LightData[] lights;
 } SL_lightlights;
+layout(binding = 2, std140) buffer SL_Shadows
+{
+    int count;
+    int pad1; int pad2; int pad3;
+    SL_ShadowData[] lights;
+} SL_shadowlights;
 ";
     const int _HeaderSize = 4*sizeof(int);
 
     public LightBuffer()
     {
         _buffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
+        _shadowBuffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
     }
 
     /// <summary>
@@ -58,9 +77,27 @@ layout(binding = 1, std140) buffer SL_Lights
     /// <summary>
     /// Adds a directional light to the CPU side of the light buffer.
     /// </summary>
-    public void AddLight(in DirectionalLight dat) =>_lights.Add(new(){
-        ColorRange = new(dat.Color, -1), 
-        PositionSharp = new(dat.GetGlobalTransform().Column2.Xyz, 0)}); // position in directional lights is actually direction
+    public void AddLight(in DirectionalLight dat) {
+        if(!dat.CastsShadows)
+            _lights.Add(new(){
+                ColorRange = new(dat.Color, -1), 
+                PositionSharp = new(-dat.GetGlobalTransform().Column2.Xyz, 0) // position in directional lights is actually direction
+            }); 
+        else
+        {
+            Vector4 cascadeSizes = default;
+            var cascades = dat.Cascades ?? DirectionalLight.DefaultCascades;
+            for(int i = 0; i<cascades.Length && i<4; i++)
+                cascadeSizes[i] = cascades.Span[i];
+            _shadowCasters.Add(new()
+            {
+                Color = new(dat.Color, 0),
+                CascadeIndices = new(1,0,0,0),
+                CascadeSizes = cascadeSizes,
+                ViewProjection = Matrix4.CreateOrthographic(1, 1, -dat.PlaneDistance, dat.PlaneDistance) * dat.GetGlobalTransform(),
+            });
+        }
+    }
 
     /// <summary>
     /// Updates the buffer on the CPU side and binds it to buffer 1.
@@ -79,6 +116,19 @@ layout(binding = 1, std140) buffer SL_Lights
         _buffer.SetData(CollectionsMarshal.AsSpan(_lights), _HeaderSize);
 
         _buffer.Bind(1);
+
+        if(_shadowCasters.Count > _currentShadowBufferLength)
+        {
+            _shadowBuffer.Dispose();
+            int ct = (int)(_shadowCasters.Count*1.5f);
+            _shadowBuffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, _HeaderSize + ct * Unsafe.SizeOf<ShadowCasterGLSL>());
+            _currentShadowBufferLength = ct;
+        }
+
+        _shadowBuffer.SetData(_shadowCasters.Count, 0);
+        _shadowBuffer.SetData(CollectionsMarshal.AsSpan(_shadowCasters), _HeaderSize);
+
+        _shadowBuffer.Bind(2);
     }
 
     /// <summary>
@@ -98,7 +148,10 @@ layout(binding = 1, std140) buffer SL_Lights
     public void Dispose()
     {
         if(!_alreadyDisposed)
+        {
             _buffer.Dispose();
+            _shadowBuffer.Dispose();
+        }
         _alreadyDisposed = true;
     }
 
