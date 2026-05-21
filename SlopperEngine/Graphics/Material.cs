@@ -131,6 +131,13 @@ public class Material
                 texcount++;
                 break;
 
+                case ActiveUniformType.Sampler2DArray:
+                if(n) break;
+                shader.SetUniform(u.Location, texcount);
+                ((Texture2DArray)u.Value!)?.Use(TextureUnit.Texture0+texcount);
+                texcount++;
+                break;
+
                 case ActiveUniformType.Image2D:
                 shader.SetUniform(u.Location, imgcount);
                 if(n) DefaultTextures.Error.UseAsImage(imgcount);

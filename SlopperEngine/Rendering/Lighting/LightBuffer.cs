@@ -8,6 +8,7 @@ using SlopperEngine.Graphics.GPUResources;
 using SlopperEngine.Core.Collections;
 using SlopperEngine.SceneObjects;
 using OpenTK.Mathematics;
+using SlopperEngine.Graphics.GPUResources.Textures;
 
 namespace SlopperEngine.Rendering.Lighting;
 
@@ -22,6 +23,10 @@ public class LightBuffer : IDisposable
     int _currentBufferLength;
     BufferObject _shadowBuffer;
     int _currentShadowBufferLength;
+    Texture2DArray _depthTextures;
+
+    Dictionary<(DirectionalLight, int), int> _shadowCascadeIndices = new();
+    int _currentShadowTextureCount;
     
     /// <summary>
     /// Inserts the light buffers as GLSL. The layout is complicated, so please just look at the source to see for yourself.
@@ -53,6 +58,7 @@ layout(binding = 2, std140) buffer SL_Shadows
     int pad1; int pad2; int pad3;
     SL_ShadowData[] lights;
 } SL_shadowlights;
+layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
 ";
     const int _HeaderSize = 4*sizeof(int);
 
@@ -60,24 +66,30 @@ layout(binding = 2, std140) buffer SL_Shadows
     {
         _buffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
         _shadowBuffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
+        _depthTextures = Texture2DArray.Create(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels, 1,
+        SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null, TextureMagFilter.Linear, TextureMinFilter.Linear);
     }
 
     /// <summary>
     /// Clears ONLY THE CPU SIDE!! of the light buffer.
     /// </summary>
-    public void ClearBuffer() => _lights.Clear();
+    void ClearBuffer()
+    {
+        _lights.Clear();
+        _shadowCasters.Clear();
+    } 
 
     /// <summary>
     /// Adds a point light to the CPU side of the light buffer.
     /// </summary>
-    public void AddLight(in PointLight dat) => _lights.Add(new(){
+    void AddLight(in PointLight dat) => _lights.Add(new(){
         ColorRange = new(dat.Color, float.Max(dat.Radius, 0)), // ensure range >= 0 so point light is always a point light 
         PositionSharp = new(dat.GetGlobalTransform().ExtractTranslation(), dat.Sharpness)});
 
     /// <summary>
     /// Adds a directional light to the CPU side of the light buffer.
     /// </summary>
-    public void AddLight(in DirectionalLight dat) {
+    void AddLight(in DirectionalLight dat) {
         if(!dat.CastsShadows)
             _lights.Add(new(){
                 ColorRange = new(dat.Color, -1), 
@@ -86,13 +98,20 @@ layout(binding = 2, std140) buffer SL_Shadows
         else
         {
             Vector4 cascadeSizes = default;
+            Vector4i cascadeIndices = default;
             var cascades = dat.Cascades ?? DirectionalLight.DefaultCascades;
-            for(int i = 0; i<cascades.Length && i<4; i++)
-                cascadeSizes[i] = cascades.Span[i];
+            int cascadeCount = int.Min(cascades.Length, 4);
+            for(int i = 0; i<cascadeCount; i++)
+            {
+                cascadeSizes[i] = 1f/cascades.Span[i];
+                cascadeIndices[i] = _currentShadowTextureCount + i;
+                _shadowCascadeIndices[(dat, i)] = _currentShadowTextureCount+i;
+            }
+            _currentShadowTextureCount += cascadeCount;
             _shadowCasters.Add(new()
             {
                 Color = new(dat.Color, 0),
-                CascadeIndices = new(1,0,0,0),
+                CascadeIndices = new(0,0,0,0),
                 CascadeSizes = cascadeSizes,
                 ViewProjection = Matrix4.CreateOrthographic(1, 1, -dat.PlaneDistance, dat.PlaneDistance) * dat.GetGlobalTransform(),
             });
@@ -102,7 +121,7 @@ layout(binding = 2, std140) buffer SL_Shadows
     /// <summary>
     /// Updates the buffer on the CPU side and binds it to buffer 1.
     /// </summary>
-    public void UseBuffer()
+    void UseBuffer()
     {
         if(_lights.Count > _currentBufferLength)
         {
@@ -129,6 +148,31 @@ layout(binding = 2, std140) buffer SL_Shadows
         _shadowBuffer.SetData(CollectionsMarshal.AsSpan(_shadowCasters), _HeaderSize);
 
         _shadowBuffer.Bind(2);
+
+        if(_currentShadowTextureCount > _depthTextures.Depth)
+        {
+            _depthTextures.Dispose();
+            _depthTextures = Texture2DArray.Create(
+                DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels, _currentShadowTextureCount,
+                SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null, TextureMagFilter.Linear, TextureMinFilter.Linear);
+        }
+
+        _depthTextures.Use(TextureUnit.Texture14);
+    }
+
+    /// <summary>
+    /// Sets one of the depth textures belonging to each directional light.
+    /// </summary>
+    public void UpdateDepthTexture(DirectionalLight light, Texture2D layer, int cascadeIndex)
+    {
+        if(!_shadowCascadeIndices.TryGetValue((light, cascadeIndex), out int indexdex))
+            return;
+        GL.CopyImageSubData(
+            layer.Handle, ImageTarget.Texture2D, 0, 
+            0, 0, 0, 
+            _depthTextures.Handle, ImageTarget.Texture2DArray, 0,
+            0, 0, indexdex, 
+            layer.Width, layer.Height, 1);
     }
 
     /// <summary>
@@ -139,6 +183,8 @@ layout(binding = 2, std140) buffer SL_Shadows
         ClearBuffer();
         PointLightBufferUpdater lightUpdater = new(this);
         sceneToUse.GetDataContainerEnumerable<PointLight>().Enumerate(ref lightUpdater);
+        _currentShadowTextureCount = 0;
+        _shadowCascadeIndices.Clear();
         DirectionalLightBufferUpdater lightUpdater2 = new(this);
         sceneToUse.GetDataContainerEnumerable<DirectionalLight>().Enumerate(ref lightUpdater2);
         UseBuffer();

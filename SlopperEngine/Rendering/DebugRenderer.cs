@@ -21,7 +21,7 @@ namespace SlopperEngine.Rendering;
 public class DebugRenderer : SceneRenderer
 {
     [field: DontSerialize] public FrameBuffer Buffer { get; private set; }
-    [field: DontSerialize] public FrameBuffer ShadowBuffer {get; private set; }
+    [DontSerialize] FrameBuffer _shadowBuffer;
     [DontSerialize] LightBuffer _lights;
     [DontSerialize] Bloom _coolBloom;
     Vector2i _screenSize = (400, 300);
@@ -30,7 +30,7 @@ public class DebugRenderer : SceneRenderer
     public DebugRenderer() : base()
     {
         Buffer = new(400, 300);
-        ShadowBuffer = FrameBuffer.CreateShadowBuffer(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels);
+        _shadowBuffer = FrameBuffer.CreateShadowBuffer(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels);
         _coolBloom = new(new(400, 300));
         _lights = new();
     }
@@ -41,7 +41,7 @@ public class DebugRenderer : SceneRenderer
         if (serializer.IsWriter)
         {
             Buffer = new(_screenSize.X, _screenSize.Y, 1);
-            ShadowBuffer = FrameBuffer.CreateShadowBuffer(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels);
+            _shadowBuffer = FrameBuffer.CreateShadowBuffer(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels);
             _coolBloom = new(_screenSize);
             _lights = new();
         }
@@ -53,6 +53,8 @@ public class DebugRenderer : SceneRenderer
     protected override void RenderInternal()
     {
         if (Scene == null) return;
+
+        _lights.UseAndUpdateFromScene(Scene);
         
         foreach (DirectionalLight light in Scene.GetDataContainerEnumerable<DirectionalLight>().EnumerateReadonly())
         {
@@ -63,7 +65,7 @@ public class DebugRenderer : SceneRenderer
             if(cascades.Length >= 1)
                 size = cascades.Span[0];
 
-            ShadowBuffer.Use();
+            _shadowBuffer.Use();
             GL.Clear(ClearBufferMask.DepthBufferBit);
 
             globals.Use();
@@ -75,10 +77,9 @@ public class DebugRenderer : SceneRenderer
             Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
             
             FrameBuffer.Unuse();
+            _lights.UpdateDepthTexture(light, _shadowBuffer.ColorAttachments[0], 0);
             break; // just do one for now
         }
-
-        _lights.UseAndUpdateFromScene(Scene);
         
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -126,5 +127,6 @@ public class DebugRenderer : SceneRenderer
         globals.Dispose();
         _lights?.Dispose();
         _coolBloom.Dispose();
+        _shadowBuffer.Dispose();
     }
 }
