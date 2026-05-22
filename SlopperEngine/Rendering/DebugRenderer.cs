@@ -56,45 +56,30 @@ public class DebugRenderer : SceneRenderer
 
         _lights.UseAndUpdateFromScene(Scene);
         
-        foreach (DirectionalLight light in Scene.GetDataContainerEnumerable<DirectionalLight>().EnumerateReadonly())
-        {
-            if(!light.CastsShadows) continue;
-            
-            float size = 32;
-            var cascades = light.Cascades ?? DirectionalLight.DefaultCascades;
-            if(cascades.Length >= 1)
-                size = cascades.Span[0];
-
-            _shadowBuffer.Use();
-            GL.Clear(ClearBufferMask.DepthBufferBit);
-
-            globals.Use();
-            globals.CameraProjection = Matrix4.CreateOrthographic(size, size, -light.PlaneDistance, light.PlaneDistance);
-            var lightTransform = light.GetGlobalTransform();
-            globals.CameraView = lightTransform.Inverted();
-            globals.CameraPosition = new(lightTransform.ExtractTranslation(), 1.0f);
-            DrawcallDrawer drawer = new(globals, ShadowPass.Instance);
-            Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
-            
-            FrameBuffer.Unuse();
-            _lights.UpdateDepthTexture(light, _shadowBuffer.ColorAttachments[0], 0);
-            break; // just do one for now
-        }
-        
         Buffer.Use();
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        FrameBuffer.Unuse();
         foreach (Camera cam in Scene.GetDataContainerEnumerable<Camera>().EnumerateReadonly())
         {
+            using var _ = DebugGroup.StartUsing("Camera");
+
+            var camTransform = cam.GetGlobalTransform();
+            Vector3 camPos = camTransform.ExtractTranslation();
+            RenderShadowCasters(camPos);
+            
+            Buffer.Use();
             globals.Use();
             globals.CameraProjection = cam.Projection;
-            var camTransform = cam.GetGlobalTransform();
             globals.CameraView = camTransform.Inverted();
-            globals.CameraPosition = new(camTransform.ExtractTranslation(), 1.0f);
+            globals.CameraPosition = new(camPos, 1.0f);
             DrawcallDrawer drawer = new(globals, DebugPass.Instance);
-            Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
+            using(DebugGroup.StartUsing("Draw objects"))
+                Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
+            FrameBuffer.Unuse();
         }
-        FrameBuffer.Unuse();
-        _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f);
+
+        using(DebugGroup.StartUsing("Bloom pass"))
+            _coolBloom.AddBloom(GetOutputTexture(), .45f, .25f); // bloom pass should be per camera ideally, but is not programmed to right now.
     }
     struct DrawcallDrawer(ShaderGlobals globals, RenderPass pass) : IRefEnumerator<MeshRenderer>
     {
@@ -104,6 +89,39 @@ public class DebugRenderer : SceneRenderer
             (call.Material ?? Material.MissingMaterial).Use(mesh.GetMeshInfo(), pass);
             globals.Model = call.GetGlobalTransform();
             mesh.Draw();
+        }
+    }
+
+    void RenderShadowCasters(Vector3 cameraPosition)
+    {
+        using var _ = DebugGroup.StartUsing("Render shadow casters");
+        foreach (DirectionalLight light in Scene!.GetDataContainerEnumerable<DirectionalLight>().EnumerateReadonly())
+        {
+            if(!light.CastsShadows) continue;
+
+            using var _2 = DebugGroup.StartUsing("Shadow caster");
+            
+            var cascades = light.Cascades ?? DirectionalLight.DefaultCascades;
+            for(int casc = 0; casc < int.Min(cascades.Length, LightBuffer.MaxShadowCascades); casc++)
+            {
+                using var _3 = DebugGroup.StartUsing("Cascade");
+
+                float size = cascades.Span[casc];
+                
+                _shadowBuffer.Use();
+                GL.Clear(ClearBufferMask.DepthBufferBit);
+
+                globals.Use();
+                globals.CameraProjection = Matrix4.CreateOrthographic(size, size, -light.PlaneDistance, light.PlaneDistance);
+                var lightTransform = light.GetGlobalTransform();
+                globals.CameraView = lightTransform.Inverted();
+                globals.CameraPosition = new(lightTransform.ExtractTranslation(), 1.0f);
+                DrawcallDrawer drawer = new(globals, ShadowPass.Instance);
+                Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
+                
+                FrameBuffer.Unuse();
+                _lights.UpdateDepthTexture(light, _shadowBuffer.ColorAttachments[0], casc);
+            }
         }
     }
 

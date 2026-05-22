@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 using System.Threading;
+using SlopperEngine.Graphics;
 
 namespace SlopperEngine.Windowing;
 
@@ -131,16 +132,23 @@ public class MainContext : GameWindow, ISerializableFromKey<byte>
         for (int i = 0; i < alive.Length; i++)
         {
             const string Message = "SlopperEngine Scene render";
-            GL.PushDebugGroup(DebugSourceExternal.DebugSourceApplication, i, Message.Length, Message);
-            try
+            using (DebugGroup.StartUsing(Message))
             {
-                alive[i].Render(time);
+                try
+                {
+                    alive[i].Render(time);
+                }
+                catch (Exception e)
+                {
+                    System.Console.Write("Exception while rendering");
+                    if(ThrowIfSevereGLError)
+                    {
+                        System.Console.WriteLine('.');
+                        throw;
+                    }
+                    System.Console.WriteLine($": {e}");
+                }
             }
-            catch (Exception e)
-            {
-                System.Console.WriteLine($"Exception while rendering: {e}");
-            }
-            GL.PopDebugGroup();
         }
 
         //finally render every window once (which is a different thing!)

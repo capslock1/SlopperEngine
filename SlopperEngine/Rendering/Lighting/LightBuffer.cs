@@ -17,6 +17,8 @@ namespace SlopperEngine.Rendering.Lighting;
 /// </summary>
 public class LightBuffer : IDisposable
 {
+    public const int MaxShadowCascades = 4;
+
     List<LightGLSL> _lights = new();
     List<ShadowCasterGLSL> _shadowCasters = new();
     BufferObject _buffer;
@@ -100,7 +102,7 @@ layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
             Vector4 cascadeSizes = default;
             Vector4i cascadeIndices = default;
             var cascades = dat.Cascades ?? DirectionalLight.DefaultCascades;
-            int cascadeCount = int.Min(cascades.Length, 4);
+            int cascadeCount = int.Min(cascades.Length, MaxShadowCascades);
             for(int i = 0; i<cascadeCount; i++)
             {
                 cascadeSizes[i] = 1f/cascades.Span[i];
@@ -111,7 +113,7 @@ layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
             _shadowCasters.Add(new()
             {
                 Color = new(dat.Color, 0),
-                CascadeIndices = new(0,0,0,0),
+                CascadeIndices = cascadeIndices,
                 CascadeSizes = cascadeSizes,
                 ViewProjection = Matrix4.CreateOrthographic(1, 1, -dat.PlaneDistance, dat.PlaneDistance) * dat.GetGlobalTransform(),
             });

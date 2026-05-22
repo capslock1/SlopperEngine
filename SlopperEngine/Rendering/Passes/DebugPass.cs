@@ -97,15 +97,25 @@ vec3 SL_GetLighting(vec3 position, vec3 normal)
     }}
     for(int s = 0; s < SL_shadowlights.count; s++)
     {{
-        const float normalOffset = 0.01;
+        const float normalOffset = 0.002;
         SL_ShadowData shadow = SL_shadowlights.lights[s];
         vec4 projPos = vec4(position + normal * normalOffset, 1.0) * shadow.viewProj;
-        vec2 shadowUV = 0.5 + 0.5 * projPos.xy * shadow.cascadeSizes[0];
-        float shadowDist = texture(SL_ShadowTextures, vec3(shadowUV, shadow.cascadeIndices[0])).x;
-        bool inLight = shadowDist > 0.5 + 0.5 * projPos.z;
-        if(!inLight) 
-            continue;
-        lightContribution += SL_PhongLighting(position, normal, camDir, -normalize(shadow.viewProj[2].xyz)) * shadow.color.xyz;
+        float lightMultiplier = 0;
+        for(int casc = 0; casc < 4; casc++)
+        {{
+            float cascadeSize = shadow.cascadeSizes[casc];
+            vec2 shadowUV = 0.5 + 0.5 * projPos.xy * cascadeSize;
+            if(max(shadowUV.x, shadowUV.y) > 1 || min(shadowUV.x, shadowUV.y) < 0)
+                continue;
+            
+            float shadowDist = texture(SL_ShadowTextures, vec3(shadowUV, shadow.cascadeIndices[casc])).x;
+            bool inLight = shadowDist > 0.5 + 0.5 * projPos.z;
+            if(!inLight) 
+                break;
+
+            lightMultiplier = 1;
+        }}
+        lightContribution += SL_PhongLighting(position, normal, camDir, -normalize(shadow.viewProj[2].xyz)) * shadow.color.xyz * lightMultiplier;
     }}
 
     return vec3(0.05,.1,.2)*ambient + lightContribution;
