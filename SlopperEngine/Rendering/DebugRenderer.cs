@@ -114,13 +114,14 @@ public class DebugRenderer : SceneRenderer
                 globals.Use();
                 globals.CameraProjection = Matrix4.CreateOrthographic(size, size, -light.PlaneDistance, light.PlaneDistance);
                 var lightTransform = light.GetGlobalTransform();
+                lightTransform.Row3.Xyz = cameraPosition;
                 globals.CameraView = lightTransform.Inverted();
                 globals.CameraPosition = new(lightTransform.ExtractTranslation(), 1.0f);
                 DrawcallDrawer drawer = new(globals, ShadowPass.Instance);
                 Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
                 
                 FrameBuffer.Unuse();
-                _lights.UpdateDepthTexture(light, _shadowBuffer.ColorAttachments[0], casc);
+                _lights.UpdateCascadeViewProjAndTexture(light, _shadowBuffer.ColorAttachments[0], casc, globals.CameraView * globals.CameraProjection);
             }
         }
     }

@@ -74,103 +74,103 @@ public class BufferObject : GPUResource
     /// </summary>
     /// <typeparam name="T">The type of data to write.</typeparam>
     /// <param name="data">The data to write.</param>
-    /// <param name="index">The byte offset to write at.</param>
-    public void SetData<T>(Span<T> data, int index) where T : struct
+    /// <param name="offset">The byte offset to write at.</param>
+    public void SetData<T>(Span<T> data, int offset) where T : struct
     {
         if(data.Length < 1) return;
         Use();
-        GL.BufferSubData(BufferType, index, data.Length * Unsafe.SizeOf<T>(), ref data[0]);
+        GL.BufferSubData(BufferType, offset, data.Length * Unsafe.SizeOf<T>(), ref data[0]);
     }
     
     /// <summary>
     /// Writes an int to the buffer.
     /// </summary>
     /// <param name="data">Int to set.</param>
-    /// <param name="index">Byte offset to set the int at.</param>
-    public void SetData(int data, int index)
+    /// <param name="offset">Byte offset to set the int at.</param>
+    public void SetData(int data, int offset)
     {
         Use();
-        GL.BufferSubData(BufferType, index, sizeof(int), ref data);
+        GL.BufferSubData(BufferType, offset, sizeof(int), ref data);
     }
     
     /// <summary>
     /// Writes a float to the buffer.
     /// </summary>
     /// <param name="data">Float to set.</param>
-    /// <param name="index">Byte offset to set the float at.</param>
-    public void SetData(float data, int index)
+    /// <param name="offset">Byte offset to set the float at.</param>
+    public void SetData(float data, int offset)
     {
         Use();
-        GL.BufferSubData(BufferType, index, sizeof(float), ref data);
+        GL.BufferSubData(BufferType, offset, sizeof(float), ref data);
     }
     
     /// <summary>
     /// Writes a 2D vector to the buffer.
     /// </summary>
     /// <param name="data">Vector to set.</param>
-    /// <param name="index">Byte offset to set the vector at.</param>
-    public void SetData(Vector2 data, int index)
+    /// <param name="offset">Byte offset to set the vector at.</param>
+    public void SetData(Vector2 data, int offset)
     {
         Use();
-        GL.BufferSubData(BufferType, index, Unsafe.SizeOf<Vector2>(), ref data);
+        GL.BufferSubData(BufferType, offset, Unsafe.SizeOf<Vector2>(), ref data);
     }
     
     /// <summary>
     /// Writes a 3D vector to the buffer.
     /// </summary>
     /// <param name="data">Vector to set.</param>
-    /// <param name="index">Byte offset to set the vector at.</param>
-    public void SetData(Vector3 data, int index)
+    /// <param name="offset">Byte offset to set the vector at.</param>
+    public void SetData(Vector3 data, int offset)
     {
         Use();
-        GL.BufferSubData(BufferType, index, Unsafe.SizeOf<Vector3>(), ref data);
+        GL.BufferSubData(BufferType, offset, Unsafe.SizeOf<Vector3>(), ref data);
     }
     
     /// <summary>
     /// Writes a 4D vector to the buffer.
     /// </summary>
     /// <param name="data">Vector to set.</param>
-    /// <param name="index">Byte offset to set the vector at.</param>
-    public void SetData(Vector4 data, int index)
+    /// <param name="offset">Byte offset to set the vector at.</param>
+    public void SetData(Vector4 data, int offset)
     {
         Use();
-        GL.BufferSubData(BufferType, index, Unsafe.SizeOf<Vector4>(), ref data);
+        GL.BufferSubData(BufferType, offset, Unsafe.SizeOf<Vector4>(), ref data);
     }
     
     /// <summary>
     /// Writes a 2D matrix to the buffer.
     /// </summary>
     /// <param name="data">Matrix to set.</param>
-    /// <param name="index">Byte offset to set the matrix at.</param>
-    public void SetData(Matrix2 data, int index)
+    /// <param name="offset">Byte offset to set the matrix at.</param>
+    public void SetData(Matrix2 data, int offset)
     {
         Use();
         data.Transpose();
-        GL.BufferSubData(BufferType, index, Unsafe.SizeOf<Matrix2>(), ref data);
+        GL.BufferSubData(BufferType, offset, Unsafe.SizeOf<Matrix2>(), ref data);
     }
     
     /// <summary>
     /// Writes a 3D matrix to the buffer.
     /// </summary>
     /// <param name="data">Matrix to set.</param>
-    /// <param name="index">Byte offset to set the matrix at.</param>
-    public void SetData(Matrix3 data, int index)
+    /// <param name="offset">Byte offset to set the matrix at.</param>
+    public void SetData(Matrix3 data, int offset)
     {
         Use();
         data.Transpose();
-        GL.BufferSubData(BufferType, index, Unsafe.SizeOf<Matrix3>(), ref data);
+        GL.BufferSubData(BufferType, offset, Unsafe.SizeOf<Matrix3>(), ref data);
     }
 
     /// <summary>
     /// Writes a 4D matrix to the buffer.
     /// </summary>
     /// <param name="data">Matrix to set.</param>
-    /// <param name="index">Byte offset to set the matrix at.</param>
-    public void SetData(Matrix4 data, int index)
+    /// <param name="offset">Byte offset to set the matrix at.</param>
+    public void SetData(Matrix4 data, int offset)
     {
         Use();
         data.Transpose();
-        GL.BufferSubData(BufferType, index, Unsafe.SizeOf<Matrix4>(), ref data);
+        GL.BufferSubData(BufferType, offset, Unsafe.SizeOf<Matrix4>(), ref data);
     }
     
     protected override ResourceData GetResourceData() => new BOResourceData(){ubo = this.Handle};

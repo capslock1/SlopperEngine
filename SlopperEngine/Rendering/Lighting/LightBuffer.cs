@@ -17,19 +17,10 @@ namespace SlopperEngine.Rendering.Lighting;
 /// </summary>
 public class LightBuffer : IDisposable
 {
+    /// <summary>
+    /// The maximum amount of cascades in a single shadow caster.
+    /// </summary>
     public const int MaxShadowCascades = 4;
-
-    List<LightGLSL> _lights = new();
-    List<ShadowCasterGLSL> _shadowCasters = new();
-    BufferObject _buffer;
-    int _currentBufferLength;
-    BufferObject _shadowBuffer;
-    int _currentShadowBufferLength;
-    Texture2DArray _depthTextures;
-
-    Dictionary<(DirectionalLight, int), int> _shadowCascadeIndices = new();
-    int _currentShadowTextureCount;
-    
     /// <summary>
     /// Inserts the light buffers as GLSL. The layout is complicated, so please just look at the source to see for yourself.
     /// </summary>
@@ -42,7 +33,7 @@ struct SL_LightData
 };
 struct SL_ShadowData
 {
-    mat4 viewProj;
+    mat4[4] viewProj;
     vec4 color;
     ivec4 cascadeIndices;
     vec4 cascadeSizes;
@@ -62,6 +53,18 @@ layout(binding = 2, std140) buffer SL_Shadows
 } SL_shadowlights;
 layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
 ";
+
+    List<LightGLSL> _lights = new();
+    List<ShadowCasterGLSL> _shadowCasters = new();
+    BufferObject _buffer;
+    int _currentBufferLength;
+    BufferObject _shadowBuffer;
+    int _currentShadowBufferLength;
+    Texture2DArray _depthTextures;
+
+    Dictionary<(DirectionalLight l, int cascade), (int cascadeIndex, int shadowCasterIndex)> _shadowCascadeIndices = new();
+    int _currentShadowTextureCount;
+    
     const int _HeaderSize = 4*sizeof(int);
 
     public LightBuffer()
@@ -107,7 +110,7 @@ layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
             {
                 cascadeSizes[i] = 1f/cascades.Span[i];
                 cascadeIndices[i] = _currentShadowTextureCount + i;
-                _shadowCascadeIndices[(dat, i)] = _currentShadowTextureCount+i;
+                _shadowCascadeIndices[(dat, i)] = (_currentShadowTextureCount+i, _shadowCasters.Count);
             }
             _currentShadowTextureCount += cascadeCount;
             _shadowCasters.Add(new()
@@ -115,7 +118,6 @@ layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
                 Color = new(dat.Color, 0),
                 CascadeIndices = cascadeIndices,
                 CascadeSizes = cascadeSizes,
-                ViewProjection = Matrix4.CreateOrthographic(1, 1, -dat.PlaneDistance, dat.PlaneDistance) * dat.GetGlobalTransform(),
             });
         }
     }
@@ -163,18 +165,22 @@ layout(binding = 14) uniform sampler2DArray SL_ShadowTextures;
     }
 
     /// <summary>
-    /// Sets one of the depth textures belonging to each directional light.
+    /// Sets one of the depth textures and viewProjections belonging to each shadow casting directional light.
     /// </summary>
-    public void UpdateDepthTexture(DirectionalLight light, Texture2D layer, int cascadeIndex)
+    public void UpdateCascadeViewProjAndTexture(DirectionalLight light, Texture2D layer, int cascadeIndex, Matrix4 cascadeViewProjection)
     {
-        if(!_shadowCascadeIndices.TryGetValue((light, cascadeIndex), out int indexdex))
+        if(!_shadowCascadeIndices.TryGetValue((light, cascadeIndex), out (int casc, int shadow) indices))
             return;
         GL.CopyImageSubData(
             layer.Handle, ImageTarget.Texture2D, 0, 
             0, 0, 0, 
             _depthTextures.Handle, ImageTarget.Texture2DArray, 0,
-            0, 0, indexdex, 
+            0, 0, indices.casc, 
             layer.Width, layer.Height, 1);
+        _shadowBuffer.SetData(cascadeViewProjection, 
+            _HeaderSize + 
+            indices.shadow*Unsafe.SizeOf<ShadowCasterGLSL>() + 
+            cascadeIndex*Unsafe.SizeOf<Matrix4>());
     }
 
     /// <summary>
