@@ -7,13 +7,14 @@ namespace SlopperEngine.Rendering.Passes;
 /// <summary>
 /// Render pass used by the DebugRenderer. Has basic phong shading.
 /// </summary>
-public record class DebugPass : RenderPass
+public record class DebugPass(bool InfiniteShadowpass) : RenderPass
 {
     /// <summary>
     /// The singleton DebugPass.
     /// </summary>
-    public static readonly DebugPass Instance = new(); 
-    private DebugPass(){}
+    public static readonly DebugPass Instance = new(false);
+
+    public static readonly DebugPass InstanceInfiniteShadow = new(true);
 
     public override void AddVertexMain(SyntaxTree scope, IndentedTextWriter writer)
     {
@@ -45,7 +46,7 @@ public record class DebugPass : RenderPass
             }
         }
         bool writesNormalAndPosition = normPosWrite == 2;
-        writer.Write(LightBuffer.GetGLSLString(writesSpecular));
+        writer.Write(LightBuffer.GetGLSLString(writesSpecular, InfiniteShadowpass));
         writer.Write(
 @$"
 out vec4 SL_FragColor;

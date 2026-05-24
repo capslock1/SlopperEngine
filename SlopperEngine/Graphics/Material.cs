@@ -55,7 +55,7 @@ public class Material
         }
         //this SUCKS.
         //getting the settable uniforms should 100% be fixed up at some point.
-        DrawShader sh = shader.GetDrawShader(DefaultMeshes.Cube.GetMeshInfo(), DebugPass.Instance);
+        DrawShader sh = shader.GetDrawShader(DefaultMeshes.Cube.GetMeshInfo(), ShadowPass.InstanceInfinite);
         return new Material(shader, sh.GetSettableUniforms().ToArray());
     }
 

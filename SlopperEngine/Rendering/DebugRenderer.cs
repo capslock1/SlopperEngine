@@ -21,6 +21,7 @@ namespace SlopperEngine.Rendering;
 public class DebugRenderer : SceneRenderer
 {
     [field: DontSerialize] public FrameBuffer Buffer { get; private set; }
+    public bool UseInfiniteShadowMap = false;
     [DontSerialize] FrameBuffer _shadowBuffer;
     [DontSerialize] LightBuffer _lights;
     [DontSerialize] Bloom _coolBloom;
@@ -72,7 +73,7 @@ public class DebugRenderer : SceneRenderer
             globals.CameraProjection = cam.Projection;
             globals.CameraView = camTransform.Inverted();
             globals.CameraPosition = new(camPos, 1.0f);
-            DrawcallDrawer drawer = new(globals, DebugPass.Instance);
+            DrawcallDrawer drawer = new(globals, UseInfiniteShadowMap ? DebugPass.InstanceInfiniteShadow : DebugPass.Instance);
             using(DebugGroup.StartUsing("Draw objects"))
                 Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
             FrameBuffer.Unuse();
@@ -117,11 +118,12 @@ public class DebugRenderer : SceneRenderer
                 lightTransform.Row3.Xyz = cameraPosition;
                 globals.CameraView = lightTransform.Inverted();
                 globals.CameraPosition = new(lightTransform.ExtractTranslation(), 1.0f);
-                DrawcallDrawer drawer = new(globals, ShadowPass.Instance);
+                DrawcallDrawer drawer = new(globals, UseInfiniteShadowMap ? ShadowPass.InstanceInfinite : ShadowPass.Instance);
                 Scene.GetDataContainerEnumerable<MeshRenderer>().Enumerate(ref drawer);
                 
                 FrameBuffer.Unuse();
                 _lights.UpdateCascadeViewProjAndTexture(light, _shadowBuffer.ColorAttachments[0], casc, globals.CameraView * globals.CameraProjection);
+                if(UseInfiniteShadowMap) break;
             }
         }
     }
