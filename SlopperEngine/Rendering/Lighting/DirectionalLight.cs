@@ -30,7 +30,7 @@ public class DirectionalLight : SceneObject3D
     /// <summary>
     /// How far the near and far plane of the light's shadow projection should be.
     /// </summary>
-    public float PlaneDistance = 100;
+    public float PlaneDistance = 10000;
 
     /// <summary>
     /// The resolution of the shadow map. Really cannot be bothered making this variable right now.

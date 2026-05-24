@@ -74,7 +74,7 @@ public abstract class GPUResource : IDisposable, ISerializableFromKey<IGPUResour
         if (!_disposedValue)
         {
             Console.WriteLine($"{ToString()}: GPU Resource leak! Did you forget to call Dispose()?");
-            System.Console.WriteLine($"Origin: {GetOrigin()}");
+            System.Console.WriteLine($"Origin: {GetOrigin()?.ToString() ?? "null"}");
             ResourceData leak = GetResourceData();
             _GCdResources.Enqueue(leak);
         }

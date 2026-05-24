@@ -45,82 +45,10 @@ public record class DebugPass : RenderPass
             }
         }
         bool writesNormalAndPosition = normPosWrite == 2;
-        writer.Write(LightBuffer.GLSLString);
+        writer.Write(LightBuffer.GetGLSLString(writesSpecular));
         writer.Write(
 @$"
 out vec4 SL_FragColor;
-
-float SL_PhongLighting(vec3 position, vec3 normal, vec3 cameraDirection, vec3 lightDir)
-{{
-    float litness = max(dot(normal, lightDir), 0);
-{(writesSpecular ?
-@"
-    vec3 rHatM = reflect(lightDir, normal);
-
-    float spec = 0;
-    spec = max(dot(rHatM, cameraDirection), 0);
-    spec = pow(spec,20);
-    spec *= litness;
-    
-    litness += 3.*spec;
-    " : ' '
-)}
-    return litness < 0. ? 0. : litness;
-}}
-
-vec3 SL_GetLighting(vec3 position, vec3 normal)
-{{
-    vec3 camDir = normalize(position - Globals.cameraPosition.xyz);
-    float ambient = normal.y*.5+1.;
-    ambient *= 1.-.5*dot(camDir, normal);
-
-    vec3 lightContribution = vec3(0);
-    for(int l = 0; l < SL_lightlights.count; l++)
-    {{
-        SL_LightData light = SL_lightlights.lights[l];
-        bool pointLight = light.colorRange.w > -0.5;
-        vec3 lightDir = pointLight ? light.positionSharpness.xyz - position : light.positionSharpness.xyz;
-
-        float distanceDarkening = 1;
-        if(pointLight)
-        {{
-            float lightDist = length(lightDir);
-            if(lightDist > light.colorRange.w)
-                continue;
-            float normLightDist = lightDist / light.colorRange.w;
-            lightDir /= lightDist;
-
-            float sq = (light.positionSharpness.w);
-            distanceDarkening = (1-normLightDist) / (sq * sq + 1);
-        }}
-        lightContribution += distanceDarkening * SL_PhongLighting(position, normal, camDir, lightDir) * light.colorRange.xyz;
-    }}
-    for(int s = 0; s < SL_shadowlights.count; s++)
-    {{
-        const float normalOffset = 0.002;
-        SL_ShadowData shadow = SL_shadowlights.lights[s];
-        float lightMultiplier = 1;
-        for(int casc = 0; casc < 4; casc++)
-        {{
-            vec4 projPos = vec4(position + normal * normalOffset, 1.0) * shadow.viewProj[casc];
-            vec3 shadowUVW = 0.5 + 0.5 * projPos.xyz;
-            if(max(shadowUVW.x, shadowUVW.y) > 1 || min(shadowUVW.x, shadowUVW.y) < 0)
-                continue;
-            
-            float shadowDist = texture(SL_ShadowTextures, vec3(shadowUVW.xy, shadow.cascadeIndices[casc])).x;
-            bool inLight = shadowDist > shadowUVW.z || shadowDist == 1;
-            // return vec3(shadowUVW.xy, inLight ? 1.0 : 0.5);
-            // return vec3(shadowDist, shadowUVW.z, 1);
-            if(!inLight) 
-                lightMultiplier = 0;
-
-            break;
-        }}
-        lightContribution += SL_PhongLighting(position, normal, camDir, -normalize(shadow.viewProj[0][2].xyz)) * shadow.color.xyz * lightMultiplier;
-    }}
-
-    return vec3(0.05,.1,.2)*ambient + lightContribution;
-}}
 
 void main()
 {{
