@@ -40,7 +40,7 @@ public class LightBuffer : IDisposable
         _buffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
         _shadowBuffer = BufferObject.Create(BufferTarget.ShaderStorageBuffer, 1*sizeof(int));
         _depthTextures = Texture2DArray.Create(DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels, 1,
-        SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null, TextureMagFilter.Linear, TextureMinFilter.Linear);
+        SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null, TextureMagFilter.Linear, TextureMinFilter.Linear, TextureWrapMode.MirroredRepeat);
     }
 
     /// <summary>
