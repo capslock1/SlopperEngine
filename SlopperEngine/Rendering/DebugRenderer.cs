@@ -89,7 +89,7 @@ public class DebugRenderer : SceneRenderer
             var mesh = call.Mesh ?? DefaultMeshes.Error;
             (call.Material ?? Material.MissingMaterial).Use(mesh.GetMeshInfo(), pass);
             globals.Model = call.GetGlobalTransform();
-            mesh.Draw();
+            mesh.DrawInstanced(int.Max(1,call.InstanceCount));
         }
     }
 

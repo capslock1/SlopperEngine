@@ -62,24 +62,31 @@ layout (location = 2) in vec3 Model_Normal;";
         public override void GLSLVertexInitialize(SyntaxTree Scope, IndentedTextWriter writer)
         {
             writer.WriteLine("void vertIn_Initialize(){");
+            writer.Indent++;
             foreach(var j in Scope.vertIn)
             {
                 if(j.Name == "position")
                 {
-                    writer.WriteLine("    vertIn.position = vec4(Model_Position, 1.0);");
+                    writer.WriteLine("vertIn.position = vec4(Model_Position, 1.0);");
                     continue;
                 }
                 if(j.Name == "UVCoordinates")
                 {
-                    writer.WriteLine("    vertIn.UVCoordinates = Model_UVs;");
+                    writer.WriteLine("vertIn.UVCoordinates = Model_UVs;");
                     continue;
                 }
                 if(j.Name == "normal")
                 {
-                    writer.WriteLine("    vertIn.normal = Model_Normal;");
+                    writer.WriteLine("vertIn.normal = Model_Normal;");
+                    continue;
+                }
+                if(j.Name == "instanceID")
+                {
+                    writer.WriteLine("vertIn.instanceID = gl_InstanceID;");
                     continue;
                 }
             }
+            writer.Indent--;
             writer.WriteLine("}");
         }
 

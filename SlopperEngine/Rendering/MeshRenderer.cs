@@ -25,6 +25,12 @@ public class MeshRenderer : SceneObject3D
     /// </summary>
     public Material? Material;
 
+    /// <summary>
+    /// How many instances to draw of this mesh.
+    /// Make sure the material supports it.
+    /// </summary>
+    public int InstanceCount = 1;
+
 
     [OnRegister]
     void CreateDrawcall()
