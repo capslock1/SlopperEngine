@@ -242,7 +242,7 @@ vec3 SL_GetLighting(vec3 position, vec3 normal)
             _depthTextures.Dispose();
             _depthTextures = Texture2DArray.Create(
                 DirectionalLight.ShadowResolutionPixels, DirectionalLight.ShadowResolutionPixels, _currentShadowTextureCount,
-                SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null, TextureMagFilter.Linear, TextureMinFilter.Linear);
+                SizedInternalFormat.DepthComponent24, PixelFormat.DepthComponent, null, TextureMagFilter.Linear, TextureMinFilter.Linear, TextureWrapMode.MirroredRepeat);
         }
 
         _depthTextures.Use(TextureUnit.Texture14);
