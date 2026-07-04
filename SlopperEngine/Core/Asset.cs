@@ -50,19 +50,26 @@ public readonly struct Asset : ISerializableFromKey<(string?, string?, AssetLoad
     /// <summary>
     /// Whether or not this Asset has non-null fields.
     /// </summary>
-    public bool AssetExists => FullFilePath != null && 
-    (
+    public bool AssetExists => FullFilePath != null && (Creates || File.Exists(FullFilePath));
+    
+    /// <summary>
+    /// Whether or not this asset creates a new file when getting the stream.
+    /// </summary>
+    public bool Creates => 
         _access.Mode == FileMode.CreateNew || 
         _access.Mode == FileMode.Create || 
         _access.Mode == FileMode.OpenOrCreate || 
-        _access.Mode == FileMode.Append || File.Exists(FullFilePath));
+        _access.Mode == FileMode.Append;
 
     /// <summary>
     /// Gets the stream associated with the asset.
     /// </summary>
     public FileStream GetStream()
     {
-        // if this errors its your own fault for not checking AssetExists
+        if (Creates)
+            Directory.CreateDirectory(Path.GetDirectoryName(FullFilePath)!);
+            
+        // if this errors its your own fault for not checking AssetExists    
         return File.Open(FullFilePath!, _access.Mode, _access.Access, _access.Share);
     }
 
