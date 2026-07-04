@@ -123,7 +123,6 @@ public class DebugRenderer : SceneRenderer
                 
                 FrameBuffer.Unuse();
                 _lights.UpdateCascadeViewProjAndTexture(light, _shadowBuffer.ColorAttachments[0], casc, globals.CameraView * globals.CameraProjection);
-                if(UseInfiniteShadowMap) break;
             }
         }
     }

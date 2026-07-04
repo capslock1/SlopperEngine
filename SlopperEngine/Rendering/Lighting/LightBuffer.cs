@@ -133,7 +133,7 @@ vec3 SL_GetLighting(vec3 position, vec3 normal)
                 break;
             
             vec4 projPos = vec4(position + normal * normalOffset, 1.0) * shadow.viewProj[casc];
-            {(usesInfiniteShadowmap ? "projPos.xy = clamp(SL_ShadowInfiniteMap(projPos.xy), vec2(-1), vec2(1));" : "")}
+            {(usesInfiniteShadowmap ? "projPos.xy = SL_ShadowInfiniteMap(projPos.xy);" : "")}
             vec3 shadowUVW = 0.5 + 0.5 * projPos.xyz;
             if(max(shadowUVW.x, shadowUVW.y) > 1 || min(shadowUVW.x, shadowUVW.y) < 0)
                 continue;
