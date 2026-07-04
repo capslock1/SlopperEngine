@@ -129,6 +129,9 @@ vec3 SL_GetLighting(vec3 position, vec3 normal)
         float lightMultiplier = 1;
         for(int casc = 0; casc < 4; casc++)
         {{
+            if(shadow.cascadeIndices[casc] == -1)
+                break;
+            
             vec4 projPos = vec4(position + normal * normalOffset, 1.0) * shadow.viewProj[casc];
             {(usesInfiniteShadowmap ? "projPos.xy = clamp(SL_ShadowInfiniteMap(projPos.xy), vec2(-1), vec2(1));" : "")}
             vec3 shadowUVW = 0.5 + 0.5 * projPos.xyz;
@@ -181,8 +184,14 @@ vec3 SL_GetLighting(vec3 position, vec3 normal)
             Vector4i cascadeIndices = default;
             var cascades = dat.Cascades ?? DirectionalLight.DefaultCascades;
             int cascadeCount = int.Min(cascades.Length, MaxShadowCascades);
-            for(int i = 0; i<cascadeCount; i++)
+            for(int i = 0; i<MaxShadowCascades; i++)
             {
+                if (i >= cascadeCount)
+                {
+                    cascadeSizes[i] = 0;
+                    cascadeIndices[i] = -1;
+                    continue;
+                }
                 cascadeSizes[i] = 1f/cascades.Span[i];
                 cascadeIndices[i] = _currentShadowTextureCount + i;
                 _shadowCascadeIndices[(dat, i)] = (_currentShadowTextureCount+i, _shadowCasters.Count);
